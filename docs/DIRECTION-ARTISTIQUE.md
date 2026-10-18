@@ -1,6 +1,6 @@
-# LifeOS — Écobrutalisme éditorial
+# LifeOS — Jardin de travail
 
-Direction demandée : une identité affirmée, calme et structurée. Le lot 0.2 s'appuie sur les trois références fournies : béton brut végétalisé, interface vert forêt botanique et composition florale éditoriale. Les fonctions restent accessibles dans les cinq espaces.
+Direction demandée : une identité affirmée, calme et structurée. Après le lot 0.2 inspiré des trois références fournies, le lot 0.3 fait évoluer ce langage en jardin de travail interactif : béton brut végétalisé, profondeur réelle, mouvement contextualisé et composition éditoriale. L'image originale est conservée sans retouche.
 
 ## Matière et couleur
 
@@ -12,17 +12,20 @@ Direction demandée : une identité affirmée, calme et structurée. Le lot 0.2 
 
 ## Composition
 
-- Angles droits, bordures franches, aplats ; aucun flou décoratif, dégradé ou volume 3D.
+- Angles droits et bordures franches pour structurer les actions ; modelé, ombres et profondeur pour donner une présence au jardin.
 - Grands titres sérif, corps de texte simple, repères en chasse fixe : le rythme éditorial complète la structure franche du brutalisme.
 - Espaces généreux et hiérarchie explicite ; grands nombres calculés sur les données réelles.
 - Jardin original devant des piliers en béton brut ; lumière et végétation apportent le contraste organique. Visuel local original décrit dans `ASSETS.md`. Aucun asset distant ni police externe.
 - Bureau : navigation sombre, contenu clair, grands blocs structurés. Mobile : même identité avec composition verticale et navigation inférieure contrastée.
+- Trois terrasses en vraie 3D représentent journée, projets et assistants. Leur sélection révèle un contexte et une action, sans coder artificiellement une progression dans la taille des plantes.
 
 ## Interactions
 
 - Boutons rectangulaires et libellés visibles ; focus terre cuite au clavier.
 - Statuts, erreurs, échéances et confirmations restent textuels.
-- Le survol peut produire une ombre franche ; pas de mouvement décoratif permanent.
+- Le mouvement relie un geste à sa conséquence : orientation du regard, changement de terrasse, changement de page, validation d'une tâche ou ouverture d'un dialogue. La scène se stabilise et s'arrête ; aucun carrousel ni rotation permanente.
 - Le thème ne modifie ni le modèle de données, ni le stockage, ni les sauvegardes.
+- Le mode calme et les réglages de l'appareil désactivent les animations ; une vue illustrée complète remplace la 3D lorsque nécessaire. Les informations et commandes restent en HTML accessible.
+- Les textes indiquent une action ou un état vérifiable : créer, retrouver, se concentrer, terminer, rouvrir, enregistrer. Les durées, résultats et activités distantes ne sont pas inventés.
 
-Implémentation : `src/styles.css` et `src/zen.css` conservent la structure responsive ; `src/ecobrutalism.css` définit les tokens actifs, la direction éditoriale et les composants des assistants. Les futurs composants doivent reprendre ces tokens.
+Implémentation : les feuilles de structure et d'écobrutalisme sont complétées par `src/living-garden.css`. `DailyGarden` porte la prochaine action et les commandes HTML ; `gardenScene.ts` est chargé séparément pour le relief ; `FocusSession` réduit l'interface à une tâche. Les futurs composants doivent reprendre ces tokens et ces principes.

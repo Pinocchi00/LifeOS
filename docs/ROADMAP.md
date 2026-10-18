@@ -4,6 +4,8 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Le reste de la roadmap ci-dessous conserve l'ordre convenu, avec l'agenda avancé comme prochain lot.
+
 ## Phase 0 — Architecture et fondations
 
 - Tâches : React/TypeScript/Vite, modules métier, IndexedDB versionné, navigation responsive, PWA, tests Vitest/Playwright, documentation de démarrage.

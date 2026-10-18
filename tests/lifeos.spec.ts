@@ -217,6 +217,9 @@ test("hors ligne après premier chargement et protection contre deux fenêtres",
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.reload();
   await expect(
-    page.getByText("Tâche hors ligne", { exact: true }),
+    page.getByRole("button", {
+      name: "Terminer Tâche hors ligne",
+      exact: true,
+    }),
   ).toBeVisible();
 });

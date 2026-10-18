@@ -43,3 +43,23 @@ Les nouvelles collections `missions` et `usage` sont ajoutées dans une envelopp
 ## 009 — Écobrutalisme et ressources locales
 
 Les références visuelles fournies orientent la composition et la palette. Un visuel original a été généré avec l'outil intégré ImageGen puis encodé en JPEG sans modification artistique, pour une ressource locale d'environ 600 Ko. Le JPEG est inclus dans le précache PWA pour garder le même rendu hors ligne. Aucune photographie de référence ou couverture n'est copiée dans les sources. Le prompt et le chemin final sont documentés dans `ASSETS.md`.
+
+## 010 — Un jardin qui oriente le travail
+
+La scène représente trois accès fonctionnels, sans inventer de croissance liée à des résultats absents. Un modèle de direction pur choisit l'action principale : première tâche admissible selon la priorité et l'échéance, projets existants, ou missions à vérifier. L'interface HTML reste la source des informations accessibles. Le canvas est décoratif pour les technologies d'assistance et possède des commandes équivalentes en HTML.
+
+## 011 — 3D facultative, à la demande
+
+Three.js est importé dynamiquement. Le chunk du moteur n'entre pas dans le précache initial ; un cache runtime séparé conserve jusqu'à deux versions après chargement. Les données locales et la vue illustrée ne dépendent pas de WebGL. Pas d'autochargement sur téléphone, sur appareil à mouvement réduit, en économie de données, sur connexion 2G déclarée ou sur faible nombre de processeurs logiques ; l'utilisateur peut toujours demander explicitement un relief fixe.
+
+Le moteur dessine sur demande, lisse les changements de caméra puis s'arrête, suspend le rendu hors écran/onglet masqué et libère géométries, matériaux, texture, ombres et contexte à la sortie. Feuilles et tiges sont instanciées. Le ratio de pixels est limité à 1,5 ; les effets et ombres inutiles sont évités. Ce budget ne constitue pas une garantie de fluidité sur tous les appareils.
+
+## 012 — Mouvement et opérations réversibles
+
+Le mouvement indique un changement de contexte ou d'état. Le mode calme suit prioritairement `prefers-reduced-motion` ; aucun effet permanent n'est nécessaire à l'usage. Les transitions de vues sont améliorées progressivement avec l'API native lorsqu'elle existe. Le clavier garde un focus explicite après navigation et changement de priorité.
+
+La dernière modification de réalisation d'une tâche est réversible en mémoire ; les autres mutations invalident cette possibilité pour éviter de réappliquer un état ancien. Le mode concentration conserve cette réouverture pendant sa présence. Les suppressions continuent de demander confirmation. Les formulaires modifiés interceptent les fermetures accidentelles ; annulation et sauvegarde explicites restent disponibles.
+
+## 013 — Mise à jour contrôlée
+
+Le service worker signale une nouvelle version à un petit store d'interface. L'utilisateur déclenche le rechargement avec **Mettre à jour** ; le bouton attend la fin des écritures et reste derrière tout dialogue ouvert. Les préférences de mouvement sont purement visuelles et enregistrées séparément dans le navigateur, sans modifier le schéma v2.

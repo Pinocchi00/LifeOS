@@ -1,4 +1,4 @@
-# LifeOS 0.2
+# LifeOS 0.3
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -43,6 +43,24 @@ Ouvrir `http://127.0.0.1:4173`, puis choisir **Installer LifeOS** dans le menu d
 - Compteurs d'usage manuels pour les deux assistants : plafond facultatif, date de remise à zéro prévue, date du relevé et notes. Aucun accès aux abonnements ni remise à zéro automatique.
 - Missions recherchables et synthèse dans les briefings du matin et du soir.
 - Identité écobrutaliste : béton et jardin original, vert forêt, crème et typographie éditoriale. Tous les visuels sont locaux et disponibles hors ligne.
+- Jardin de travail interactif avec trois terrasses : journée, projets et assistants. La scène est une vraie 3D WebGL locale ; les mêmes commandes restent accessibles dans la vue illustrée.
+- Prochaine action calculée sur les données locales, puis mode concentration pour terminer une priorité, passer à la suivante ou rouvrir la dernière tâche.
+- Compteurs cliquables, transitions de navigation, survols et confirmations animés. Mode calme persistant et respect prioritaire des animations réduites de l'appareil.
+- Avertissement avant fermeture d'un formulaire modifié par Échap, la croix ou le fond du dialogue ; les boutons **Annuler** restent une annulation explicite du formulaire.
+
+## Le jardin de travail
+
+Choisir une terrasse change le contexte du briefing et son action principale. **Journée** reprend les tâches réelles ; **Projets** ouvre vos projets ou propose d'en créer un ; **Assistants** met en avant les missions à vérifier. Les nombres n'influencent pas artificiellement la taille de la scène : ils restent affichés en texte.
+
+Cliquer sur **Explorer en 3D** pour activer le relief. Sur un ordinateur compatible, un survol maintenu peut aussi l'activer. Le visuel original reste la vue de repli si le moteur est indisponible. Sur téléphone, aucun téléchargement 3D n'est déclenché automatiquement. Le glissement vertical reste disponible pour faire défiler la page.
+
+La 3D est téléchargée séparément, à la demande. Elle peut fonctionner hors ligne après un premier chargement réussi sous le contrôle du service worker. Le reste de LifeOS et le jardin illustré restent disponibles hors ligne indépendamment du relief. Les mouvements s'arrêtent au repos et lorsque la scène est masquée ; les ressources sont libérées en quittant l'accueil.
+
+**Me concentrer sur cette tâche** affiche une priorité sans les autres panneaux. Terminer la tâche l'enregistre puis présente la suivante. La dernière clôture peut être annulée dans ce mode ; hors de ce mode, le bouton **Annuler** de la confirmation reste disponible pendant 10 secondes, délai suspendu au survol ou au focus. Une tâche peut toujours être rouverte depuis l'agenda.
+
+Le bouton **Mouvement / Mode calme** suit d'abord les préférences de l'appareil. Le mode calme désactive les animations et garde une 3D fixe si vous l'activez explicitement. La préférence visuelle est enregistrée dans le navigateur, séparément des données métier ; elle n'est pas incluse dans le JSON de sauvegarde.
+
+Les mises à jour PWA sont proposées avec **Mettre à jour**, sans rechargement forcé pendant une saisie. Ce bouton reste inaccessible derrière un dialogue ouvert et attend la fin d'un enregistrement.
 
 L'espace Vie présente les prochaines étapes. Les rapports et chiffres des assistants sont saisis par vous : aucune activité distante, actualité ou intégration IA n'est simulée.
 
@@ -98,7 +116,9 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 - `src/domain/` : modèles, règles, missions, validation des sauvegardes et migration v1 → v2.
 - `src/components/Assistants.tsx` : centre de missions, formulaires, rapports et compteurs manuels.
 - `src/storage/` : IndexedDB et coordination des mutations et fenêtres.
-- `src/App.tsx`, `src/styles.css`, `src/zen.css`, `src/ecobrutalism.css` : écrans, structure et identité visuelle écobrutaliste.
+- `src/App.tsx` et les feuilles CSS : écrans, structure responsive et identité écobrutaliste.
+- `src/components/DailyGarden.tsx`, `FocusSession.tsx`, `UpdateNotice.tsx` : jardin, concentration et mise à jour explicite.
+- `src/experience/` : moteur 3D chargé séparément, préférences de mouvement et cycle PWA.
 - `public/` : icônes locales ; aucune police ni image distante.
 - `tests/` : parcours Playwright et régressions.
 - `android/` : enveloppe Android native générée par Capacitor.

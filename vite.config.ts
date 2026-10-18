@@ -30,6 +30,17 @@ export default defineConfig({
       workbox: {
         clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,svg,png,jpg,woff2}"],
+        globIgnores: ["**/gardenScene-*.js"],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/gardenScene-[^/]+\.js$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "lifeos-relief",
+              expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
         navigateFallback: "index.html",
       },
     }),

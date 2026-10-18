@@ -2,9 +2,12 @@ import {
   useEffect,
   useRef,
   useState,
+  useMemo,
+  useDeferredValue,
   type FormEvent,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -28,9 +31,9 @@ import {
   ShieldCheck,
   Sparkles,
   Sprout,
-  Sun,
   Trash2,
   X,
+  Waves,
 } from "lucide-react";
 import {
   briefing,
@@ -54,6 +57,12 @@ import {
   UsageForm,
 } from "./components/Assistants";
 import { type Assistant, type Mission, type Usage } from "./domain/assistants";
+import { DailyGarden } from "./components/DailyGarden";
+import { FocusSession } from "./components/FocusSession";
+import { useMotion } from "./experience/useMotion";
+import { UpdateNotice } from "./components/UpdateNotice";
+import type { GardenAction } from "./domain/garden";
+import { version } from "../package.json";
 
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
@@ -65,6 +74,7 @@ type Editor =
   | { type: "mission"; value?: Mission }
   | { type: "usage"; assistant: Assistant }
   | { type: "instructions"; mission: Mission }
+  | { type: "focus"; taskId?: string }
   | null;
 const navigation = [
   { id: "home", label: "Accueil", icon: House },
@@ -88,25 +98,93 @@ function Modal({
   close: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [dirty, setDirty] = useState(false);
+  const [discard, setDiscard] = useState(false);
+  const backdropDown = useRef(false);
+  const lastControl = useRef<HTMLElement | null>(null);
+  function requestClose() {
+    if (dirty) setDiscard(true);
+    else close();
+  }
+  useEffect(() => {
+    setDirty(false);
+    setDiscard(false);
+  }, [title]);
+  useEffect(() => {
+    if (!dirty) return;
+    const protect = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", protect);
+    return () => window.removeEventListener("beforeunload", protect);
+  }, [dirty]);
   useEffect(() => {
     ref.current?.showModal();
+    ref.current
+      ?.querySelector<HTMLElement>(
+        '[data-dialog-initial],form input:not([type="checkbox"]),.search-input input',
+      )
+      ?.focus({ preventScroll: true });
   }, []);
   return (
     <dialog
       ref={ref}
       className="modal"
       aria-labelledby="modal-title"
-      onCancel={close}
+      onCancel={(event) => {
+        event.preventDefault();
+        requestClose();
+      }}
+      onChangeCapture={(event) => {
+        if ((event.target as HTMLElement).closest("form")) setDirty(true);
+      }}
+      onFocusCapture={(event) => {
+        if ((event.target as HTMLElement).matches("input,textarea,select"))
+          lastControl.current = event.target as HTMLElement;
+      }}
+      onPointerDown={(event) => {
+        backdropDown.current = event.target === ref.current;
+      }}
       onClick={(event) => {
-        if (event.target === ref.current) close();
+        if (event.target === ref.current && backdropDown.current)
+          requestClose();
       }}
     >
       <div className="modal-head">
         <h2 id="modal-title">{title}</h2>
-        <button className="icon-button" aria-label="Fermer" onClick={close}>
+        <button
+          className="icon-button"
+          aria-label="Fermer"
+          onClick={requestClose}
+        >
           <X size={20} />
         </button>
       </div>
+      {discard && (
+        <div className="unsaved-prompt" role="alert">
+          <strong>Garder vos modifications ?</strong>
+          <p>
+            Le formulaire n’est pas enregistré. Vous pouvez continuer ou quitter
+            sans enregistrer.
+          </p>
+          <div>
+            <button
+              autoFocus
+              className="button primary"
+              onClick={() => {
+                setDiscard(false);
+                lastControl.current?.focus();
+              }}
+            >
+              Continuer la modification
+            </button>
+            <button className="button danger" onClick={close}>
+              Quitter sans enregistrer
+            </button>
+          </div>
+        </div>
+      )}
       {children}
     </dialog>
   );
@@ -508,7 +586,33 @@ function Backup({
 
 export default function App() {
   const { data, ready, error, busy, mutate } = useLifeOS();
-  const [space, setSpace] = useState<Space>("home");
+  const [space, updateSpace] = useState<Space>("home");
+  const motion = useMotion();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const transition = useRef<ViewTransition | null>(null);
+  function setSpace(next: Space) {
+    if (next === space) return;
+    transition.current?.skipTransition();
+    const commit = () => flushSync(() => updateSpace(next));
+    if (
+      !motion.calm &&
+      typeof document.startViewTransition === "function" &&
+      !document.hidden
+    ) {
+      const current = document.startViewTransition(commit);
+      transition.current = current;
+      void current.finished
+        .catch(() => undefined)
+        .finally(() => {
+          if (transition.current === current) transition.current = null;
+        });
+    } else commit();
+  }
+  useEffect(() => {
+    document.title = `LifeOS — ${navigation.find((item) => item.id === space)?.label}`;
+    headingRef.current?.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }, [space]);
   const [projectView, setProjectView] = useState<"projects" | "missions">(
     "projects",
   );
@@ -519,6 +623,11 @@ export default function App() {
     action: () => Promise<void>;
   } | null>(null);
   const [message, setMessage] = useState("");
+  const [undo, setUndo] = useState<Task | null>(null);
+  const [noticePause, setNoticePause] = useState({
+    hover: false,
+    focus: false,
+  });
   const [query, setQuery] = useState("");
   const [taskFilter, setTaskFilter] = useState("open");
   const [briefingMode, setBriefingMode] = useState<"morning" | "evening">(
@@ -534,40 +643,85 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
   useEffect(() => {
-    if (!message) return;
-    const timer = setTimeout(() => setMessage(""), 3500);
+    if (
+      !message ||
+      noticePause.hover ||
+      noticePause.focus ||
+      editor?.type === "focus"
+    )
+      return;
+    const timer = setTimeout(
+      () => {
+        setMessage("");
+        setUndo(null);
+      },
+      undo ? 10000 : 4000,
+    );
     return () => clearTimeout(timer);
-  }, [message]);
+  }, [message, undo, noticePause, editor?.type]);
   useEffect(() => {
     function key(event: KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key === "k") {
         event.preventDefault();
-        setEditor({ type: "search" });
+        if (!document.querySelector("dialog[open]"))
+          setEditor({ type: "search" });
       }
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, []);
-  const brief = briefing(data, today);
+  const brief = useMemo(() => briefing(data, today), [data, today]);
   const completed = data.tasks.filter((task) => task.status === "done").length;
-  const progress = data.tasks.length
-    ? Math.round((completed / data.tasks.length) * 100)
-    : 0;
   const close = () => setEditor(null);
   const openMissions = () => {
     setSpace("projects");
     setProjectView("missions");
   };
+  function gardenAct(action: GardenAction, taskId?: string) {
+    if (action === "focus") setEditor({ type: "focus", taskId });
+    else if (action === "task") setEditor({ type: "task", due: today });
+    else if (action === "projects") {
+      if (data.projects.length) {
+        setProjectView("projects");
+        setSpace("projects");
+      } else setEditor({ type: "project" });
+    } else if (action === "assistants") {
+      openMissions();
+      if (!data.missions.length) setEditor({ type: "mission" });
+    } else {
+      setSelectedDay(today);
+      setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+      setTaskFilter(briefingMode === "evening" ? "done" : "open");
+      setSpace("agenda");
+    }
+  }
   async function change(
     operation: (value: Data) => Data,
     notice = "Modification enregistrée",
   ) {
     await mutate(operation);
+    setUndo(null);
     setMessage(notice);
   }
-  const safeChange = (operation: (value: Data) => Data, notice?: string) => {
-    void change(operation, notice).catch(() => undefined);
-  };
+  function undoChange() {
+    if (!undo) return Promise.resolve();
+    const original = undo;
+    return change(
+      (previous) => ({
+        ...previous,
+        tasks: previous.tasks.map((item) =>
+          item.id === original.id
+            ? {
+                ...item,
+                status: original.status,
+                completedAt: original.completedAt,
+              }
+            : item,
+        ),
+      }),
+      "Action annulée",
+    );
+  }
   const saveTask = (task: Task) =>
     change(
       (previous) => ({
@@ -619,8 +773,8 @@ export default function App() {
       }),
       "Idée enregistrée",
     );
-  function toggle(task: Task) {
-    safeChange(
+  async function toggle(task: Task) {
+    await change(
       (previous) => ({
         ...previous,
         tasks: previous.tasks.map((item) =>
@@ -634,10 +788,9 @@ export default function App() {
             : item,
         ),
       }),
-      task.status === "done"
-        ? "Tâche rouverte"
-        : "Une belle avancée. Tâche terminée !",
+      task.status === "done" ? "Tâche rouverte" : "Tâche terminée",
     );
+    setUndo(task);
   }
   function taskRow(task: Task) {
     const project = data.projects.find(
@@ -652,7 +805,9 @@ export default function App() {
           disabled={busy}
           className="task-check"
           aria-label={`${task.status === "done" ? "Rouvrir" : "Terminer"} ${task.title}`}
-          onClick={() => toggle(task)}
+          onClick={() => {
+            void toggle(task).catch(() => undefined);
+          }}
         >
           {task.status === "done" && <Check size={14} />}
         </button>
@@ -801,7 +956,8 @@ export default function App() {
     month.getMonth() + 1,
     0,
   ).getDate();
-  const resultQuery = query.trim().toLocaleLowerCase("fr");
+  const deferredQuery = useDeferredValue(query);
+  const resultQuery = deferredQuery.trim().toLocaleLowerCase("fr");
   const matches = (text: string) =>
     text.toLocaleLowerCase("fr").includes(resultQuery);
 
@@ -818,6 +974,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Aller au contenu
+      </a>
       <aside className="sidebar">
         <a
           className="brand"
@@ -892,7 +1051,7 @@ export default function App() {
             <Settings2 size={18} />
             <span>Données & sauvegardes</span>
           </button>
-          <span className="version">LifeOS 0.2 · Pensé pour vous</span>
+          <span className="version">LifeOS {version} · Pensé pour vous</span>
         </div>
       </aside>
       <div className="main-shell">
@@ -907,6 +1066,29 @@ export default function App() {
             <Leaf size={20} /> LifeOS
           </span>
           <div className="top-actions">
+            <button
+              className="motion-toggle"
+              aria-label={
+                motion.preference === "calm"
+                  ? "Suivre les préférences d’animation de l’appareil"
+                  : motion.systemReduced
+                    ? "Animations réduites par votre appareil"
+                    : "Réduire les animations"
+              }
+              disabled={motion.systemReduced && motion.preference !== "calm"}
+              aria-pressed={motion.calm}
+              title={
+                motion.systemReduced
+                  ? "Votre appareil demande des animations réduites."
+                  : motion.calm
+                    ? "Revenir au mouvement automatique"
+                    : "Activer le mode calme"
+              }
+              onClick={motion.toggle}
+            >
+              <Waves size={18} />
+              <span>{motion.calm ? "Mode calme" : "Mouvement"}</span>
+            </button>
             <button
               className="search-button"
               aria-label="Rechercher dans LifeOS"
@@ -931,7 +1113,8 @@ export default function App() {
             </button>
           </div>
         </header>
-        <main>
+        <main data-space={space} id="main-content" tabIndex={-1}>
+          <UpdateNotice busy={busy} />
           {error && (
             <div className="error-banner" role="alert">
               {error}
@@ -948,7 +1131,7 @@ export default function App() {
                   year: "numeric",
                 })}
               </p>
-              <h1>
+              <h1 ref={headingRef} tabIndex={-1}>
                 {space === "home"
                   ? "Faites de la place à l’essentiel."
                   : space === "agenda"
@@ -963,16 +1146,16 @@ export default function App() {
               </h1>
               <p className="subtitle">
                 {space === "home"
-                  ? "Un esprit plus libre. Des projets qui avancent. Votre quotidien, en clair."
+                  ? "Une prochaine action claire. Vos projets et vos idées à portée de main."
                   : space === "agenda"
-                    ? "Planifiez avec intention, avancez une chose à la fois."
+                    ? "Choisissez un jour pour planifier, terminer ou reprogrammer vos tâches."
                     : space === "projects"
                       ? projectView === "missions"
                         ? "Vos missions, leurs résultats, votre validation."
-                        : "De la première intention au prochain petit pas."
+                        : "Reliez vos projets à leurs tâches et à leurs missions."
                       : space === "life"
-                        ? "Un espace pour votre énergie, vos habitudes et votre équilibre."
-                        : "Capturez les idées d’aujourd’hui. Retrouvez les inspirations de demain."}
+                        ? "Le suivi personnel se prépare. Planifiez déjà un moment pour vous."
+                        : "Conservez une idée, une ressource ou une décision pour la retrouver."}
               </p>
             </div>
             <button
@@ -1002,91 +1185,49 @@ export default function App() {
 
           {space === "home" && (
             <>
-              <section
-                className="briefing-card"
-                aria-label="Briefing quotidien"
-              >
-                <div className="briefing-text">
-                  <div className="briefing-kicker">
-                    <Sun size={17} />
-                    <span>VOTRE RENDEZ-VOUS AVEC VOUS</span>
-                  </div>
-                  <div className="segmented">
-                    <button
-                      className={briefingMode === "morning" ? "selected" : ""}
-                      onClick={() => setBriefingMode("morning")}
-                    >
-                      Le matin
-                    </button>
-                    <button
-                      className={briefingMode === "evening" ? "selected" : ""}
-                      onClick={() => setBriefingMode("evening")}
-                    >
-                      Le soir
-                    </button>
-                  </div>
-                  <h2>
-                    {briefingMode === "morning"
-                      ? "Un pas.\nPuis un autre."
-                      : "Le chemin\nparcouru."}
-                  </h2>
-                  <p>
-                    {briefingMode === "morning"
-                      ? brief.priorities.length
-                        ? `${brief.priorities.length} priorité${brief.priorities.length > 1 ? "s" : ""} pour avancer aujourd’hui. Vous n’avez pas besoin de tout faire, seulement de commencer.`
-                        : "Pas encore de priorité ? Choisissez ce qui mérite votre attention aujourd’hui."
-                      : `${brief.completed.length} tâche${brief.completed.length > 1 ? "s terminées" : " terminée"} aujourd’hui. Chaque avancée compte.`}
-                  </p>
-                  <button
-                    className="button light"
-                    onClick={() => {
-                      setSpace("agenda");
-                      setSelectedDay(today);
-                    }}
-                  >
-                    {briefingMode === "morning"
-                      ? "Composer ma journée"
-                      : "Voir mes avancées"}
-                    <ArrowRight size={16} />
-                  </button>
-                  <span className="briefing-source">
-                    Briefing calculé à partir de vos données locales
-                  </span>
-                </div>
-                <div className="zen-art" aria-hidden="true">
-                  <img
-                    src="/art/concrete-garden.jpg"
-                    alt=""
-                    width="1024"
-                    height="1536"
-                    fetchPriority="high"
-                  />
-                  <span className="zen-art-index">LE VIVANT / LE TEMPS</span>
-                  <span className="zen-art-caption">
-                    CALME INTÉRIEUR.
-                    <br />
-                    MOUVEMENT EXTÉRIEUR.
-                  </span>
-                </div>
-              </section>
-              <div className="stats-grid">
-                <div className="stat">
+              <DailyGarden
+                data={data}
+                today={today}
+                evening={briefingMode === "evening"}
+                setEvening={(value) =>
+                  setBriefingMode(value ? "evening" : "morning")
+                }
+                calm={motion.calm}
+                act={gardenAct}
+              />
+              <div className="stats-grid" aria-label="Accès à votre activité">
+                <button
+                  className="stat"
+                  aria-label="Voir les tâches d’aujourd’hui"
+                  onClick={() => {
+                    setSelectedDay(today);
+                    setTaskFilter("open");
+                    setSpace("agenda");
+                  }}
+                >
                   <span className="stat-icon sage">
-                    <ClipboardList size={19} />
+                    <CalendarDays size={19} />
                   </span>
-                  <div>
-                    <span>Tâches du jour</span>
-                    <strong>
-                      {brief.planned.length}
-                      <small>à accomplir</small>
-                    </strong>
-                  </div>
-                </div>
-                <div className="stat">
+                  <span className="stat-copy">
+                    <span>À faire aujourd’hui</span>
+                    <strong>{brief.planned.length}</strong>
+                    <small>
+                      Ouvrir l’agenda <ArrowUpRight size={12} />
+                    </small>
+                  </span>
+                </button>
+                <button
+                  className="stat"
+                  aria-label="Voir les projets en cours"
+                  onClick={() => {
+                    setProjectView("projects");
+                    setSpace("projects");
+                  }}
+                >
                   <span className="stat-icon amber">
                     <FolderKanban size={19} />
                   </span>
-                  <div>
+                  <span className="stat-copy">
                     <span>Projets en cours</span>
                     <strong>
                       {
@@ -1094,34 +1235,50 @@ export default function App() {
                           (project) => project.status === "active",
                         ).length
                       }
-                      <small>à faire grandir</small>
                     </strong>
-                  </div>
-                </div>
-                <div className="stat">
+                    <small>
+                      Retrouver les projets <ArrowUpRight size={12} />
+                    </small>
+                  </span>
+                </button>
+                <button
+                  className="stat"
+                  aria-label="Voir les tâches terminées"
+                  onClick={() => {
+                    setTaskFilter("done");
+                    setSpace("agenda");
+                  }}
+                >
                   <span className="stat-icon blue">
                     <Check size={19} />
                   </span>
-                  <div>
-                    <span>Progression globale</span>
+                  <span className="stat-copy">
+                    <span>Tâches terminées</span>
                     <strong>
-                      {progress}
-                      <small>% des tâches terminées</small>
+                      {completed}
+                      <em> / {data.tasks.length}</em>
                     </strong>
-                  </div>
-                </div>
-                <div className="stat">
+                    <small>
+                      Consulter les réalisations <ArrowUpRight size={12} />
+                    </small>
+                  </span>
+                </button>
+                <button
+                  className="stat"
+                  aria-label="Retrouver les idées capturées"
+                  onClick={() => setSpace("explore")}
+                >
                   <span className="stat-icon rose">
                     <Lightbulb size={19} />
                   </span>
-                  <div>
-                    <span>Idées capturées</span>
-                    <strong>
-                      {data.notes.length}
-                      <small>à explorer</small>
-                    </strong>
-                  </div>
-                </div>
+                  <span className="stat-copy">
+                    <span>Idées conservées</span>
+                    <strong>{data.notes.length}</strong>
+                    <small>
+                      Ouvrir le carnet <ArrowUpRight size={12} />
+                    </small>
+                  </span>
+                </button>
               </div>
               <div className="dashboard-grid">
                 <section className="panel priorities-panel">
@@ -1182,8 +1339,8 @@ export default function App() {
                   <p className="eyebrow">UN PEU DE RECUL</p>
                   <h2>
                     {brief.overdue.length
-                      ? "Retrouvez un peu\nde légèreté."
-                      : "Moins de dispersion,\nplus d’intention."}
+                      ? "Revoir les\néchéances."
+                      : "Garder\nun cap clair."}
                   </h2>
                   <p>{brief.recommendation}</p>
                   <details>
@@ -1208,7 +1365,10 @@ export default function App() {
                 <h2>Vos projets, pas à pas</h2>
                 <button
                   className="text-button"
-                  onClick={() => setSpace("projects")}
+                  onClick={() => {
+                    setProjectView("projects");
+                    setSpace("projects");
+                  }}
                 >
                   Tous les projets
                   <ArrowUpRight size={15} />
@@ -1602,7 +1762,7 @@ export default function App() {
           <footer>
             <span>
               <Leaf size={13} />
-              Un quotidien qui vous ressemble.
+              Votre espace. Vos décisions.
             </span>
             <span>
               <span className="local-dot" />
@@ -1628,9 +1788,35 @@ export default function App() {
         ))}
       </nav>
       {message && (
-        <div className="toast" role="status">
+        <div
+          className="toast"
+          role="status"
+          onPointerEnter={() =>
+            setNoticePause((value) => ({ ...value, hover: true }))
+          }
+          onPointerLeave={() =>
+            setNoticePause((value) => ({ ...value, hover: false }))
+          }
+          onFocusCapture={() =>
+            setNoticePause((value) => ({ ...value, focus: true }))
+          }
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget))
+              setNoticePause((value) => ({ ...value, focus: false }));
+          }}
+        >
           <Check size={17} />
           {message}
+          {undo && (
+            <button
+              className="undo-button"
+              onClick={() => {
+                void undoChange().catch(() => undefined);
+              }}
+            >
+              Annuler
+            </button>
+          )}
         </div>
       )}
       {editor && (
@@ -1659,9 +1845,26 @@ export default function App() {
                           : "Nouvelle mission"
                         : editor.type === "usage"
                           ? "Votre compteur personnel"
-                          : "Instructions de mission"
+                          : editor.type === "focus"
+                            ? "Une chose à la fois"
+                            : "Instructions de mission"
           }
         >
+          {editor.type === "focus" && (
+            <FocusSession
+              data={data}
+              today={today}
+              taskId={editor.taskId}
+              complete={toggle}
+              undo={
+                undo?.status === "todo"
+                  ? { taskId: undo.id, run: undoChange }
+                  : undefined
+              }
+              edit={(task) => setEditor({ type: "task", value: task })}
+              close={close}
+            />
+          )}
           {editor.type === "task" && (
             <TaskForm
               task={editor.value}

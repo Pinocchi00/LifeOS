@@ -1,5 +1,19 @@
 # Vérifications LifeOS
 
+## Lot 0.3 — 19 octobre 2026
+
+- **28 tests Vitest réussis**, dont les six nouveaux scénarios de direction : espace vide, priorité réelle, tâches futures, projets conservés sans projet actif, missions à vérifier et bilan du jour local.
+- **22 parcours Playwright réussis** sur ordinateur et format Pixel 7. Les nouvelles vérifications couvrent concentration et réouverture, annulation persistante, accès directs, protection d'une saisie par Échap/croix, Ctrl+K, focus clavier, mode calme persistant et priorité des réglages système.
+- Scène WebGL réellement initialisée dans Chromium avec SwiftShader : rendu fixe au repos et en mode animé après stabilisation, sélection des terrasses, cache optionnel absent du précache initial, rechargement hors ligne après première utilisation, repli sans WebGL et suppression du canvas à la navigation.
+- Budget observé : **43 appels de dessin** pour la scène ; test imposant moins de 50 et un ratio de pixels au plus égal à 1,5. Ces mesures sont des contrôles techniques, pas un benchmark de téléphone réel.
+- Compilation réussie : application principale d'environ 118 Ko gzip, chunk 3D séparé d'environ 135 Ko gzip. Vite signale la taille brute du chunk Three.js (>500 Ko) ; celui-ci est volontairement différé et exclu du téléchargement de précache initial.
+- PWA : ressources métier et image originales précachées ; cache 3D à la demande. Après l'ajout de l'avis de mise à jour, les quatre parcours hors ligne/3D ont été rejoués avec succès.
+- Contrôles visuels du jardin, de la version mobile à 320 pixels et de l'alerte de saisie ; courte démonstration locale enregistrée sans données personnelles.
+- Les premiers essais ont révélé un focus trop précoce avant l'ouverture du dialogue et un sélecteur de test devenu ambigu (titre dans le briefing et la liste). Le focus a été corrigé ; le test vise maintenant la commande de tâche.
+- Limites : pas de test sur appareil Android physique, Safari/Firefox ou lecteur d'écran réel ; pas de mesure de consommation électrique ni de garantie universelle de cadence. L'APK reste non construit.
+
+Fichiers principaux : `src/components/DailyGarden.tsx`, `FocusSession.tsx`, `UpdateNotice.tsx`, `src/experience/gardenScene.ts`, `useMotion.ts`, `pwa.ts`, `src/domain/garden.ts` et son test, `src/living-garden.css`, `tests/experience.spec.ts`. L'image du jardin déjà produite est réutilisée sans retouche.
+
 ## Lot 0.2 — 19 octobre 2026
 
 - **22 tests Vitest réussis**, 3 fichiers : les tests existants plus les missions, validation humaine, preuves HTTP/HTTPS, compteurs, rapports et migration réelle IndexedDB v1 → v2.

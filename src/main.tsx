@@ -1,16 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
+import { startWorker } from "./experience/pwa";
 import App from "./App";
 import "./styles.css";
 import "./zen.css";
 import "./ecobrutalism.css";
+import "./living-garden.css";
 
-registerSW({
-  onRegisterError(error) {
-    console.warn("Mode hors ligne indisponible", error);
-  },
-});
+startWorker();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

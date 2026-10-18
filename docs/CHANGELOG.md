@@ -1,5 +1,16 @@
 # Journal des modifications
 
+## 0.3.0 — 19 octobre 2026
+
+- Accueil réorganisé autour du jardin de travail : trois terrasses sélectionnables et prochaine action selon les tâches, projets ou missions réels.
+- Vraie scène WebGL Three.js : béton, plantations instanciées, éclairage, ombres et interaction par pointeur ; commande équivalente en HTML.
+- Chargement 3D différé, cache optionnel séparé, densité de pixels plafonnée, rendu à la demande et libération des ressources en quittant l'accueil.
+- Mode concentration, passage à la priorité suivante et réouverture de la dernière clôture ; annulation aussi disponible depuis la confirmation globale.
+- Compteurs cliquables, transitions de navigation et micro-interactions, mode calme persistant et respect des préférences système.
+- Protection des saisies contre une fermeture accidentelle ; Ctrl+K ne remplace plus un dialogue ouvert.
+- Navigation au clavier, focus du contenu et annonces contextuelles ; mise à jour PWA proposée sans rechargement forcé.
+- Règles, tests métier et parcours navigateur dédiés. Données métier toujours au format v2, sans migration supplémentaire.
+
 ## 0.2.0 — 19 octobre 2026
 
 - Centre de missions ChatGPT/Claude dans Projets : objectifs, critères, fichiers, projet, échéance et cinq statuts.
