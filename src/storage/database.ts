@@ -1,0 +1,29 @@
+import { openDB } from "idb";
+import { dataSchema, emptyData, type Data } from "../domain/model";
+
+const database = () =>
+  openDB("lifeos-core", 1, {
+    upgrade(db) {
+      db.createObjectStore("state");
+    },
+  });
+export async function readData(): Promise<Data> {
+  const db = await database();
+  try {
+    const value = await db.get("state", "current");
+    return value === undefined ? emptyData() : dataSchema.parse(value);
+  } finally {
+    db.close();
+  }
+}
+export async function writeData(data: Data): Promise<void> {
+  const valid = dataSchema.parse(data);
+  const db = await database();
+  try {
+    const transaction = db.transaction("state", "readwrite");
+    await transaction.store.put(valid, "current");
+    await transaction.done;
+  } finally {
+    db.close();
+  }
+}
