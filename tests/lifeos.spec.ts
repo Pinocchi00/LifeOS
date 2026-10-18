@@ -126,13 +126,11 @@ test("capture, export, restauration et refus d’un fichier dangereux", async ({
   await page.getByRole("button", { name: "Confirmer la suppression" }).click();
   await expect(page.getByText("Un endroit pour les étincelles.")).toBeVisible();
   await page.getByRole("button", { name: "Ouvrir les sauvegardes" }).click();
-  await page
-    .getByLabel("Restaurer une sauvegarde JSON")
-    .setInputFiles({
-      name: "invalid.json",
-      mimeType: "application/json",
-      buffer: Buffer.from('{"application":"LifeOS","data":{}}'),
-    });
+  await page.getByLabel("Restaurer une sauvegarde JSON").setInputFiles({
+    name: "invalid.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"application":"LifeOS","data":{}}'),
+  });
   await expect(page.getByRole("alert")).toContainText("Fichier invalide");
   await page.getByLabel("Restaurer une sauvegarde JSON").setInputFiles(path!);
   await expect(
@@ -199,6 +197,15 @@ test("hors ligne après premier chargement et protection contre deux fenêtres",
   await second.close();
   await context.setOffline(true);
   await page.reload();
+  await expect
+    .poll(() =>
+      page
+        .locator(".zen-art img")
+        .evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+    )
+    .toBe(true);
   await expect(
     page.getByRole("heading", { name: "Faites de la place à l’essentiel." }),
   ).toBeVisible();

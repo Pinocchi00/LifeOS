@@ -2,7 +2,7 @@
 
 État initial : dépôt vide, aucun prototype 0.2 disponible. Le lot 0.1 vise les phases 0 et 1, avec les fondations des briefings et sauvegardes. Aucun service externe requis.
 
-Direction artistique : le lot 0.1.1 applique l'identité « Brutalisme zen » aux cinq espaces, aux formulaires et à la PWA. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
+Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
 ## Phase 0 — Architecture et fondations
 
@@ -23,7 +23,9 @@ Direction artistique : le lot 0.1.1 applique l'identité « Brutalisme zen » au
 - Tâches : missions ChatGPT/Claude, statuts, critères, fichiers, rapports et preuves, copie d'instructions, limites manuelles.
 - Dépendances : projets persistants ; aucune API implicite.
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
-- État : prévu. Écran d'information uniquement ; aucun assistant connecté ni mission simulée.
+- État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
+
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 

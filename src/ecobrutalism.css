@@ -1,0 +1,816 @@
+/* Écobrutalisme : structure de béton, profondeur végétale, rythme éditorial. */
+:root {
+  --paper: #ece9df;
+  --surface: #f6f2e9;
+  --ink: #20372a;
+  --olive: #b6c692;
+  --clay: #a25b41;
+  --muted: #5e6c58;
+}
+.brand {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -1.8px;
+}
+.sidebar {
+  background: #1e3025;
+}
+.topbar {
+  background: #eeece2;
+}
+h1,
+.page-heading h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(40px, 4.6vw, 70px);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -2.7px;
+  line-height: 1.04;
+}
+.page-heading > div {
+  max-width: 800px;
+}
+.page-heading {
+  margin-bottom: 32px;
+}
+.eyebrow {
+  letter-spacing: 1.6px;
+  font-size: 9px;
+}
+.subtitle {
+  line-height: 1.8;
+  font-size: 13px;
+}
+.section-heading h2 {
+  font-size: 18px;
+  letter-spacing: -0.4px;
+  text-transform: none;
+}
+.briefing-card {
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
+  min-height: 385px;
+  background: #233c2d;
+  color: #f3efe3;
+}
+.briefing-text {
+  padding: 35px;
+}
+.briefing-kicker {
+  color: #bdcaa7;
+  font-size: 9px;
+  letter-spacing: 1.3px;
+}
+.briefing-card h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 65px;
+  letter-spacing: -2.2px;
+  line-height: 0.98;
+  text-transform: none;
+  margin: 28px 0 23px;
+}
+.briefing-card p {
+  color: #d3dbc6;
+  max-width: 350px;
+  font-size: 12px;
+}
+.briefing-card .button {
+  background: #c4d0a7;
+  color: #20372a;
+  border-color: #c4d0a7;
+}
+.briefing-source {
+  color: #bdcaa7;
+  font-size: 8px;
+  margin-top: 18px;
+}
+.segmented {
+  border-color: #829175;
+  top: 27px;
+  right: 27px;
+}
+.segmented button {
+  color: #c8d4b6;
+}
+.segmented button + button {
+  border-color: #829175;
+}
+.segmented .selected {
+  background: #c4d0a7;
+  color: #20372a;
+}
+.zen-art {
+  border-color: #78866a;
+  background: #d2d1bf;
+  min-height: 385px;
+}
+.zen-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 52% 67%;
+}
+.zen-art-index {
+  color: #f6f1e6;
+  background: #233c2de8;
+  padding: 7px 9px;
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  top: 20px;
+  left: 20px;
+}
+.zen-art-caption {
+  background: #eeece2;
+  color: #20372a;
+  bottom: 20px;
+  left: 20px;
+  padding: 11px 13px;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+}
+.stat {
+  padding-top: 23px;
+  padding-bottom: 23px;
+}
+.stat strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 43px;
+}
+.insight-card {
+  background: #dce1cd;
+}
+.insight-card h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.08;
+  text-transform: none;
+  letter-spacing: -1px;
+}
+.insight-icon {
+  color: #f4f1e6;
+  background: #5d7150;
+}
+.project-title,
+.note-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: -0.7px;
+}
+.project-card {
+  border-color: #88947d;
+}
+.capture-banner {
+  background: #243d2e;
+}
+.empty strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 400;
+}
+.note-card {
+  background: #e0e3d1;
+}
+.life-intro h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  text-transform: none;
+  font-weight: 400;
+  font-size: 48px;
+  letter-spacing: -1.5px;
+}
+.modal-head h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  text-transform: none;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.8px;
+}
+.button {
+  letter-spacing: 0.5px;
+}
+.project-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #8b967e;
+  margin: 0 0 27px;
+}
+.project-tabs button {
+  padding: 14px 23px;
+  border: 1px solid transparent;
+  font: 11px var(--mono);
+  text-transform: uppercase;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.project-tabs button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+.project-tabs button span {
+  font-size: 9px;
+  border: 1px solid currentColor;
+  padding: 2px 4px;
+}
+.assistants-intro {
+  position: relative;
+  background: #233c2d;
+  color: #edf0df;
+  border: 1px solid var(--ink);
+  padding: 30px;
+  margin-bottom: 23px;
+  overflow: hidden;
+}
+.assistants-intro::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 27%;
+  background: url("/art/concrete-garden.jpg") center 70% / cover;
+  opacity: 0.55;
+}
+.assistants-intro > * {
+  position: relative;
+  z-index: 1;
+}
+.assistants-intro > span:first-child {
+  font: 9px var(--mono);
+  letter-spacing: 1.4px;
+  color: #b6c692;
+}
+.assistants-intro > p {
+  font:
+    400 36px/1.1 Georgia,
+    serif;
+  letter-spacing: -1px;
+  margin: 15px 0 20px;
+  max-width: 70%;
+}
+.manual-tag {
+  display: inline-flex;
+  padding: 7px 9px;
+  border: 1px solid #7e926c;
+  font: 9px var(--mono);
+  color: #cad5b5;
+}
+.usage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.usage-card {
+  background: var(--surface);
+  border: 1px solid #7c8c70;
+  padding: 24px;
+  min-width: 0;
+}
+.usage-card.claude {
+  background: #e5e1d2;
+}
+.usage-card h2 {
+  font:
+    400 30px Georgia,
+    serif;
+  margin: 0;
+  letter-spacing: -1px;
+}
+.usage-card > .muted {
+  font-size: 12px;
+  margin: 15px 0;
+}
+.usage-label {
+  font: 10px/1.6 var(--mono);
+  color: var(--muted);
+  margin: 18px 0 12px;
+  overflow-wrap: anywhere;
+}
+.usage-number {
+  display: block;
+  font:
+    400 42px Georgia,
+    serif;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+.usage-number small {
+  font: 11px var(--mono);
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.usage-card progress {
+  width: 100%;
+  height: 7px;
+  display: block;
+  margin: 18px 0 12px;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  background: #cbd2ba;
+  accent-color: #49653c;
+}
+.usage-card progress::-webkit-progress-bar {
+  background: #cbd2ba;
+}
+.usage-card progress::-webkit-progress-value {
+  background: #49653c;
+}
+.usage-card progress::-moz-progress-bar {
+  background: #49653c;
+}
+.usage-card > p.small {
+  margin: 9px 0 0;
+  font-size: 10px;
+}
+.mission-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin: 20px 0 24px;
+}
+.mission-filters label {
+  font: 10px var(--mono);
+  color: #536449;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-transform: uppercase;
+  min-width: 0;
+}
+.mission-filters select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #7d8e70;
+  color: var(--ink);
+  background: var(--surface);
+  padding: 13px;
+  min-height: 44px;
+  font:
+    12px Arial,
+    sans-serif;
+}
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.mission-card {
+  min-width: 0;
+  border: 1px solid #829174;
+  padding: 23px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+.assistant-tag,
+.mission-status {
+  display: inline-block;
+  font: 9px/1.5 var(--mono);
+  padding: 4px 7px;
+  border: 1px solid #869875;
+  color: #3e5c31;
+}
+.assistant-tag.claude {
+  border-color: #9b8365;
+  color: #796046;
+}
+.mission-status.todo {
+  background: #e8ecde;
+}
+.mission-status.doing {
+  background: #d9e4ce;
+}
+.mission-status.review {
+  background: #ebe3c5;
+  color: #6e5b2f;
+  border-color: #9e8e5c;
+}
+.mission-status.done {
+  background: #2c4e36;
+  color: #eef4e6;
+}
+.mission-status.blocked {
+  background: #efdacf;
+  color: #94462d;
+  border-color: #ab7056;
+}
+.mission-title {
+  display: block;
+  padding: 0;
+  text-align: left;
+  font:
+    400 25px/1.15 Georgia,
+    serif;
+  letter-spacing: -0.6px;
+  margin: 23px 0 14px;
+  overflow-wrap: anywhere;
+}
+.mission-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.mission-card > p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mission-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 15px;
+  font: 9px/1.7 var(--mono);
+  color: #607252;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.mission-report-count {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  font: 10px var(--mono);
+  color: #657757;
+  margin: 10px 0 18px;
+}
+.mission-report-count > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.mission-actions {
+  border-top: 1px solid #c9d0bc;
+  margin-top: auto;
+  padding-top: 13px;
+}
+.manual-note {
+  font: 10px/1.8 var(--mono) !important;
+  padding: 13px;
+  border: 1px solid #c4cdb4;
+  color: #526547;
+  background: #e9eddf;
+}
+.report-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  border-top: 1px solid #b7c2a7;
+  padding-top: 20px;
+}
+.report-entry h3,
+.report-history h3 {
+  font:
+    400 23px Georgia,
+    serif;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+.report-entry > p {
+  font-size: 12px;
+  margin: 0;
+}
+.form .verification-check {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  background: #e0e8d2;
+  padding: 15px;
+  border: 1px solid #8da178;
+  text-transform: none;
+  letter-spacing: 0;
+  font:
+    12px/1.7 Arial,
+    sans-serif;
+}
+.verification-check input {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  margin: 1px 0 0;
+  accent-color: #315a3c;
+}
+.report-history {
+  border-top: 1px solid #b7c2a7;
+  padding-top: 20px;
+}
+.report-history article {
+  border: 1px solid #c5cfb7;
+  background: #eef1e5;
+  padding: 17px;
+  margin-top: 15px;
+}
+.report-history p,
+.report-history li {
+  font:
+    12px/1.8 Arial,
+    sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.report-history p {
+  margin-top: 12px;
+}
+.report-history ul {
+  margin-bottom: 0;
+  padding-left: 17px;
+}
+.report-history a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.copy-notice {
+  font: 11px/1.8 var(--mono) !important;
+  color: #3e6634;
+}
+.assistant-overview {
+  margin-top: 23px;
+}
+.assistant-overview > p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 13px;
+}
+.assistant-overview > span {
+  display: block;
+  font-size: 9px;
+}
+.report-summary {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  padding: 13px 0;
+  gap: 7px;
+  border-top: 1px solid #ccd4bf;
+}
+.report-summary > span {
+  font-size: 12px;
+  font-weight: 600;
+}
+.report-summary small {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.backup-counts {
+  flex-wrap: wrap;
+  gap: 15px;
+}
+@media (min-width: 1550px) {
+  .briefing-card {
+    min-height: 425px;
+  }
+  .briefing-card h2 {
+    font-size: 76px;
+  }
+  .briefing-text {
+    padding: 40px;
+  }
+}
+@media (max-width: 1200px) {
+  .page-heading h1 {
+    font-size: 52px;
+  }
+  .briefing-card {
+    grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr);
+  }
+  .briefing-text {
+    padding: 28px;
+  }
+  .briefing-card h2 {
+    font-size: 58px;
+    margin-top: 8px;
+  }
+  .segmented {
+    position: static;
+    margin-bottom: 20px;
+  }
+}
+@media (max-width: 960px) {
+  .page-heading h1 {
+    font-size: 45px;
+  }
+  .briefing-card {
+    grid-template-columns: minmax(0, 1fr) 170px;
+  }
+  .briefing-text {
+    padding: 25px;
+  }
+  .briefing-card h2 {
+    font-size: 49px;
+  }
+  .briefing-card p {
+    font-size: 12px;
+  }
+  .zen-art-caption {
+    left: 12px;
+    right: 12px;
+    bottom: 15px;
+    font-size: 7px;
+    padding: 8px;
+  }
+  .zen-art-index {
+    left: 12px;
+    top: 15px;
+    font-size: 7px;
+    padding: 6px;
+  }
+  .mission-grid {
+    grid-template-columns: 1fr;
+  }
+  .usage-card {
+    padding: 20px;
+  }
+  .usage-card h2 {
+    font-size: 28px;
+  }
+  .assistants-intro > p {
+    font-size: 32px;
+  }
+}
+@media (max-width: 650px) {
+  .mobile-brand {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    letter-spacing: -1.2px;
+    font-size: 29px;
+  }
+  .page-heading h1 {
+    font-size: clamp(40px, 10.7vw, 57px);
+    line-height: 1.02;
+    letter-spacing: -1.8px;
+  }
+  .subtitle {
+    font-size: 12px;
+  }
+  .briefing-card {
+    display: block;
+  }
+  .briefing-text {
+    padding: 27px 24px;
+  }
+  .briefing-card h2 {
+    font-size: 58px;
+    line-height: 0.98;
+    letter-spacing: -2px;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+  .briefing-card p {
+    max-width: 310px;
+    font-size: 12px;
+  }
+  .briefing-kicker {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .briefing-source {
+    max-width: 270px;
+  }
+  .zen-art {
+    height: 230px;
+    min-height: 230px;
+    border-top: 1px solid #7e8c6e;
+  }
+  .zen-art img {
+    object-position: 50% 73%;
+  }
+  .zen-art-index {
+    left: 20px;
+    top: 20px;
+    font-size: 8px;
+  }
+  .zen-art-caption {
+    bottom: 20px;
+    left: 20px;
+    right: auto;
+    font-size: 8px;
+    padding: 10px;
+  }
+  .stat strong {
+    font-size: 43px;
+  }
+  .insight-card h2 {
+    font-size: 34px;
+  }
+  .project-title,
+  .note-title {
+    font-size: 26px;
+  }
+  .life-intro h2 {
+    font-size: 38px;
+  }
+  .modal-head h2 {
+    font-size: 24px;
+  }
+  .project-tabs button {
+    flex: 1;
+    padding: 14px 16px;
+    justify-content: center;
+    font-size: 10px;
+  }
+  .assistants-intro {
+    padding: 25px 20px;
+  }
+  .assistants-intro > span:first-child {
+    font-size: 8px;
+    letter-spacing: 0.6px;
+  }
+  .assistants-intro > p {
+    font-size: 33px;
+    max-width: 80%;
+    line-height: 1.1;
+  }
+  .assistants-intro::after {
+    width: 30%;
+  }
+  .manual-tag {
+    font-size: 8px;
+    line-height: 1.6;
+  }
+  .usage-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .usage-card {
+    padding: 23px;
+  }
+  .usage-card h2 {
+    font-size: 32px;
+  }
+  .mission-filters {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+  .mission-filters label {
+    font-size: 9px;
+    gap: 7px;
+  }
+  .mission-filters select {
+    font-size: 16px;
+  }
+  .mission-card {
+    padding: 22px;
+  }
+  .mission-title {
+    font-size: 27px;
+  }
+  .mission-report-count {
+    font-size: 9px;
+  }
+  .assistant-overview .section-heading {
+    align-items: flex-start;
+  }
+  .assistant-overview h2 {
+    max-width: 210px;
+  }
+  .assistant-overview .section-heading .text-button {
+    max-width: 95px;
+  }
+  .report-entry h3,
+  .report-history h3 {
+    font-size: 22px;
+  }
+  .form .verification-check {
+    font-size: 12px;
+  }
+  .form .verification-check input {
+    width: 19px;
+  }
+}
+@media (max-width: 360px) {
+  .page-heading h1 {
+    font-size: 39px;
+  }
+  .briefing-text {
+    padding: 24px 20px;
+  }
+  .briefing-card h2 {
+    font-size: 51px;
+  }
+  .assistants-intro > p {
+    font-size: 31px;
+  }
+  .assistants-center .section-heading {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .assistant-overview .section-heading {
+    display: block;
+  }
+  .assistant-overview .section-heading .text-button {
+    max-width: none;
+    margin-top: 13px;
+  }
+}

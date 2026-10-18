@@ -1,8 +1,39 @@
 import "fake-indexeddb/auto";
+import { openDB } from "idb";
 import { describe, expect, it } from "vitest";
 import { readData, writeData } from "./database";
 import { emptyData, type Data } from "../domain/model";
 describe("IndexedDB", () => {
+  it("migre une enveloppe v1 existante sans effacer ses notes", async () => {
+    const db = await openDB("lifeos-core", 1, {
+      upgrade(database) {
+        database.createObjectStore("state");
+      },
+    });
+    const legacy = {
+      version: 1,
+      tasks: [],
+      projects: [],
+      notes: [
+        {
+          id: "legacy-note",
+          title: "Ancienne note",
+          body: "À garder",
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+    await db.put("state", legacy, "current");
+    db.close();
+    const migrated = await readData();
+    expect(migrated.version).toBe(2);
+    expect(migrated.notes).toEqual(legacy.notes);
+    expect(migrated.missions).toEqual([]);
+    const check = await openDB("lifeos-core", 1);
+    expect((await check.get("state", "current")).version).toBe(2);
+    check.close();
+    await writeData(emptyData());
+  });
   it("part vide, persiste et remplace atomiquement une sauvegarde", async () => {
     expect(await readData()).toEqual(emptyData());
     const data = {

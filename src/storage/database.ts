@@ -1,5 +1,10 @@
 import { openDB } from "idb";
-import { dataSchema, emptyData, type Data } from "../domain/model";
+import {
+  dataSchema,
+  storedDataSchema,
+  emptyData,
+  type Data,
+} from "../domain/model";
 
 const database = () =>
   openDB("lifeos-core", 1, {
@@ -11,7 +16,10 @@ export async function readData(): Promise<Data> {
   const db = await database();
   try {
     const value = await db.get("state", "current");
-    return value === undefined ? emptyData() : dataSchema.parse(value);
+    if (value === undefined) return emptyData();
+    const migrated = storedDataSchema.parse(value);
+    if (value.version === 1) await db.put("state", migrated, "current");
+    return migrated;
   } finally {
     db.close();
   }

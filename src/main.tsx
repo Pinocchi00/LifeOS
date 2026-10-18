@@ -4,6 +4,7 @@ import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import "./styles.css";
 import "./zen.css";
+import "./ecobrutalism.css";
 
 registerSW({
   onRegisterError(error) {

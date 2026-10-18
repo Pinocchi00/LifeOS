@@ -1,15 +1,6 @@
 import { z } from "zod";
-
-const text = z.string().trim().max(10000);
-const id = z.string().min(1).max(100);
-const title = z.string().trim().min(1, "Un titre est nécessaire.").max(180);
-const day = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((value) => {
-    const date = new Date(value + "T12:00:00Z");
-    return !isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-  }, "Date invalide");
+import { text, id, title, day } from "./validation";
+import { missionSchema, usageSchema } from "./assistants";
 export const taskSchema = z
   .object({
     id,
@@ -43,35 +34,86 @@ export const projectSchema = z
 export const noteSchema = z
   .object({ id, title, body: text, createdAt: z.string().datetime() })
   .strict();
-export const dataSchema = z
+const coreSchema = z
   .object({
-    version: z.literal(1),
     tasks: z.array(taskSchema).max(20000),
     projects: z.array(projectSchema).max(2000),
     notes: z.array(noteSchema).max(10000),
   })
-  .strict()
+  .strict();
+const validateCore = (
+  data: z.infer<typeof coreSchema>,
+  context: z.RefinementCtx,
+) => {
+  const ids = [...data.tasks, ...data.projects, ...data.notes].map(
+    (item) => item.id,
+  );
+  if (new Set(ids).size !== ids.length)
+    context.addIssue({ code: "custom", message: "Identifiants dupliqués." });
+  const projects = new Set(data.projects.map((project) => project.id));
+  if (
+    data.tasks.some((task) => task.projectId && !projects.has(task.projectId))
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Une tâche référence un projet inexistant.",
+    });
+  }
+};
+const legacySchema = coreSchema
+  .extend({ version: z.literal(1) })
+  .superRefine(validateCore);
+export const dataSchema = coreSchema
+  .extend({
+    version: z.literal(2),
+    missions: z.array(missionSchema).max(5000),
+    usage: z.array(usageSchema).max(2),
+  })
   .superRefine((data, context) => {
-    const ids = [...data.tasks, ...data.projects, ...data.notes].map(
-      (item) => item.id,
-    );
+    validateCore(data, context);
+    const ids = [
+      ...data.tasks,
+      ...data.projects,
+      ...data.notes,
+      ...data.missions,
+      ...data.missions.flatMap((mission) => mission.reports),
+    ].map((item) => item.id);
     if (new Set(ids).size !== ids.length)
-      context.addIssue({ code: "custom", message: "Identifiants dupliqués." });
-    const projects = new Set(data.projects.map((project) => project.id));
-    if (
-      data.tasks.some((task) => task.projectId && !projects.has(task.projectId))
-    ) {
       context.addIssue({
         code: "custom",
-        message: "Une tâche référence un projet inexistant.",
+        message: "Identifiants de missions ou rapports dupliqués.",
       });
-    }
+    const projects = new Set(data.projects.map((project) => project.id));
+    if (
+      data.missions.some(
+        (mission) => mission.projectId && !projects.has(mission.projectId),
+      )
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Une mission référence un projet inexistant.",
+      });
+    if (
+      new Set(data.usage.map((usage) => usage.assistant)).size !==
+      data.usage.length
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Compteur d’assistant dupliqué.",
+      });
   });
+export const storedDataSchema = z
+  .union([dataSchema, legacySchema])
+  .transform((data) =>
+    data.version === 1
+      ? { ...data, version: 2 as const, missions: [], usage: [] }
+      : data,
+  );
 export const backupSchema = z
   .object({
     application: z.literal("LifeOS"),
     exportedAt: z.string().datetime(),
-    data: dataSchema,
+    data: storedDataSchema,
   })
   .strict();
 export type Task = z.infer<typeof taskSchema>;
@@ -79,10 +121,12 @@ export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Data = z.infer<typeof dataSchema>;
 export const emptyData = (): Data => ({
-  version: 1,
+  version: 2,
   tasks: [],
   projects: [],
   notes: [],
+  missions: [],
+  usage: [],
 });
 export const localDay = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -125,6 +169,9 @@ export function removeProject(data: Data, projectId: string): Data {
     projects: data.projects.filter((project) => project.id !== projectId),
     tasks: data.tasks.map((task) =>
       task.projectId === projectId ? { ...task, projectId: "" } : task,
+    ),
+    missions: data.missions.map((mission) =>
+      mission.projectId === projectId ? { ...mission, projectId: "" } : mission,
     ),
   };
 }

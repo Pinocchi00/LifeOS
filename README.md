@@ -1,4 +1,4 @@
-# LifeOS 0.1
+# LifeOS 0.2
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -38,14 +38,33 @@ Ouvrir `http://127.0.0.1:4173`, puis choisir **Installer LifeOS** dans le menu d
 - Idées : capture, modification, suppression, carnet Explorer et recherche commune aux tâches/projets/idées (Ctrl+K).
 - Persistance IndexedDB, export JSON, contrôle des fichiers importés et restauration transactionnelle avec confirmation.
 - PWA et projet natif Android Capacitor généré et synchronisé.
+- Centre ChatGPT/Claude dans **Projets → Missions IA** et **Mes assistants** sur ordinateur : objectifs, critères, fichiers, échéance, cinq statuts, comptes-rendus et preuves conservés.
+- Instructions copiables ; clôture d'une mission après compte-rendu et validation explicite. Aucun message n'est envoyé automatiquement.
+- Compteurs d'usage manuels pour les deux assistants : plafond facultatif, date de remise à zéro prévue, date du relevé et notes. Aucun accès aux abonnements ni remise à zéro automatique.
+- Missions recherchables et synthèse dans les briefings du matin et du soir.
+- Identité écobrutaliste : béton et jardin original, vert forêt, crème et typographie éditoriale. Tous les visuels sont locaux et disponibles hors ligne.
 
-Les espaces Vie et Assistants expliquent les prochaines étapes. Aucun suivi santé, rapport d'assistant, quota, actualité ou connecteur n'est simulé.
+L'espace Vie présente les prochaines étapes. Les rapports et chiffres des assistants sont saisis par vous : aucune activité distante, actualité ou intégration IA n'est simulée.
+
+## Utiliser les assistants
+
+1. Ouvrir **Projets**, puis **Missions IA**, et créer une mission pour ChatGPT ou Claude.
+2. Définir l'objectif, les critères de réussite, le projet et les fichiers concernés.
+3. Ouvrir **Instructions**, copier le texte puis le coller dans l'assistant choisi. Joindre vous-même les fichiers utiles.
+4. Revenir dans LifeOS, modifier la mission et coller le compte-rendu réel ainsi que les preuves ou références. Les comptes-rendus précédents sont conservés.
+5. Passer à **À vérifier**, puis **Terminé** après vérification des critères et confirmation de votre validation. Une mission sans compte-rendu ne peut pas être terminée.
+
+Les liens de preuve HTTP/HTTPS sont cliquables ; les chemins de fichiers et autres références restent du texte. La suppression d'un projet conserve ses tâches et missions, sans rattachement. La suppression confirmée d'une mission supprime aussi ses comptes-rendus.
+
+Les compteurs affichent uniquement votre dernier relevé. Si un plafond est inconnu, aucun nombre restant n'est inventé. Une date de remise à zéro passée invite à vérifier les chiffres ; elle ne déclenche aucune modification. Pour commencer une nouvelle période, modifier l'usage relevé et la date prévue.
 
 ## Sauvegarder et restaurer
 
 Ouvrir l'avatar en haut à droite ou **Données & sauvegardes** sur ordinateur. Choisir **Exporter mes données**. Conserver le JSON dans un endroit sûr : il contient vos informations en clair, sans chiffrement.
 
 Pour restaurer : sélectionner un JSON LifeOS, vérifier le nombre d'éléments puis confirmer le remplacement. Exporter d'abord les données actuelles : la restauration remplace l'intégralité du contenu, elle ne fusionne pas les appareils. Les fichiers inconnus, trop volumineux (10 Mo), incohérents ou de version non prise en charge sont refusés avant toute écriture.
+
+Le format de données courant est **v2** : il comprend les missions, rapports et compteurs. Les données locales et sauvegardes **v1** sont migrées sans perdre les tâches, projets ou notes. Les anciennes versions de l'application ne savent pas lire un export v2 ; conserver les exports historiques si nécessaire. Pour charger une mise à jour PWA, fermer toutes les fenêtres LifeOS puis relancer l'application.
 
 Le stockage n'est pas une sauvegarde garantie : le nettoyage des données du navigateur, la navigation privée, une désinstallation ou une réinitialisation peuvent l'effacer. Aucune synchronisation cloud ni chiffrement applicatif dans cette version. Les données santé ne sont pas encore prises en charge ; leur stockage séparé est prévu.
 
@@ -76,9 +95,10 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 ## Structure
 
-- `src/domain/` : modèles, règles, validation des sauvegardes et tests métier.
+- `src/domain/` : modèles, règles, missions, validation des sauvegardes et migration v1 → v2.
+- `src/components/Assistants.tsx` : centre de missions, formulaires, rapports et compteurs manuels.
 - `src/storage/` : IndexedDB et coordination des mutations et fenêtres.
-- `src/App.tsx`, `src/styles.css`, `src/zen.css` : écrans, structure et direction artistique Brutalisme zen.
+- `src/App.tsx`, `src/styles.css`, `src/zen.css`, `src/ecobrutalism.css` : écrans, structure et identité visuelle écobrutaliste.
 - `public/` : icônes locales ; aucune police ni image distante.
 - `tests/` : parcours Playwright et régressions.
 - `android/` : enveloppe Android native générée par Capacitor.
@@ -86,4 +106,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Prochain lot recommandé : centre de missions ChatGPT/Claude avec critères, statuts, preuves, copie d'instructions et quotas saisis manuellement.
+Prochain lot dans l'ordre convenu : agenda hebdomadaire, créneaux horaires, routines et objectifs. Ensuite : Vie, Explorer, Android, adaptation et connecteurs facultatifs.

@@ -13,8 +13,8 @@ export default defineConfig({
         short_name: "LifeOS",
         lang: "fr",
         description: "Organisation personnelle privée et locale",
-        theme_color: "#24271f",
-        background_color: "#eeece4",
+        theme_color: "#20372a",
+        background_color: "#ece9df",
         display: "standalone",
         start_url: "/",
         icons: [
@@ -29,7 +29,7 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,jpg,woff2}"],
         navigateFallback: "index.html",
       },
     }),

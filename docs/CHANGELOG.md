@@ -1,5 +1,15 @@
 # Journal des modifications
 
+## 0.2.0 — 19 octobre 2026
+
+- Centre de missions ChatGPT/Claude dans Projets : objectifs, critères, fichiers, projet, échéance et cinq statuts.
+- Comptes-rendus saisis et conservés avec preuves ; validation explicite nécessaire avant clôture.
+- Instructions copiables avec repli sur sélection du texte si le presse-papiers est refusé ; aucun envoi automatique.
+- Compteurs manuels, plafond inconnu accepté, date prévue et relevé horodaté ; aucune lecture de l'abonnement ni remise à zéro automatique.
+- Missions dans la recherche, synthèse matinale et comptes-rendus du soir.
+- Stockage et exports v2 avec migration des données locales et imports v1 ; suppression d'un projet conservant les missions.
+- DA écobrutaliste inspirée des références : béton/jardin original, vert forêt, crème, titres sérif et composition éditoriale. Visuel précaché pour le mode hors ligne.
+
 ## 0.1.1 — 18 octobre 2026
 
 - Nouvelle direction artistique « Brutalisme zen » : encre, papier minéral, lichen et terre cuite.

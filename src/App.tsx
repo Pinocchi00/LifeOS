@@ -46,6 +46,14 @@ import {
   type Task,
 } from "./domain/model";
 import { useLifeOS } from "./storage/useLifeOS";
+import {
+  AssistantOverview,
+  AssistantsCenter,
+  MissionForm,
+  MissionInstructions,
+  UsageForm,
+} from "./components/Assistants";
+import { type Assistant, type Mission, type Usage } from "./domain/assistants";
 
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
@@ -54,7 +62,9 @@ type Editor =
   | { type: "note"; value?: Note }
   | { type: "backup" }
   | { type: "search" }
-  | { type: "assistants" }
+  | { type: "mission"; value?: Mission }
+  | { type: "usage"; assistant: Assistant }
+  | { type: "instructions"; mission: Mission }
   | null;
 const navigation = [
   { id: "home", label: "Accueil", icon: House },
@@ -422,6 +432,9 @@ function Backup({
         <span>
           <b>{data.notes.length}</b> idées
         </span>
+        <span>
+          <b>{data.missions.length}</b> missions
+        </span>
       </div>
       <button className="button primary" onClick={download}>
         <ArrowDownToLine size={17} /> Exporter mes données
@@ -442,7 +455,7 @@ function Backup({
               setPending(parseBackup(await file.text()));
             } catch {
               setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
+                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 ou v2 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
               );
             }
             event.target.value = "";
@@ -454,8 +467,9 @@ function Backup({
           <strong>Remplacer les données actuelles ?</strong>
           <p>
             Le fichier contient {pending.tasks.length} tâches,{" "}
-            {pending.projects.length} projets et {pending.notes.length} idées.
-            Exportez vos données actuelles avant de continuer.
+            {pending.projects.length} projets, {pending.notes.length} idées,{" "}
+            {pending.missions.length} missions et {pending.usage.length}{" "}
+            compteurs. Exportez vos données actuelles avant de continuer.
           </p>
           <button
             disabled={busy}
@@ -495,6 +509,9 @@ function Backup({
 export default function App() {
   const { data, ready, error, busy, mutate } = useLifeOS();
   const [space, setSpace] = useState<Space>("home");
+  const [projectView, setProjectView] = useState<"projects" | "missions">(
+    "projects",
+  );
   const [editor, setEditor] = useState<Editor>(null);
   const [confirm, setConfirm] = useState<{
     title: string;
@@ -537,6 +554,10 @@ export default function App() {
     ? Math.round((completed / data.tasks.length) * 100)
     : 0;
   const close = () => setEditor(null);
+  const openMissions = () => {
+    setSpace("projects");
+    setProjectView("missions");
+  };
   async function change(
     operation: (value: Data) => Data,
     notice = "Modification enregistrée",
@@ -554,6 +575,30 @@ export default function App() {
         tasks: [...previous.tasks.filter((item) => item.id !== task.id), task],
       }),
       "Tâche enregistrée",
+    );
+  const saveMission = (mission: Mission) =>
+    change(
+      (previous) => ({
+        ...previous,
+        missions: [
+          ...previous.missions.filter((item) => item.id !== mission.id),
+          mission,
+        ],
+      }),
+      "Mission enregistrée",
+    );
+  const saveUsage = (usage: Usage) =>
+    change(
+      (previous) => ({
+        ...previous,
+        usage: [
+          ...previous.usage.filter(
+            (item) => item.assistant !== usage.assistant,
+          ),
+          usage,
+        ],
+      }),
+      "Compteur enregistré",
     );
   const saveProject = (project: Project) =>
     change(
@@ -715,11 +760,11 @@ export default function App() {
               onClick={() =>
                 setConfirm({
                   title: "Supprimer ce projet ?",
-                  message: `« ${project.name} » sera supprimé. Ses tâches seront conservées, sans projet associé.`,
+                  message: `« ${project.name} » sera supprimé. Ses tâches et missions seront conservées, sans projet associé.`,
                   action: () =>
                     change(
                       (previous) => removeProject(previous, project.id),
-                      "Projet supprimé ; tâches conservées",
+                      "Projet supprimé ; tâches et missions conservées",
                     ),
                 })
               }
@@ -799,7 +844,10 @@ export default function App() {
           {navigation.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setSpace(id)}
+              onClick={() => {
+                setSpace(id);
+                if (id === "projects") setProjectView("projects");
+              }}
               className={`nav-item ${space === id ? "active" : ""}`}
               aria-current={space === id ? "page" : undefined}
             >
@@ -810,13 +858,15 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-divider" />
-        <button
-          className="nav-item"
-          onClick={() => setEditor({ type: "assistants" })}
-        >
+        <button className="nav-item" onClick={openMissions}>
           <Sparkles size={19} />
           <span>Mes assistants</span>
-          <span className="soon">À venir</span>
+          <span className="soon">
+            {
+              data.missions.filter((mission) => mission.status !== "done")
+                .length
+            }
+          </span>
         </button>
         <div className="sidebar-bottom">
           <div className="local-card">
@@ -842,7 +892,7 @@ export default function App() {
             <Settings2 size={18} />
             <span>Données & sauvegardes</span>
           </button>
-          <span className="version">LifeOS 0.1 · Pensé pour vous</span>
+          <span className="version">LifeOS 0.2 · Pensé pour vous</span>
         </div>
       </aside>
       <div className="main-shell">
@@ -904,7 +954,9 @@ export default function App() {
                   : space === "agenda"
                     ? "Une journée à votre rythme."
                     : space === "projects"
-                      ? "Vos idées prennent forme."
+                      ? projectView === "missions"
+                        ? "Cultiver le travail à deux."
+                        : "Vos idées prennent forme."
                       : space === "life"
                         ? "Prendre soin de votre quotidien."
                         : "Gardez votre curiosité vivante."}
@@ -915,7 +967,9 @@ export default function App() {
                   : space === "agenda"
                     ? "Planifiez avec intention, avancez une chose à la fois."
                     : space === "projects"
-                      ? "De la première intention au prochain petit pas."
+                      ? projectView === "missions"
+                        ? "Vos missions, leurs résultats, votre validation."
+                        : "De la première intention au prochain petit pas."
                       : space === "life"
                         ? "Un espace pour votre énergie, vos habitudes et votre équilibre."
                         : "Capturez les idées d’aujourd’hui. Retrouvez les inspirations de demain."}
@@ -926,7 +980,9 @@ export default function App() {
               onClick={() =>
                 setEditor(
                   space === "projects"
-                    ? { type: "project" }
+                    ? projectView === "missions"
+                      ? { type: "mission" }
+                      : { type: "project" }
                     : space === "explore"
                       ? { type: "note" }
                       : { type: "task", due: today },
@@ -935,7 +991,9 @@ export default function App() {
             >
               <Plus size={17} />
               {space === "projects"
-                ? "Nouveau projet"
+                ? projectView === "missions"
+                  ? "Nouvelle mission"
+                  : "Nouveau projet"
                 : space === "explore"
                   ? "Nouvelle idée"
                   : "Nouvelle tâche"}
@@ -996,22 +1054,14 @@ export default function App() {
                   </span>
                 </div>
                 <div className="zen-art" aria-hidden="true">
-                  <span className="zen-art-index">L / 01</span>
-                  <svg className="enso" viewBox="0 0 320 320" fill="none">
-                    <path
-                      d="M226 58C171 17 89 43 56 102C18 168 52 252 121 274C186 295 257 255 277 195C294 144 278 98 247 77"
-                      stroke="currentColor"
-                      strokeWidth="33"
-                      strokeLinecap="butt"
-                    />
-                    <path
-                      d="M233 64C187 31 117 38 75 82"
-                      stroke="currentColor"
-                      strokeWidth="7"
-                      strokeLinecap="butt"
-                    />
-                  </svg>
-                  <span className="zen-art-seal" />
+                  <img
+                    src="/art/concrete-garden.jpg"
+                    alt=""
+                    width="1024"
+                    height="1536"
+                    fetchPriority="high"
+                  />
+                  <span className="zen-art-index">LE VIVANT / LE TEMPS</span>
                   <span className="zen-art-caption">
                     CALME INTÉRIEUR.
                     <br />
@@ -1149,6 +1199,11 @@ export default function App() {
                   </button>
                 </section>
               </div>
+              <AssistantOverview
+                data={data}
+                evening={briefingMode === "evening"}
+                open={openMissions}
+              />
               <div className="section-heading project-section-heading">
                 <h2>Vos projets, pas à pas</h2>
                 <button
@@ -1359,6 +1414,52 @@ export default function App() {
           )}
 
           {space === "projects" && (
+            <div
+              className="project-tabs"
+              role="group"
+              aria-label="Espaces des projets"
+            >
+              <button
+                aria-pressed={projectView === "projects"}
+                onClick={() => setProjectView("projects")}
+              >
+                Projets
+              </button>
+              <button
+                aria-pressed={projectView === "missions"}
+                onClick={() => setProjectView("missions")}
+              >
+                Missions IA <span>{data.missions.length}</span>
+              </button>
+            </div>
+          )}
+          {space === "projects" && projectView === "missions" && (
+            <AssistantsCenter
+              data={data}
+              edit={(mission) => setEditor({ type: "mission", value: mission })}
+              instructions={(mission) =>
+                setEditor({ type: "instructions", mission })
+              }
+              editUsage={(assistant) => setEditor({ type: "usage", assistant })}
+              remove={(mission) =>
+                setConfirm({
+                  title: "Supprimer cette mission ?",
+                  message: `« ${mission.title} » et ses ${mission.reports.length} compte-rendu(s) seront supprimés.`,
+                  action: () =>
+                    change(
+                      (previous) => ({
+                        ...previous,
+                        missions: previous.missions.filter(
+                          (item) => item.id !== mission.id,
+                        ),
+                      }),
+                      "Mission supprimée",
+                    ),
+                })
+              }
+            />
+          )}
+          {space === "projects" && projectView === "projects" && (
             <>
               <div className="section-heading">
                 <h2>Votre jardin de projets</h2>
@@ -1516,7 +1617,10 @@ export default function App() {
             key={id}
             className={space === id ? "active" : ""}
             aria-current={space === id ? "page" : undefined}
-            onClick={() => setSpace(id)}
+            onClick={() => {
+              setSpace(id);
+              if (id === "projects") setProjectView("projects");
+            }}
           >
             <Icon size={21} />
             <span>{label}</span>
@@ -1549,7 +1653,13 @@ export default function App() {
                     ? "Vos données, en sécurité"
                     : editor.type === "search"
                       ? "Retrouver l’essentiel"
-                      : "Vos assistants, au même endroit"
+                      : editor.type === "mission"
+                        ? editor.value
+                          ? "Modifier la mission"
+                          : "Nouvelle mission"
+                        : editor.type === "usage"
+                          ? "Votre compteur personnel"
+                          : "Instructions de mission"
           }
         >
           {editor.type === "task" && (
@@ -1578,32 +1688,31 @@ export default function App() {
               close={close}
             />
           )}
-          {editor.type === "assistants" && (
-            <div className="form">
-              <div className="assistant-logos">
-                <span>ChatGPT</span>
-                <span>Claude</span>
-              </div>
-              <p>
-                Le centre de missions est prévu au prochain lot : objectifs,
-                fichiers, critères de réussite, rapports et suivi manuel des
-                limites.
-              </p>
-              <p className="muted">
-                Aucun assistant n’est connecté. Aucun rapport n’est généré ou
-                simulé. Vous pouvez déjà organiser votre travail dans Projets.
-              </p>
-              <button
-                className="button primary"
-                onClick={() => {
-                  close();
-                  setSpace("projects");
-                }}
-              >
-                Ouvrir mes projets
-                <ArrowRight size={16} />
-              </button>
-            </div>
+          {editor.type === "mission" && (
+            <MissionForm
+              mission={editor.value}
+              projects={data.projects}
+              save={saveMission}
+              close={close}
+            />
+          )}
+          {editor.type === "usage" && (
+            <UsageForm
+              assistant={editor.assistant}
+              usage={data.usage.find(
+                (item) => item.assistant === editor.assistant,
+              )}
+              save={saveUsage}
+              close={close}
+            />
+          )}
+          {editor.type === "instructions" && (
+            <MissionInstructions
+              mission={editor.mission}
+              project={data.projects.find(
+                (project) => project.id === editor.mission.projectId,
+              )}
+            />
           )}
           {editor.type === "search" && (
             <div className="form">
@@ -1611,7 +1720,7 @@ export default function App() {
                 <Search size={19} />
                 <input
                   autoFocus
-                  placeholder="Tâches, projets, idées…"
+                  placeholder="Tâches, projets, idées, missions…"
                   aria-label="Rechercher"
                   value={query}
                   maxLength={180}
@@ -1681,9 +1790,43 @@ export default function App() {
                           <ArrowUpRight size={16} />
                         </button>
                       ))}
-                    {!data.tasks.some((task) =>
-                      matches(task.title + " " + task.description),
+                    {data.missions
+                      .filter((mission) =>
+                        matches(
+                          mission.title +
+                            " " +
+                            mission.objective +
+                            " " +
+                            mission.criteria,
+                        ),
+                      )
+                      .map((mission) => (
+                        <button
+                          key={mission.id}
+                          onClick={() =>
+                            setEditor({ type: "mission", value: mission })
+                          }
+                        >
+                          <Sparkles size={18} />
+                          <span>
+                            {mission.title}
+                            <small>Mission</small>
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </button>
+                      ))}
+                    {!data.missions.some((mission) =>
+                      matches(
+                        mission.title +
+                          " " +
+                          mission.objective +
+                          " " +
+                          mission.criteria,
+                      ),
                     ) &&
+                      !data.tasks.some((task) =>
+                        matches(task.title + " " + task.description),
+                      ) &&
                       !data.projects.some((project) =>
                         matches(project.name + " " + project.description),
                       ) &&

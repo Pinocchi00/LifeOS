@@ -1,4 +1,19 @@
-# Vérifications du lot 0.1
+# Vérifications LifeOS
+
+## Lot 0.2 — 19 octobre 2026
+
+- **22 tests Vitest réussis**, 3 fichiers : les tests existants plus les missions, validation humaine, preuves HTTP/HTTPS, compteurs, rapports et migration réelle IndexedDB v1 → v2.
+- **12 parcours Playwright réussis** : 6 scénarios exécutés sur ordinateur et format Pixel 7. Les nouveaux parcours couvrent le cycle complet d'une mission, les instructions et le presse-papiers/repli, le refus de clôture sans compte-rendu, la conservation des rapports, les filtres, la recherche, la suppression de projet conservant la mission, les compteurs non réinitialisés automatiquement, l'export v2 et la restauration v1.
+- Le parcours hors ligne vérifie aussi que le visuel botanique local reste chargé après rechargement sans réseau.
+- Compilation TypeScript/Vite/PWA réussie : 12 ressources précachées, incluant le JPEG original encodé pour l'application.
+- Captures accueil ordinateur/mobile inspectées pour la nouvelle direction écobrutaliste. Les données d'essai des tests restent dans des contextes isolés, sans publication de données personnelles.
+- Atelier et formulaires contrôlés à 768, 393 et 320 pixels, sans débordement horizontal ; captures du centre et du compteur également inspectées.
+- Projet Android resynchronisé avec les ressources du lot ; compilation native toujours non réalisée faute de Java/SDK Android.
+- Nouveaux modules : `src/domain/assistants.ts`, `src/domain/validation.ts`, `src/components/Assistants.tsx`, `src/ecobrutalism.css`, tests associés et `public/art/concrete-garden.jpg`. Le prompt du visuel est dans `ASSETS.md`.
+- Limites : aucun assistant connecté, aucune lecture de quota fournisseur, aucun envoi de mission ni synchronisation externe. APK et notifications toujours en attente d'outillage et d'essais natifs.
+- Prochain lot dans l'ordre convenu : agenda hebdomadaire, horaires, routines et objectifs.
+
+Les sections suivantes conservent l'historique des lots précédents.
 
 ## Lot visuel 0.1.1 — Brutalisme zen
 
