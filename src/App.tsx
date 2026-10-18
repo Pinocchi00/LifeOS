@@ -969,8 +969,8 @@ export default function App() {
                   </div>
                   <h2>
                     {briefingMode === "morning"
-                      ? "Chaque grand projet commence\npar un petit pas."
-                      : "Prenez un instant pour\nmesurer le chemin parcouru."}
+                      ? "Un pas.\nPuis un autre."
+                      : "Le chemin\nparcouru."}
                   </h2>
                   <p>
                     {briefingMode === "morning"
@@ -995,18 +995,28 @@ export default function App() {
                     Briefing calculé à partir de vos données locales
                   </span>
                 </div>
-                <div className="orb-art" aria-hidden="true">
-                  <div className="orbit orbit-one" />
-                  <div className="orbit orbit-two" />
-                  <div className="orb" />
-                  <span className="art-star">✦</span>
-                  <span className="art-leaf">
-                    <Leaf size={54} strokeWidth={1} />
+                <div className="zen-art" aria-hidden="true">
+                  <span className="zen-art-index">L / 01</span>
+                  <svg className="enso" viewBox="0 0 320 320" fill="none">
+                    <path
+                      d="M226 58C171 17 89 43 56 102C18 168 52 252 121 274C186 295 257 255 277 195C294 144 278 98 247 77"
+                      stroke="currentColor"
+                      strokeWidth="33"
+                      strokeLinecap="butt"
+                    />
+                    <path
+                      d="M233 64C187 31 117 38 75 82"
+                      stroke="currentColor"
+                      strokeWidth="7"
+                      strokeLinecap="butt"
+                    />
+                  </svg>
+                  <span className="zen-art-seal" />
+                  <span className="zen-art-caption">
+                    CALME INTÉRIEUR.
+                    <br />
+                    MOUVEMENT EXTÉRIEUR.
                   </span>
-                  <div className="art-label">
-                    <span />
-                    Un pas après l’autre.
-                  </div>
                 </div>
               </section>
               <div className="stats-grid">

@@ -2,6 +2,8 @@
 
 État initial : dépôt vide, aucun prototype 0.2 disponible. Le lot 0.1 vise les phases 0 et 1, avec les fondations des briefings et sauvegardes. Aucun service externe requis.
 
+Direction artistique : le lot 0.1.1 applique l'identité « Brutalisme zen » aux cinq espaces, aux formulaires et à la PWA. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
+
 ## Phase 0 — Architecture et fondations
 
 - Tâches : React/TypeScript/Vite, modules métier, IndexedDB versionné, navigation responsive, PWA, tests Vitest/Playwright, documentation de démarrage.

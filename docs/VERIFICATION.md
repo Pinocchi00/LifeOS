@@ -1,5 +1,13 @@
 # Vérifications du lot 0.1
 
+## Lot visuel 0.1.1 — Brutalisme zen
+
+- Compilation TypeScript/Vite et PWA réussie après la refonte.
+- Les 8 parcours Playwright existants passent sur ordinateur et format Pixel 7 : CRUD, recherche, sauvegardes, hors ligne, navigation et absence de débordement.
+- Captures ordinateur/mobile inspectées ; traitement du défilement de la navigation latérale sur fenêtre basse.
+- Contrôle complémentaire : les cinq espaces à 320 pixels sans débordement, formulaire étroit avec champs empilés, accès aux sauvegardes dans une fenêtre de 600 pixels de hauteur.
+- Aucun modèle de données ou mécanisme de persistance modifié ; les modules encore prévus restent décrits dans la roadmap.
+
 Date : 18 octobre 2026. Environnement : Windows, Node.js 24.19.0, Chromium Playwright. Dépôt GitHub initial vide.
 
 ## Résultats observés

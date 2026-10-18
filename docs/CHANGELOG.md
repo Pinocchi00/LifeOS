@@ -1,5 +1,12 @@
 # Journal des modifications
 
+## 0.1.1 — 18 octobre 2026
+
+- Nouvelle direction artistique « Brutalisme zen » : encre, papier minéral, lichen et terre cuite.
+- Typographie massive, angles droits, bordures nettes, navigation sombre, formulaires et calendrier harmonisés.
+- Cercle ensō vectoriel local, nouvelle marque et icônes PWA coordonnées.
+- Identité commune aux cinq espaces sur ordinateur et mobile ; données et fonctions inchangées.
+
 ## 0.1.0 — 18 octobre 2026
 
 - Initialisation à partir d'un dépôt vide.

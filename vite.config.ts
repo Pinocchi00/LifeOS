@@ -13,8 +13,8 @@ export default defineConfig({
         short_name: "LifeOS",
         lang: "fr",
         description: "Organisation personnelle privée et locale",
-        theme_color: "#314d40",
-        background_color: "#f6f7f2",
+        theme_color: "#24271f",
+        background_color: "#eeece4",
         display: "standalone",
         start_url: "/",
         icons: [

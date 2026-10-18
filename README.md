@@ -78,7 +78,7 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 - `src/domain/` : modèles, règles, validation des sauvegardes et tests métier.
 - `src/storage/` : IndexedDB et coordination des mutations et fenêtres.
-- `src/App.tsx`, `src/styles.css` : écrans et interactions accessibles.
+- `src/App.tsx`, `src/styles.css`, `src/zen.css` : écrans, structure et direction artistique Brutalisme zen.
 - `public/` : icônes locales ; aucune police ni image distante.
 - `tests/` : parcours Playwright et régressions.
 - `android/` : enveloppe Android native générée par Capacitor.
