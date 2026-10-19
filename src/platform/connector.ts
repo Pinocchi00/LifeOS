@@ -28,8 +28,9 @@ function compatible<T>(schema: z.ZodType<T>, value: unknown): T {
 export function supportsConnector(): boolean {
   return (
     !Capacitor.isNativePlatform() &&
-    window.location.protocol === "http:" &&
-    window.location.hostname === "127.0.0.1"
+    ((window.location.protocol === "http:" &&
+      window.location.hostname === "127.0.0.1") ||
+      window.location.protocol === "https:")
   );
 }
 export async function connectorRequest(
@@ -40,7 +41,7 @@ export async function connectorRequest(
 ): Promise<unknown> {
   if (!supportsConnector())
     throw new Error(
-      "Le serveur privé de ce lot fonctionne dans LifeOS ouvert sur cet ordinateur à son adresse http://127.0.0.1. L’application Android conserve l’accès public.",
+      "Ouvrez LifeOS à l’adresse du serveur : HTTPS distant ou http://127.0.0.1 sur cet ordinateur. L’application Android conserve l’accès public.",
     );
   if (signal?.aborted) throw new Error("Opération annulée.");
   const controller = new AbortController();
@@ -88,7 +89,7 @@ export async function connectorRequest(
       );
     if (error instanceof TypeError)
       throw new Error(
-        "Serveur LifeOS inaccessible. Vérifiez son démarrage sur cet ordinateur ; vos relevés restent disponibles hors ligne.",
+        "Serveur LifeOS inaccessible. Vérifiez son adresse, sa disponibilité et son certificat HTTPS ; vos relevés restent disponibles hors ligne.",
       );
     throw error;
   } finally {

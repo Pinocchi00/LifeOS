@@ -196,13 +196,19 @@ export function AiPanel({
       </details>
       {!supportsConnector() ? (
         <p className="ai-notice">
-          L’API IA s’utilise dans le navigateur de l’ordinateur qui exécute le
-          serveur local. Android conserve la préparation manuelle des
-          instructions. Aucune clé à saisir dans l’application.
+          L’API IA s’utilise dans LifeOS ouvert à l’adresse du serveur, en HTTPS
+          ou sur son ordinateur en boucle locale. Android conserve la
+          préparation manuelle des instructions. Aucune clé à saisir dans
+          l’application.
         </p>
       ) : (
         <>
           <section className="ai-access" aria-label="Accès IA">
+            <p className="small muted">
+              Serveur contacté : <strong>{window.location.origin}</strong>.
+              Ouvrir cette adresse ne transfère pas les données d’un autre
+              appareil.
+            </p>
             <button
               className="button secondary"
               disabled={!!busy}

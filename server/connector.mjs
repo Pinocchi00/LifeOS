@@ -1,6 +1,8 @@
 import { StringDecoder } from "node:string_decoder";
 import { aiConfig, createAi } from "./ai.mjs";
 import { createServer } from "node:http";
+import { createServer as createHttpsServer } from "node:https";
+import { transportConfig, transportOptions } from "./transport.mjs";
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve, join, extname } from "node:path";
@@ -67,10 +69,26 @@ export function connectorConfig(env) {
     throw new Error(
       "Configurez ensemble le jeton serveur et les dépôts autorisés.",
     );
-  const port = Number(env.LIFEOS_CONNECTOR_PORT || 4317);
-  if (!Number.isInteger(port) || port < 1024 || port > 65535)
-    throw new Error("Port serveur invalide (1024 à 65535).");
-  return { token, repositories: new Set(entries), port, ai: aiConfig(env) };
+  const remote = transportConfig(env);
+  const port = Number(env.LIFEOS_CONNECTOR_PORT || remote?.port || 4317);
+  if (
+    !Number.isInteger(port) ||
+    port < (remote ? 1 : 1024) ||
+    port > 65535 ||
+    (remote && port !== remote.port)
+  )
+    throw new Error(
+      remote
+        ? "Le port serveur doit correspondre à l’origine HTTPS (1 à 65535)."
+        : "Port serveur invalide (1024 à 65535).",
+    );
+  return {
+    token,
+    repositories: new Set(entries),
+    port,
+    ai: aiConfig(env),
+    remote,
+  };
 }
 async function staticFiles(root) {
   const files = new Map();
@@ -123,6 +141,8 @@ export async function createConnector({
   ledgerPath = resolve(distRoot, "../.local-server/ai-budget.sqlite"),
 }) {
   const files = await staticFiles(distRoot);
+  const tls = await transportOptions(config.remote, distRoot, now());
+  const cookieName = config.remote ? "__Secure-lifeos_connector" : COOKIE;
   const ai = createAi({
     config: config.ai,
     ledgerPath,
@@ -142,26 +162,30 @@ export async function createConnector({
   const githubConfigured = Boolean(config.token && config.repositories.size);
   const configured = githubConfigured || ai.configured;
   const cookie = (value, age) =>
-    `${COOKIE}=${value}; HttpOnly; SameSite=Strict; Path=${PREFIX}; Max-Age=${age}`;
+    `${cookieName}=${value}; HttpOnly; SameSite=Strict; Path=${PREFIX}; Max-Age=${age}${config.remote ? "; Secure" : ""}`;
   function validSession(req) {
     const parts = (req.headers.cookie || "")
       .split(";")
       .map((item) => item.trim())
-      .filter((item) => item.startsWith(`${COOKIE}=`));
+      .filter((item) => item.startsWith(`${cookieName}=`));
     return Boolean(
       session &&
       session.expiresAt > now() &&
       parts.length === 1 &&
-      equal(parts[0].slice(COOKIE.length + 1), session.token),
+      equal(parts[0].slice(cookieName.length + 1), session.token),
     );
   }
-  const server = createServer(
-    { maxHeaderSize: 8192, requestTimeout: 5000, headersTimeout: 5000 },
+  const responseHeaders = {
+    ...headers,
+    ...(config.remote ? { "Strict-Transport-Security": "max-age=86400" } : {}),
+  };
+  const server = (config.remote ? createHttpsServer : createServer)(
+    { ...tls, maxHeaderSize: 8192, requestTimeout: 5000, headersTimeout: 5000 },
     async (req, res) => {
       const send = (status, value, extra = {}) => {
         if (!res.destroyed) {
           res.writeHead(status, {
-            ...headers,
+            ...responseHeaders,
             "Content-Type": "application/json; charset=utf-8",
             ...extra,
           });
@@ -169,16 +193,19 @@ export async function createConnector({
         }
       };
       try {
-        const origin = `http://127.0.0.1:${server.address().port}`;
+        const origin =
+          config.remote?.origin || `http://127.0.0.1:${server.address().port}`;
         if (
-          req.headers.host !== origin.slice(7) ||
+          req.headers.host !== new URL(origin).host ||
+          (config.remote && !req.socket.encrypted) ||
           req.headers["x-forwarded-host"] ||
           req.headers["x-forwarded-for"] ||
+          req.headers["x-forwarded-proto"] ||
           req.headers.forwarded
         )
           throw new Refusal(
             403,
-            "Utilisez l’adresse locale exacte du serveur LifeOS.",
+            "Utilisez l’adresse exacte du serveur LifeOS, sans proxy HTTP.",
           );
         const path = (req.url || "").split("?")[0];
         if (
@@ -195,13 +222,13 @@ export async function createConnector({
           if (req.headers["sec-fetch-site"] === "cross-site")
             throw new Refusal(
               403,
-              "Ouverture externe refusée. Ouvrez l’adresse locale directement.",
+              "Ouverture externe refusée. Ouvrez directement l’adresse du serveur.",
             );
           const file = files.get(path);
           if (!file) throw new Refusal(404, "Fichier absent.");
           const data = await readFile(file);
           res.writeHead(200, {
-            ...headers,
+            ...responseHeaders,
             "Content-Type": types[extname(file)],
           });
           res.end(req.method === "HEAD" ? undefined : data);
@@ -215,7 +242,7 @@ export async function createConnector({
             !["same-origin", "none"].includes(req.headers["sec-fetch-site"])) ||
           (req.method === "POST" && req.headers.origin !== origin)
         )
-          throw new Refusal(403, "Requête locale directe requise.");
+          throw new Refusal(403, "Requête directe de même origine requise.");
         if (path === `${PREFIX}/status` && req.method === "GET") {
           const paired = validSession(req);
           send(200, {

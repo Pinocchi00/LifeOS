@@ -75,7 +75,7 @@ export function GithubLinkForm({
         />
       </label>
       <p className="small muted">
-        La lecture se lance ensuite sur demande : accès public ou serveur local
+        La lecture se lance ensuite sur demande : accès public ou serveur LifeOS
         configuré pour un dépôt privé GitHub.com. Aucun jeton GitHub à saisir
         ici. GitHub Enterprise reste à développer.
       </p>
@@ -226,7 +226,7 @@ export function GithubPanel({
       />
       <p className="github-network-note">
         {access === "server" ? (
-          "« Vérifier et garder un relevé » transmet seulement le dépôt, le type et le numéro à votre serveur local. Il utilise son jeton pour contacter GitHub. Aucun texte de mission ni suivi Vie transmis. Aucun appel au démarrage ni en arrière-plan."
+          "« Vérifier et garder un relevé » transmet seulement le dépôt, le type et le numéro à votre serveur LifeOS. Il utilise son jeton pour contacter GitHub. Aucun texte de mission ni suivi Vie transmis. Aucun appel au démarrage ni en arrière-plan."
         ) : (
           <>
             « Vérifier et garder un relevé » contacte uniquement l’API publique
@@ -346,7 +346,7 @@ export function GithubPanel({
                   ? "Lecture de GitHub…"
                   : "Vérifier et garder un relevé"}
                 {access === "server" && (
-                  <span className="github-via">Via mon serveur local</span>
+                  <span className="github-via">Via mon serveur LifeOS</span>
                 )}
               </button>
               {busy === link.id && (

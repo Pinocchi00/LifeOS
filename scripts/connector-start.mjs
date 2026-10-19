@@ -11,19 +11,27 @@ try {
     distRoot: fileURLToPath(new URL("../dist", import.meta.url)),
   });
   server.on("error", () => {
-    console.error("Serveur indisponible : vérifiez le port local.");
+    console.error(
+      "Serveur indisponible : vérifiez le port, les droits d’écoute et la configuration.",
+    );
     process.exitCode = 1;
   });
-  server.listen(config.port, "127.0.0.1", () => {
-    console.log(`LifeOS : http://127.0.0.1:${config.port}`);
+  server.listen(config.port, config.remote?.bind || "127.0.0.1", () => {
+    console.log(
+      `LifeOS : ${config.remote?.origin || `http://127.0.0.1:${config.port}`}`,
+    );
     console.log(
       config.token || config.ai
-        ? `Code d’appairage local (10 min, usage unique) : ${code}`
+        ? `Code d’appairage propriétaire (10 min, usage unique) : ${code}`
         : "Connecteurs désactivés : configurez les accès facultatifs côté serveur.",
     );
     console.log(
       "Arrêt : Ctrl+C. Les clés fournisseur restent dans ce processus.",
     );
+    if (config.remote)
+      console.log(
+        "Mode HTTPS personnel. Une session d’une heure au plus ; transmettez le code au seul navigateur voulu. Certificat chargé au démarrage.",
+      );
   });
   const stop = () => {
     server.closeAllConnections();

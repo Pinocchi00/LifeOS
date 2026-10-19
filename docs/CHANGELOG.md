@@ -1,5 +1,12 @@
 # Journal des modifications
 
+## 0.13.0 — 19 octobre 2026
+
+- Serveur HTTPS personnel facultatif : origine canonique, certificat/clé privés, nom SAN, dates et correspondance vérifiés avant ouverture du budget ; configuration partielle refusée et HTTP conservé en boucle locale.
+- Session du propriétaire par appairage temporaire, cookie Secure/HttpOnly/Strict, révocation commune GitHub/IA, hôte/origine exacts, TLS 1.2 minimum et HSTS. Aucun CORS ou proxy HTTP ajouté.
+- Accès navigateur aux connecteurs à l’origine HTTPS, adresse affichée avant appairage, consentements, limites et formats v6/Vie conservés. Configuration Windows et guide d’exploitation sans déploiement automatique.
+- Recette avec connexions TLS et fournisseurs fictifs, export sans secrets puis usage hors ligne. Aucun hébergement, domaine, achat ou appel fournisseur réel configuré ; l’APK conserve les connecteurs manuels/publics en attendant l’accès privé natif.
+
 ## 0.12.0 — 19 octobre 2026
 
 - Trois nouvelles images écobrutalistes originales dans Projets, Vie et Explorer ; WebP adaptatifs embarqués et disponibles hors ligne, sans moteur 3D.

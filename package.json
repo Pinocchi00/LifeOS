@@ -1,6 +1,6 @@
 {
   "name": "lifeos",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "connector:start": "node scripts/connector-start.mjs",
     "test:server": "node --test server/*.test.mjs",
     "connector:setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-Connector.ps1",
+    "connector:https-setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-RemoteConnector.ps1",
     "connector:ai-setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-AiConnector.ps1"
   },
   "dependencies": {

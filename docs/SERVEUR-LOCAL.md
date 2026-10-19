@@ -2,7 +2,7 @@
 
 Le serveur sert la version web compilée de LifeOS et ajoute la lecture d’issues, PR et exécutions Actions de dépôts privés **GitHub.com** autorisés. Il écoute uniquement sur **127.0.0.1**, sur cet ordinateur. Il ne synchronise pas les données et ne publie aucun service sur le réseau. L’application locale et l’APK restent autonomes.
 
-Depuis les lots 0.11 et 0.12, ce même serveur peut aussi héberger les [connecteurs OpenAI et Anthropic facultatifs](API-IA.md). Ce guide décrit la lecture GitHub ; les règles de transmission de texte et de réservations IA figurent dans le guide dédié.
+Depuis les lots 0.11 et 0.12, ce même serveur peut aussi héberger les [connecteurs OpenAI et Anthropic facultatifs](API-IA.md). Depuis le lot 0.13, un [mode HTTPS personnel distinct](SERVEUR-HTTPS.md) est disponible avec une origine et un certificat explicitement configurés. Sans cette configuration, les restrictions locales de ce guide restent applicables. Ce guide décrit la lecture GitHub ; les règles de transmission de texte et de réservations IA figurent dans le guide dédié.
 
 ## Démarrage sur Windows
 
@@ -49,7 +49,7 @@ Références officielles consultées le 19 octobre 2026 : [protection des identi
 ## Protections et limites
 
 - Appairage de 128 bits, comparaison de hachages en temps constant, durée de dix minutes, usage unique et cinq échecs au plus. Session aléatoire de 256 bits, expirant après une heure sans prolongation automatique, révocable. Rien de cet état ne survit au redémarrage du serveur.
-- Cookie `HttpOnly`, `SameSite=Strict`, limité à `/api/connector`. HTTP est accepté **uniquement en boucle locale** ; ce serveur n’est pas un déploiement HTTPS distant et ne doit pas être exposé par un tunnel ou une redirection de port. L’authentification d’un service distant et l’accès natif Android privé restent à développer.
+- Cookie `HttpOnly`, `SameSite=Strict`, limité à `/api/connector`. HTTP est accepté **uniquement en boucle locale** ; ce serveur n’est pas un déploiement HTTPS distant et ne doit pas être exposé par un tunnel ou une redirection de port. Le mode HTTPS personnel possède sa configuration dédiée depuis 0.13 ; l’accès natif Android privé reste à développer.
 - Hôte exact contrôlé, en-têtes de proxy refusés, origine exacte pour les POST, marqueur de requête requis, accès cross-site refusé, aucun CORS ouvert. CSP sur la version servie, interdiction d’intégration en iframe et de chargement de code tiers. Seuls les fichiers compilés sont servis ; dotfiles, sources, clés et source maps sont exclus.
 - Cibles strictes, dépôts en liste autorisée, seul GET vers `https://api.github.com` avec version `2026-03-10`, aucune redirection. Le jeton n’est pas renvoyé au navigateur. Les erreurs distantes et corps non projetés ne sont pas transmis ou journalisés.
 - Une lecture externe à la fois, une seconde entre départs, soixante tentatives au plus par heure de fonctionnement, attente GitHub respectée et aucun réessai automatique. Annulation à la fermeture de la requête ou à la déconnexion, délai externe de quinze secondes, JSON externe limité à 1 Mio, corps entrant à 4 Kio. Les quotas locaux et attentes ne sont pas durables ; redémarrer ne réinitialise pas les quotas imposés par GitHub. Une tentative échouée consomme aussi la limite locale.

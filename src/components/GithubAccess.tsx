@@ -103,8 +103,8 @@ export function GithubAccess({
       {mode === "server" && (
         <>
           <p>
-            Lisez les dépôts autorisés de cet ordinateur. Votre jeton GitHub
-            reste côté serveur ; LifeOS ne le conserve pas.
+            Lisez les dépôts autorisés de votre serveur LifeOS. Votre jeton
+            GitHub reste côté serveur ; LifeOS ne le conserve pas.
           </p>
           <p className="small">
             Les titres et liens privés rejoindront votre sauvegarde
@@ -113,19 +113,27 @@ export function GithubAccess({
           </p>
           {!supportsConnector() ? (
             <p className="github-network-note">
-              Accès privé disponible dans le navigateur de cet ordinateur, à
-              l’adresse affichée par le serveur local. Android et les sites
-              distants conservent l’accès public dans ce lot.
+              Accès privé disponible dans LifeOS ouvert à l’adresse du serveur,
+              en HTTPS ou en boucle locale sur son ordinateur. Android conserve
+              l’accès public dans ce lot.
             </p>
           ) : (
             <>
+              <p className="small muted">
+                Serveur contacté : <strong>{window.location.origin}</strong>.
+                L’appairage ne transfère pas vos données locales.
+              </p>
               <div className="github-actions">
                 <button
                   className="button secondary"
                   disabled={disabled || busy}
                   onClick={() => void act("status")}
                 >
-                  {busy ? "Contact du serveur…" : "Vérifier le serveur local"}
+                  {busy
+                    ? "Contact du serveur…"
+                    : window.location.protocol === "https:"
+                      ? "Vérifier ce serveur HTTPS"
+                      : "Vérifier le serveur local"}
                 </button>
                 {ready && (
                   <button
@@ -192,7 +200,7 @@ export function GithubAccess({
             </>
           )}
           <details>
-            <summary>Configurer le serveur sur cet ordinateur</summary>
+            <summary>Configurer mon serveur LifeOS</summary>
             <p className="small">
               Après compilation du projet, lancez{" "}
               <code>npm run connector:setup</code>
@@ -206,12 +214,13 @@ export function GithubAccess({
               <code>docs/SERVEUR-LOCAL.md</code>.
             </p>
             <p className="small muted">
-              Node.js 24.12 minimum. Le serveur écoute uniquement sur 127.0.0.1.
-              La session est partagée par les onglets de cette adresse et expire
-              après une heure. Redémarrez le serveur pour un nouveau code après
-              expiration ou déconnexion. Les instructions copiées incluent les
-              adresses des références ; aucune mission ni donnée Vie n’est
-              envoyée.
+              Node.js 24.12 minimum. Le mode local écoute sur 127.0.0.1 ; le
+              mode distant exige une origine HTTPS et un certificat valide.
+              Guide : docs/SERVEUR-HTTPS.md. La session est partagée par les
+              onglets de cette adresse et expire après une heure. Redémarrez le
+              serveur pour un nouveau code après expiration ou déconnexion. Les
+              instructions copiées incluent les adresses des références ; aucune
+              mission ni donnée Vie n’est envoyée.
             </p>
           </details>
         </>

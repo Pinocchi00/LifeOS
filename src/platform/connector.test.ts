@@ -37,11 +37,15 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
-it("aucune connexion à l’import ; adresse locale directe seulement et repli Android", () => {
+it("aucune connexion à l’import ; HTTPS de même origine ou boucle locale, repli Android", () => {
   expect(fetch).not.toHaveBeenCalled();
   expect(supportsConnector()).toBe(true);
   vi.stubGlobal("window", {
     location: { hostname: "example.test", protocol: "https:" },
+  });
+  expect(supportsConnector()).toBe(true);
+  vi.stubGlobal("window", {
+    location: { hostname: "example.test", protocol: "http:" },
   });
   expect(supportsConnector()).toBe(false);
   vi.stubGlobal("window", {
