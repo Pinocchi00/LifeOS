@@ -48,6 +48,8 @@ public class NativeSmokeTest {
         return value.get();
     }
     private void capture(String name) {
+        // DOM readiness can precede the WebView compositor's next drawn frame.
+        SystemClock.sleep(500);
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).takeScreenshot(
             new File(activity.getActivity().getExternalFilesDir(null), name));
     }
@@ -182,6 +184,7 @@ public class NativeSmokeTest {
         waitFor("document.body.innerText.includes('Rappel quotidien et essai annulés')");
         js("window.Capacitor.nativePromise('LocalNotifications','getPending',{}).then(r=>window.smokeAfter=r.notifications)");
         waitFor("window.smokeAfter?.every(n=>n.id!==7301 && n.id!==7302)");
+        js("document.querySelector('.android-reminders').scrollIntoView({block:'start'})");
         capture("native-reminders.png");
     }
 }
