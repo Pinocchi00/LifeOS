@@ -43,8 +43,24 @@ jobs:
             sdkmanager "platforms;android-36"
           fi
       - run: npm ci
+      - name: Restaurer les dépendances Gradle
+        id: gradle-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .tools/gradle/caches
+            .tools/gradle/wrapper
+          key: lifeos-gradle-${{ runner.os }}-${{ hashFiles('package-lock.json', 'android/**/*.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
       - name: APK, lint et compilation des essais natifs
         run: npm run android:verify
+      - name: Conserver les dépendances Gradle vérifiées
+        if: steps.gradle-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .tools/gradle/caches
+            .tools/gradle/wrapper
+          key: ${{ steps.gradle-cache.outputs.cache-primary-key }}
       - name: Autoriser KVM sur le runner isolé
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -57,10 +73,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: |
-            adb shell svc wifi disable
-            adb shell svc data disable
-            cd android && ./gradlew --no-daemon --console=plain :app:connectedDebugAndroidTest
+          script: bash scripts/android-emulator-test.sh
       - name: APK de développement et rapports
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,5 +83,7 @@ jobs:
           path: |
             artifacts/*.apk
             artifacts/*.sha256
+            artifacts/*.png
+            artifacts/android-logcat.txt
             android/app/build/reports/
             android/app/build/outputs/androidTest-results/

@@ -630,6 +630,7 @@ export default function App() {
     transition.current?.skipTransition();
     const commit = () => flushSync(() => updateSpace(next));
     if (
+      !isAndroid() &&
       !motion.calm &&
       typeof document.startViewTransition === "function" &&
       !document.hidden
