@@ -87,5 +87,6 @@ jobs:
             artifacts/*.sha256
             artifacts/*.png
             artifacts/android-logcat.txt
+            artifacts/android-instrumentation.txt
             android/app/build/reports/
             android/app/build/outputs/androidTest-results/
