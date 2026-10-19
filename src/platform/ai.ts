@@ -4,6 +4,8 @@ import {
   aiDraftSchema,
   aiPayload,
   type AiInput,
+  type AiModelId,
+  findAiModel,
 } from "../domain/ai";
 import { connectorRequest } from "./connector";
 export const readAiStatus = async (signal?: AbortSignal) =>
@@ -18,8 +20,12 @@ export const prepareAi = async (input: AiInput, signal?: AbortSignal) => {
     );
   return quote;
 };
-export const executeAi = async (quoteId: string, signal?: AbortSignal) =>
-  aiDraftSchema.parse(
+export const executeAi = async (
+  quoteId: string,
+  signal?: AbortSignal,
+  model?: AiModelId,
+) => {
+  const draft = aiDraftSchema.parse(
     await connectorRequest(
       "ai/execute",
       { quoteId, confirmed: true },
@@ -27,3 +33,9 @@ export const executeAi = async (quoteId: string, signal?: AbortSignal) =>
       65000,
     ),
   );
+  if (model && findAiModel(draft.model)?.model !== model)
+    throw new Error(
+      "Le modèle reçu diffère de l’aperçu autorisé. Aucune adoption.",
+    );
+  return draft;
+};

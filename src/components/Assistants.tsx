@@ -670,15 +670,13 @@ export function AssistantsCenter({
                   }
                 </button>
               </div>
-              {mission.assistant === "chatgpt" && (
-                <button
-                  className="text-button"
-                  aria-label={`API OpenAI pour ${mission.title}`}
-                  onClick={() => ai(mission)}
-                >
-                  Préparer une demande API
-                </button>
-              )}
+              <button
+                className="text-button"
+                aria-label={`API ${mission.assistant === "chatgpt" ? "OpenAI" : "Anthropic"} pour ${mission.title}`}
+                onClick={() => ai(mission)}
+              >
+                Préparer une demande API
+              </button>
               <div className="between mission-actions">
                 <button
                   className="text-button"

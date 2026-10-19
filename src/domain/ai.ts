@@ -10,21 +10,92 @@ export const aiCatalog = {
   inputUsdPerMillion: 2,
   outputUsdPerMillion: 12,
   cachedInputUsdPerMillion: 0.2,
+  precautionInputUsdPerMillion: 2.5,
+  assistant: "chatgpt",
+  purpose: "Analyse et rédaction",
   reserveNanoUsd: 100000000,
 } as const;
+const anthropic = {
+  provider: "Anthropic",
+  assistant: "claude",
+  checkedOn: "2026-10-19",
+  validUntil: "2026-11-18",
+  privacySource:
+    "https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+  reserveNanoUsd: 100000000,
+} as const;
+export const aiModels = [
+  aiCatalog,
+  {
+    ...anthropic,
+    model: "claude-sonnet-5-5",
+    name: "Claude Sonnet 5.5",
+    purpose: "Analyse et rédaction",
+    source: "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+    inputUsdPerMillion: 2,
+    outputUsdPerMillion: 10,
+    cachedInputUsdPerMillion: 0.1,
+    precautionInputUsdPerMillion: 2.5,
+  },
+  {
+    ...anthropic,
+    model: "claude-haiku-5-5",
+    name: "Claude Haiku 5.5",
+    purpose: "Brouillon bref · coût réduit",
+    source: "https://platform.claude.com/docs/en/models/haiku-5-5/overview",
+    inputUsdPerMillion: 0.1,
+    outputUsdPerMillion: 0.5,
+    cachedInputUsdPerMillion: 0.01,
+    precautionInputUsdPerMillion: 0.125,
+  },
+] as const;
+export type AiModelId = (typeof aiModels)[number]["model"];
+export const aiModelSchema = z.enum([
+  "gpt-5.6-terra",
+  "claude-sonnet-5-5",
+  "claude-haiku-5-5",
+]);
+export function findAiModel(id: string) {
+  return aiModels.find(
+    (item) =>
+      id === item.model ||
+      (id.startsWith(`${item.model}-`) &&
+        /^\d{4}-?\d{2}-?\d{2}$/.test(id.slice(item.model.length + 1))),
+  );
+}
+export function aiModel(id: AiModelId) {
+  return aiModels.find((item) => item.model === id)!;
+}
 export const aiInstructions =
   "Réponds en français. Aide à réfléchir à la mission et propose un brouillon utile, avec ses limites. Tu ne disposes d’aucun outil, accès aux fichiers ou moyen d’agir. Ne prétends jamais avoir modifié, vérifié ou exécuté quelque chose. Distingue les faits fournis des hypothèses et les propositions des résultats réellement observés. La validation reste humaine.";
 export const aiInputSchema = z
   .object({
     text: z.string().trim().min(1).max(6000),
     maxOutputTokens: z.union([z.literal(256), z.literal(512), z.literal(1024)]),
+    model: aiModelSchema.default("gpt-5.6-terra"),
   })
   .strict();
-export type AiInput = z.infer<typeof aiInputSchema>;
+export type AiInput = z.input<typeof aiInputSchema>;
 export function aiPayload(input: AiInput) {
   const value = aiInputSchema.parse(input);
+  if (aiModel(value.model).provider === "Anthropic")
+    return {
+      model: value.model,
+      system: aiInstructions,
+      messages: [{ role: "user", content: value.text }],
+      max_tokens: value.maxOutputTokens,
+      thinking: {
+        type:
+          value.model === "claude-sonnet-5-5" ? "between_tools" : "disabled",
+      },
+      output_config: { effort: "low" },
+      stream: false,
+      tools: [],
+      tool_choice: { type: "none" },
+      service_tier: "standard_only",
+    };
   return {
-    model: aiCatalog.model,
+    model: value.model,
     instructions: aiInstructions,
     input: value.text,
     max_output_tokens: value.maxOutputTokens,
@@ -37,6 +108,23 @@ export function aiPayload(input: AiInput) {
     service_tier: "default",
     truncation: "disabled",
   };
+}
+export function aiCountPayload(input: AiInput) {
+  const payload = aiPayload(input);
+  return "messages" in payload
+    ? {
+        model: payload.model,
+        system: payload.system,
+        messages: payload.messages,
+        thinking: payload.thinking,
+        tools: payload.tools,
+        tool_choice: payload.tool_choice,
+      }
+    : {
+        model: payload.model,
+        instructions: payload.instructions,
+        input: payload.input,
+      };
 }
 export const aiBudgetSchema = z
   .object({
@@ -54,6 +142,9 @@ export const aiStatusSchema = z
     expiresAt: z.string().datetime().nullable(),
     budget: aiBudgetSchema.nullable(),
     catalogFresh: z.boolean(),
+    providers: z
+      .object({ OpenAI: z.boolean(), Anthropic: z.boolean() })
+      .strict(),
   })
   .strict();
 export const aiQuoteSchema = z
@@ -66,7 +157,7 @@ export const aiQuoteSchema = z
   .strict();
 export const aiDraftSchema = z
   .object({
-    responseId: z.string().regex(/^resp_[a-zA-Z0-9_-]{1,180}$/),
+    responseId: z.string().regex(/^(?:resp|msg)_[a-zA-Z0-9_-]{1,180}$/),
     model: z.string().min(1).max(120),
     receivedAt: z.string().datetime(),
     status: z.enum(["completed", "incomplete"]),

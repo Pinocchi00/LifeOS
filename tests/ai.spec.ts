@@ -18,7 +18,7 @@ const mission = {
   updatedAt: date,
   validatedAt: null,
 };
-async function setup(page: Page, origin = "/") {
+async function setup(page: Page, origin = "/", assistant = "chatgpt") {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(origin);
   await page.getByRole("button", { name: "Ouvrir les sauvegardes" }).click();
@@ -29,16 +29,16 @@ async function setup(page: Page, origin = "/") {
       JSON.stringify({
         application: "LifeOS",
         exportedAt: date,
-        data: { ...emptyData(), missions: [mission] },
+        data: { ...emptyData(), missions: [{ ...mission, assistant }] },
       }),
     ),
   });
   await page
     .getByRole("button", { name: "Confirmer le remplacement", exact: true })
     .click();
-  await open(page);
+  await open(page, assistant);
 }
-async function open(page: Page) {
+async function open(page: Page, assistant = "chatgpt") {
   await page
     .getByRole("navigation", {
       name:
@@ -52,7 +52,7 @@ async function open(page: Page) {
   await page.getByRole("button", { name: /^Missions IA/ }).click();
   await page
     .getByRole("button", {
-      name: "API OpenAI pour Demande IA fictive",
+      name: `API ${assistant === "chatgpt" ? "OpenAI" : "Anthropic"} pour Demande IA fictive`,
       exact: true,
     })
     .click();
@@ -92,7 +92,7 @@ test("consentement, vrai serveur avec fournisseur fictif, brouillon incomplet ad
     page
       .getByRole("region", { name: "Accès IA", exact: true })
       .getByRole("status"),
-  ).toContainText("0 / 2 essais");
+  ).toContainText("0 / 4 essais");
   await page
     .getByLabel("Texte à transmettre")
     .fill("Analyser uniquement ce texte explicite.");
@@ -120,10 +120,10 @@ test("consentement, vrai serveur avec fournisseur fictif, brouillon incomplet ad
   await page
     .getByText("Requête exacte préparée pour OpenAI", { exact: true })
     .click();
-  await expect(page.locator(".ai-approval pre")).toContainText(
+  await expect(page.locator(".ai-approval pre").first()).toContainText(
     '"store": false',
   );
-  await expect(page.locator(".ai-approval pre")).toContainText(
+  await expect(page.locator(".ai-approval pre").first()).toContainText(
     "Analyser uniquement ce texte explicite.",
   );
   await page.getByRole("button", { name: "Fermer", exact: true }).click();
@@ -153,6 +153,7 @@ test("consentement, vrai serveur avec fournisseur fictif, brouillon incomplet ad
   expect(body).toEqual({
     text: "Analyser uniquement ce texte explicite.",
     maxOutputTokens: 512,
+    model: "gpt-5.6-terra",
   });
   await page
     .getByRole("button", { name: "Déconnecter le serveur", exact: true })
@@ -246,6 +247,7 @@ test("serveur absent, refus après autorisation et aucun réessai implicite", as
         expiresAt: date,
         budget,
         catalogFresh: true,
+        providers: { OpenAI: true, Anthropic: false },
       },
     }),
   );
@@ -296,4 +298,199 @@ test("serveur absent, refus après autorisation et aucun réessai implicite", as
     }),
   ).toHaveCount(0);
   expect(sends).toBe(1);
+});
+
+test("Claude : choix sans réseau, consentement renouvelé, deux modèles et comptes-rendus sourcés", async ({
+  page,
+}, testInfo) => {
+  const requests: { path: string; body: string | null }[] = [];
+  page.on("request", (request) => {
+    expect(request.url()).not.toMatch(/api\.(anthropic|openai)\.com/);
+    if (request.url().includes("/api/connector/"))
+      requests.push({
+        path: new URL(request.url()).pathname,
+        body: request.postData(),
+      });
+  });
+  const origin = `http://127.0.0.1:${testInfo.project.name === "desktop" ? 4178 : 4179}`;
+  await setup(page, origin, "claude");
+  const select = page.getByLabel("Modèle pour cette demande");
+  await expect(select).toHaveValue("claude-sonnet-5-5");
+  await select.selectOption("claude-haiku-5-5");
+  expect(requests).toHaveLength(0);
+  await page
+    .getByRole("button", {
+      name: "Vérifier l’accès IA du serveur",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByLabel("Code d’appairage du terminal")
+    .fill("fixture-ai-browser-code");
+  await page
+    .getByRole("button", { name: "Appairer l’accès IA", exact: true })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Accès IA", exact: true }),
+  ).toContainText("0 / 4 essais");
+  await page
+    .getByRole("button", {
+      name: "Préparer l’aperçu sans envoyer à Anthropic",
+      exact: true,
+    })
+    .click();
+  await expect(select).toBeDisabled();
+  await page
+    .getByText("Requête exacte préparée pour Anthropic", { exact: true })
+    .click();
+  await expect(page.locator(".ai-approval pre").first()).toContainText(
+    '"model": "claude-haiku-5-5"',
+  );
+  await expect(page.locator(".ai-approval pre").first()).toContainText(
+    '"type": "disabled"',
+  );
+  await page
+    .getByRole("checkbox", { name: /J’autorise la transmission/ })
+    .check();
+  await page
+    .getByRole("button", {
+      name: "Revenir au texte, sans réessai",
+      exact: true,
+    })
+    .click();
+  await select.selectOption("claude-sonnet-5-5");
+  await page
+    .getByRole("button", {
+      name: "Préparer l’aperçu sans envoyer à Anthropic",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("checkbox", { name: /J’autorise la transmission/ }),
+  ).not.toBeChecked();
+  expect(requests.filter((item) => item.path.endsWith("execute"))).toHaveLength(
+    0,
+  );
+  await page
+    .getByRole("checkbox", { name: /J’autorise la transmission/ })
+    .check();
+  await page
+    .getByRole("button", {
+      name: "Autoriser et envoyer à Anthropic",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".ai-draft")).toContainText("claude-sonnet-5-5");
+  await expect(page.locator(".ai-draft img")).toHaveCount(0);
+  await page
+    .getByRole("button", {
+      name: "Conserver comme compte-rendu non vérifié",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".ai-draft")).toContainText("Brouillon conservé");
+  await page.getByRole("button", { name: "Fermer", exact: true }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page
+    .getByRole("button", {
+      name: "API Anthropic pour Demande IA fictive",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByLabel("Modèle pour cette demande")
+    .selectOption("claude-haiku-5-5");
+  await page
+    .getByRole("button", {
+      name: "Vérifier l’accès IA du serveur",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Accès IA", exact: true }),
+  ).toContainText("1 / 4 essais");
+  await page
+    .getByRole("button", {
+      name: "Préparer l’aperçu sans envoyer à Anthropic",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("checkbox", { name: /J’autorise la transmission/ })
+    .check();
+  await page
+    .getByRole("button", {
+      name: "Autoriser et envoyer à Anthropic",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".ai-draft")).toContainText("claude-haiku-5-5");
+  await page
+    .getByRole("button", {
+      name: "Conserver comme compte-rendu non vérifié",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".ai-draft")).toContainText("Brouillon conservé");
+  await page.getByRole("button", { name: "Fermer", exact: true }).click();
+  await page.getByRole("button", { name: "Ouvrir les sauvegardes" }).click();
+  const download = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Exporter mes données", exact: true })
+    .click();
+  const raw = await readFile((await (await download).path())!, "utf8");
+  expect(raw).not.toMatch(
+    /fixture-only-|fixture-ai-browser-code|lifeos_connector/,
+  );
+  const data = JSON.parse(raw).data;
+  expect(data.version).toBe(6);
+  expect(data.missions[0].status).toBe("review");
+  expect(data.missions[0].reports).toHaveLength(2);
+  expect(data.missions[0].reports[0].evidence).toContain("sonnet-5-5/overview");
+  expect(data.missions[0].reports[1].evidence).toContain("haiku-5-5/overview");
+  expect(requests.filter((item) => item.path.endsWith("execute"))).toHaveLength(
+    2,
+  );
+});
+
+test("Claude non configuré : modèle choisi conservé et aucun repli OpenAI", async ({
+  page,
+}) => {
+  await setup(page, "/", "claude");
+  let prepare = 0;
+  await page.route("**/api/connector/ai/prepare", (route) => {
+    prepare++;
+    return route.abort();
+  });
+  await page.route("**/api/connector/ai/status", (route) =>
+    route.fulfill({
+      json: {
+        configured: true,
+        paired: true,
+        expiresAt: date,
+        budget: null,
+        catalogFresh: true,
+        providers: { OpenAI: true, Anthropic: false },
+      },
+    }),
+  );
+  await page
+    .getByRole("button", {
+      name: "Vérifier l’accès IA du serveur",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Accès IA", exact: true }),
+  ).toContainText("Accès Anthropic désactivé");
+  await page
+    .getByLabel("Modèle pour cette demande")
+    .selectOption("claude-haiku-5-5");
+  await expect(
+    page.getByRole("button", {
+      name: "Préparer l’aperçu sans envoyer à Anthropic",
+      exact: true,
+    }),
+  ).toBeDisabled();
+  expect(prepare).toBe(0);
 });

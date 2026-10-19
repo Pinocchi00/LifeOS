@@ -1,7 +1,14 @@
 import { expect, it } from "vitest";
 import { emptyData, dataSchema, serializeBackup } from "./model";
 import { adoptAiDraft, missionAiText } from "./aiMission";
-import { aiCatalog, aiDraftSchema, aiInputSchema, aiPayload } from "./ai";
+import {
+  aiCatalog,
+  aiDraftSchema,
+  aiInputSchema,
+  aiPayload,
+  aiModels,
+  aiCountPayload,
+} from "./ai";
 const time = "2026-10-19T12:00:00Z";
 const data = () => ({
   ...emptyData(),
@@ -22,6 +29,61 @@ const data = () => ({
       validatedAt: null,
     },
   ],
+});
+it("catalogue Claude borné et paramètres propres à chaque modèle, sans outil ou cache demandé", () => {
+  expect(aiModels).toHaveLength(3);
+  for (const model of ["claude-sonnet-5-5", "claude-haiku-5-5"] as const) {
+    const input = { text: "Une analyse", maxOutputTokens: 512 as const, model };
+    expect(aiPayload(input)).toMatchObject({
+      model,
+      max_tokens: 512,
+      tools: [],
+      tool_choice: { type: "none" },
+      stream: false,
+      thinking: {
+        type: model.includes("sonnet") ? "between_tools" : "disabled",
+      },
+      output_config: { effort: "low" },
+      service_tier: "standard_only",
+    });
+    expect(aiCountPayload(input)).toMatchObject({
+      model,
+      messages: [{ role: "user", content: input.text }],
+    });
+    expect(JSON.stringify(aiPayload(input))).not.toMatch(
+      /cache_control|api_key|Authorization|FILE/,
+    );
+  }
+});
+it("brouillon Claude adopté avec source du modèle et sans modifier la validation", () => {
+  const previous = {
+    ...data(),
+    missions: [{ ...data().missions[0], assistant: "claude" as const }],
+  };
+  const result = adoptAiDraft(previous, "m", {
+    ...draft(),
+    model: "claude-haiku-5-5",
+    responseId: "msg_fixture",
+  });
+  expect(result.missions[0].reports[0].body).toContain(
+    "Anthropic · claude-haiku-5-5",
+  );
+  expect(result.missions[0].reports[0].evidence).toContain(
+    "haiku-5-5/overview",
+  );
+  expect(result.missions[0].status).toBe("review");
+  expect(result.missions[0].validatedAt).toBeNull();
+  expect(dataSchema.safeParse(result).success).toBe(true);
+});
+it("brouillons croisés, préfixe de réponse et modèle inventé refusés à l’adoption", () => {
+  for (const patch of [
+    { model: "claude-sonnet-5-5", responseId: "msg_fixture" },
+    { model: "gpt-5.6-terra", responseId: "msg_fixture" },
+    { model: "gpt-5.6-terra-other", responseId: "resp_fixture" },
+  ])
+    expect(() => adoptAiDraft(data(), "m", { ...draft(), ...patch })).toThrow(
+      "incompatible",
+    );
 });
 const draft = () =>
   aiDraftSchema.parse({

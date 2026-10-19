@@ -1,5 +1,13 @@
 # Journal des modifications
 
+## 0.12.0 — 19 octobre 2026
+
+- Connecteur Anthropic facultatif pour les missions Claude, sur le serveur local existant ; clé distincte en processus et saisie masquée OpenAI, Anthropic ou les deux.
+- Catalogue sourcé élargi à GPT-5.6 Terra, Claude Sonnet 5.5 et Claude Haiku 5.5, avec modèle choisi explicitement, paramètres et tarifs propres à chacun. Comptage et génération visibles avant accord.
+- Nouvelle autorisation après changement de modèle, fournisseur indisponible expliqué sans remplacement, réserve quotidienne commune aux fournisseurs et registre existant conservé.
+- Réponse contrôlée par modèle/fournisseur, refus et troncature Claude signalés, texte uniquement, compte-rendu lié à la source du modèle et adoption dans l’assistant correspondant.
+- Format v6 et Vie v1 conservés, aucune dépendance ajoutée, tests avec fournisseurs fictifs et scénario natif du catalogue Claude ; aucun appel payant réel.
+
 ## 0.11.0 — 19 octobre 2026
 
 - Premier connecteur OpenAI facultatif sur le serveur local : clé en processus uniquement, configuration explicite des deux limites et saisie Windows masquée.

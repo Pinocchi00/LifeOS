@@ -60,7 +60,7 @@ export class AiBudget {
           current.dailyNanoUsd
       )
         throw new Error(
-          "Limite quotidienne IA atteinte. Aucun envoi à OpenAI.",
+          "Limite quotidienne IA atteinte. Aucun envoi au fournisseur.",
         );
       this.db
         .prepare("INSERT INTO ai_attempts VALUES (?, ?, ?, 'reserved')")

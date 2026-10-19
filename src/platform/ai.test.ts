@@ -42,6 +42,29 @@ it("un aperçu altéré est refusé avant toute génération", async () => {
   await expect(prepareAi(input)).rejects.toThrow("diffère");
   expect(fetch).toHaveBeenCalledOnce();
 });
+it("changement de modèle de l’aperçu ou de la réponse refusé sans nouvel appel", async () => {
+  const claude = { ...input, model: "claude-haiku-5-5" as const };
+  vi.mocked(fetch).mockResolvedValueOnce(Response.json(quote()));
+  await expect(prepareAi(claude)).rejects.toThrow("diffère");
+  vi.mocked(fetch).mockResolvedValueOnce(
+    Response.json({
+      responseId: "msg_fixture",
+      model: "claude-sonnet-5-5",
+      receivedAt: "2026-10-19T12:00:00Z",
+      status: "completed",
+      text: "Brouillon",
+      refusal: false,
+      inputTokens: 100,
+      outputTokens: 100,
+      estimatedNanoUsd: 1250000,
+      reservedNanoUsd: 100000000,
+    }),
+  );
+  await expect(
+    executeAi("a".repeat(32), undefined, claude.model),
+  ).rejects.toThrow("diffère");
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
 it("confirmation liée au seul aperçu et aucune répétition après refus du serveur", async () => {
   vi.mocked(fetch).mockResolvedValueOnce(
     Response.json({ error: "Enveloppe conservée" }, { status: 409 }),
@@ -58,6 +81,7 @@ it("confirmation liée au seul aperçu et aucune répétition après refus du se
       expiresAt: null,
       budget: null,
       catalogFresh: true,
+      providers: { OpenAI: true, Anthropic: false },
     }),
   );
   expect((await readAiStatus()).configured).toBe(false);

@@ -3,11 +3,12 @@ import { fileURLToPath } from "node:url";
 import { connectorConfig, createConnector } from "../server/connector.mjs";
 import { aiCatalog } from "../src/domain/ai.ts";
 const servers = [];
-for (const port of [4176, 4177]) {
+for (const port of [4176, 4177, 4178, 4179]) {
   const config = connectorConfig({
     LIFEOS_OPENAI_KEY: "fixture-only-openai-key-not-real",
-    LIFEOS_AI_DAILY_USD: "0.20",
-    LIFEOS_AI_DAILY_CALLS: "2",
+    LIFEOS_ANTHROPIC_KEY: "fixture-only-anthropic-key-not-real",
+    LIFEOS_AI_DAILY_USD: "0.40",
+    LIFEOS_AI_DAILY_CALLS: "4",
   });
   const { server } = await createConnector({
     config,
@@ -15,7 +16,29 @@ for (const port of [4176, 4177]) {
     ledgerPath: ":memory:",
     distRoot: fileURLToPath(new URL("../dist", import.meta.url)),
     now: () => Date.parse("2026-10-19T12:00:00Z"),
-    upstream: async (url) => {
+    upstream: async (url, init) => {
+      if (url === "https://api.anthropic.com/v1/messages/count_tokens")
+        return Response.json({ input_tokens: 200 });
+      if (url === "https://api.anthropic.com/v1/messages")
+        return Response.json({
+          id: `msg_browser_${JSON.parse(init.body).model.replaceAll("-", "_")}`,
+          type: "message",
+          role: "assistant",
+          model: JSON.parse(init.body).model,
+          stop_reason: "end_turn",
+          content: [
+            {
+              type: "text",
+              text: "Brouillon Claude fictif <img src=x onerror=alert(1)>. Aucun travail exécuté.",
+            },
+          ],
+          usage: {
+            input_tokens: 200,
+            output_tokens: 80,
+            cache_creation_input_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+        });
       if (url === "https://api.openai.com/v1/responses/input_tokens")
         return Response.json({
           object: "response.input_tokens",

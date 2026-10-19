@@ -5,20 +5,27 @@ import {
   aiPayload,
   aiInputSchema,
   aiDraftSchema,
+  aiModels,
+  aiModel,
+  findAiModel,
+  aiCountPayload,
 } from "../src/domain/ai.ts";
 import { readGithubJson } from "../src/domain/githubWire.ts";
 import { AiBudget } from "./ai-budget.mjs";
 export function aiConfig(env) {
   const key = env.LIFEOS_OPENAI_KEY?.trim() || "";
-  if (!key) {
+  const anthropicKey = env.LIFEOS_ANTHROPIC_KEY?.trim() || "";
+  if (!key && !anthropicKey) {
     if (env.LIFEOS_AI_DAILY_USD || env.LIFEOS_AI_DAILY_CALLS)
       throw new Error(
-        "Limites IA sans clé serveur. Configurez les trois ensemble.",
+        "Limites IA sans clé serveur. Configurez une clé et les deux limites ensemble.",
       );
     return null;
   }
-  if (!/^[\x21-\x7e]{10,500}$/.test(key))
+  if (key && !/^[\x21-\x7e]{10,500}$/.test(key))
     throw new Error("Clé OpenAI serveur invalide.");
+  if (anthropicKey && !/^[\x21-\x7e]{10,500}$/.test(anthropicKey))
+    throw new Error("Clé Anthropic serveur invalide.");
   const dollars = env.LIFEOS_AI_DAILY_USD || "";
   const calls = env.LIFEOS_AI_DAILY_CALLS || "";
   if (
@@ -32,6 +39,7 @@ export function aiConfig(env) {
     );
   return {
     key,
+    anthropicKey,
     dailyNanoUsd: Math.round(Number(dollars) * 1e9),
     dailyCalls: Number(calls),
   };
@@ -47,7 +55,7 @@ const usage = z.object({
 export function projectAi(raw, maxOutput, time) {
   const response = z
     .object({
-      id: z.string(),
+      id: z.string().regex(/^resp_[a-zA-Z0-9_-]{1,180}$/),
       object: z.literal("response"),
       model: z.string(),
       status: z.enum(["completed", "incomplete"]),
@@ -55,10 +63,7 @@ export function projectAi(raw, maxOutput, time) {
       usage,
     })
     .parse(raw);
-  if (
-    response.model !== aiCatalog.model &&
-    !response.model.startsWith(`${aiCatalog.model}-`)
-  )
+  if (findAiModel(response.model)?.model !== aiCatalog.model)
     throw new Error("Modèle inattendu.");
   if (response.usage.output_tokens > maxOutput)
     throw new Error("Sortie hors limite.");
@@ -98,6 +103,66 @@ export function projectAi(raw, maxOutput, time) {
     reservedNanoUsd: aiCatalog.reserveNanoUsd,
   });
 }
+export function projectAnthropic(raw, maxOutput, time, modelId) {
+  const response = z
+    .object({
+      id: z.string().regex(/^msg_[a-zA-Z0-9_-]{1,180}$/),
+      type: z.literal("message"),
+      role: z.literal("assistant"),
+      model: z.string(),
+      stop_reason: z.enum(["end_turn", "max_tokens", "refusal"]),
+      stop_details: z.object({ type: z.string() }).nullable().optional(),
+      content: z
+        .array(
+          z
+            .object({
+              type: z.literal("text"),
+              text: z.string(),
+              citations: z.array(z.unknown()).max(0).optional(),
+            })
+            .strict(),
+        )
+        .max(30),
+      usage: usage.extend({
+        cache_creation_input_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .max(0)
+          .optional(),
+        cache_read_input_tokens: z
+          .number()
+          .int()
+          .nonnegative()
+          .max(0)
+          .optional(),
+      }),
+    })
+    .parse(raw);
+  if (
+    findAiModel(response.model)?.model !== modelId ||
+    response.usage.output_tokens > maxOutput
+  )
+    throw new Error("Modèle ou sortie incompatible.");
+  const model = aiModel(modelId);
+  return aiDraftSchema.parse({
+    responseId: response.id,
+    model: response.model,
+    receivedAt: new Date(time).toISOString(),
+    status: response.stop_reason === "max_tokens" ? "incomplete" : "completed",
+    text: response.content.map((item) => item.text).join("\n\n"),
+    refusal:
+      response.stop_reason === "refusal" ||
+      response.stop_details?.type === "refusal",
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    estimatedNanoUsd: Math.ceil(
+      response.usage.input_tokens * model.precautionInputUsdPerMillion * 1000 +
+        response.usage.output_tokens * model.outputUsdPerMillion * 1000,
+    ),
+    reservedNanoUsd: model.reserveNanoUsd,
+  });
+}
 export function createAi({
   config,
   ledgerPath,
@@ -112,8 +177,13 @@ export function createAi({
     closing = false,
     retryAt = 0;
   const fresh = () =>
-    new Date(now()).toISOString().slice(0, 10) >= aiCatalog.checkedOn &&
-    new Date(now()).toISOString().slice(0, 10) <= aiCatalog.validUntil;
+    aiModels.every(
+      (model) =>
+        new Date(now()).toISOString().slice(0, 10) >= model.checkedOn &&
+        new Date(now()).toISOString().slice(0, 10) <= model.validUntil,
+    );
+  const keyFor = (model) =>
+    model.provider === "OpenAI" ? config?.key : config?.anthropicKey;
   return {
     configured: Boolean(config),
     status(session) {
@@ -123,32 +193,44 @@ export function createAi({
         expiresAt: session ? new Date(session.expiresAt).toISOString() : null,
         budget: session && ledger ? ledger.summary(now()) : null,
         catalogFresh: fresh(),
+        providers: {
+          OpenAI: Boolean(config?.key),
+          Anthropic: Boolean(config?.anthropicKey),
+        },
       };
     },
     prepare(input, session) {
       if (now() < retryAt)
         throw new Error(
-          "OpenAI demande une attente. Réessayez plus tard ; aucun nouvel appel n’a été effectué.",
+          "Le fournisseur IA demande une attente. Réessayez plus tard ; aucun nouvel appel n’a été effectué.",
         );
       if (!config || !session || !fresh())
         throw new Error(
           "Accès IA non configuré, session absente ou catalogue à actualiser.",
         );
       const available = ledger.summary(now());
+      const value = aiInputSchema.parse(input);
+      const model = aiModel(value.model);
+      if (!keyFor(model))
+        throw new Error(
+          "Ce fournisseur n’est pas configuré. Aucun autre modèle n’est utilisé à sa place.",
+        );
       if (
         available.attempts >= available.dailyCalls ||
         available.reservedNanoUsd + aiCatalog.reserveNanoUsd >
           available.dailyNanoUsd
       )
         throw new Error(
-          "Limite quotidienne IA atteinte. Aucun envoi à OpenAI.",
+          "Limite quotidienne IA atteinte. Aucun envoi au fournisseur.",
         );
       clearTimeout(quoteTimer);
-      const payload = aiPayload(aiInputSchema.parse(input));
+      const payload = aiPayload(value);
       quote = {
         id: randomBytes(16).toString("hex"),
         expiresAt: now() + 120000,
         payload,
+        input: value,
+        model,
         session,
       };
       quoteTimer = setTimeout(() => {
@@ -182,6 +264,8 @@ export function createAi({
           "Autorisation absente, expirée, remplacée ou envoi déjà lancé. Préparez un nouvel aperçu.",
         );
       const chosen = quote;
+      const key = keyFor(chosen.model);
+      if (!key) throw new Error("Fournisseur non configuré.");
       clearTimeout(quoteTimer);
       quote = null;
       ledger.reserve(chosen.id, now());
@@ -204,10 +288,13 @@ export function createAi({
             "Envoi interrompu ou session expirée. Une facturation reste possible ; l’enveloppe est conservée.",
           );
       };
-      async function call(path, payload) {
+      const isAnthropic = chosen.model.provider === "Anthropic";
+      async function call(counting, payload) {
         check();
         const response = await upstream(
-          `https://api.openai.com/v1/responses${path}`,
+          isAnthropic
+            ? `https://api.anthropic.com/v1/messages${counting ? "/count_tokens" : ""}`
+            : `https://api.openai.com/v1/responses${counting ? "/input_tokens" : ""}`,
           {
             method: "POST",
             credentials: "omit",
@@ -215,7 +302,9 @@ export function createAi({
             cache: "no-store",
             signal: controller.signal,
             headers: {
-              Authorization: `Bearer ${config.key}`,
+              ...(isAnthropic
+                ? { "x-api-key": key, "anthropic-version": "2023-06-01" }
+                : { Authorization: `Bearer ${key}` }),
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
@@ -229,33 +318,45 @@ export function createAi({
           }
           await response.body?.cancel();
           throw new Error(
-            "OpenAI refuse l’appel ou est indisponible. Aucun réessai automatique ; l’enveloppe reste réservée.",
+            "Le fournisseur refuse l’appel ou est indisponible. Aucun réessai automatique ; l’enveloppe reste réservée.",
           );
         }
         return readGithubJson(response);
       }
       try {
-        const { model, instructions, input } = chosen.payload;
-        const count = tokenCount.parse(
-          await call("/input_tokens", { model, instructions, input }),
-        );
+        const count = (
+          isAnthropic ? tokenCount.omit({ object: true }) : tokenCount
+        ).parse(await call(true, aiCountPayload(chosen.input)));
         check();
         if (
-          count.input_tokens * 2500 + chosen.payload.max_output_tokens * 12000 >
-          aiCatalog.reserveNanoUsd
+          count.input_tokens *
+            chosen.model.precautionInputUsdPerMillion *
+            1000 +
+            chosen.input.maxOutputTokens *
+              chosen.model.outputUsdPerMillion *
+              1000 >
+          chosen.model.reserveNanoUsd
         )
           throw new Error(
             "Coût de précaution supérieur à l’enveloppe. Génération refusée.",
           );
-        const result = projectAi(
-          await call("", chosen.payload),
-          chosen.payload.max_output_tokens,
-          now(),
-        );
+        const raw = await call(false, chosen.payload);
+        const result = isAnthropic
+          ? projectAnthropic(
+              raw,
+              chosen.input.maxOutputTokens,
+              now(),
+              chosen.model.model,
+            )
+          : projectAi(raw, chosen.input.maxOutputTokens, now());
         check();
         if (
           Object.values(result).some(
-            (value) => typeof value === "string" && value.includes(config.key),
+            (value) =>
+              typeof value === "string" &&
+              [config.key, config.anthropicKey]
+                .filter(Boolean)
+                .some((secret) => value.includes(secret)),
           )
         )
           throw new Error("Contenu confidentiel refusé.");
@@ -276,7 +377,7 @@ export function createAi({
         // Never forward provider errors, response bodies or payloads.
         if (error instanceof z.ZodError)
           throw new Error(
-            "Réponse OpenAI incompatible. Aucune adoption ; l’enveloppe reste réservée.",
+            "Réponse IA incompatible. Aucune adoption ; l’enveloppe reste réservée.",
           );
         throw new Error(
           "Appel IA interrompu, refusé ou réponse incompatible. Une facturation reste possible ; l’enveloppe reste réservée. Aucun réessai automatique.",

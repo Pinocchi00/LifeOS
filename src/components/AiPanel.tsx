@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { aiCatalog, aiInputSchema, usd, type AiDraft } from "../domain/ai";
+import {
+  aiModel,
+  aiModels,
+  aiCountPayload,
+  aiInputSchema,
+  usd,
+  type AiDraft,
+  type AiModelId,
+} from "../domain/ai";
 import type { Data } from "../domain/model";
 import { missionAiText, adoptAiDraft } from "../domain/aiMission";
 import { readAiStatus, prepareAi, executeAi } from "../platform/ai";
@@ -20,6 +28,11 @@ export function AiPanel({
   dirty: (value: boolean) => void;
 }) {
   const mission = data.missions.find((item) => item.id === missionId);
+  const [modelId, setModelId] = useState<AiModelId>(
+    mission?.assistant === "claude" ? "claude-sonnet-5-5" : "gpt-5.6-terra",
+  );
+  const model = aiModel(modelId);
+  const provider = model.provider;
   const [text, setText] = useState(mission ? missionAiText(mission) : "");
   const [maxOutputTokens, setMax] = useState<256 | 512 | 1024>(512);
   const [status, setStatus] = useState<Awaited<
@@ -73,10 +86,14 @@ export function AiPanel({
         if (!quote || !approved || attempted) return;
         setAttempted(true);
         dirty(true);
-        const result = await executeAi(quote.id, controller.signal);
+        const result = await executeAi(quote.id, controller.signal, modelId);
         if (mounted.current) setDraft(result);
       } else if (kind === "prepare") {
-        const parsed = aiInputSchema.safeParse({ text, maxOutputTokens });
+        const parsed = aiInputSchema.safeParse({
+          text,
+          maxOutputTokens,
+          model: modelId,
+        });
         if (!parsed.success)
           throw new Error(
             "Gardez une demande de 1 à 6 000 caractères et une limite de sortie proposée.",
@@ -117,44 +134,64 @@ export function AiPanel({
       request.current = null;
     }
   }
-  if (!mission || mission.assistant !== "chatgpt")
-    return <p className="form">Cette mission OpenAI n’est plus disponible.</p>;
+  if (!mission)
+    return <p className="form">Cette mission IA n’est plus disponible.</p>;
   return (
     <div className="ai-panel">
-      <p className="eyebrow">OPENAI / UN BROUILLON, PUIS VOTRE JUGEMENT</p>
+      <p className="eyebrow">
+        {provider.toUpperCase()} / UN BROUILLON, PUIS VOTRE JUGEMENT
+      </p>
       <h3>{mission.title}</h3>
       <p>
         Préparez une demande, relisez exactement ce qui partira, puis autorisez
         l’envoi. Aucun fichier, historique, lien GitHub ou suivi Vie n’est joint
         automatiquement.
       </p>
+      <label>
+        Modèle pour cette demande
+        <select
+          value={modelId}
+          disabled={!!busy || !!quote || Boolean(draft && !saved)}
+          onChange={(event) => {
+            setModelId(event.target.value as AiModelId);
+            setApproved(false);
+            setModified(true);
+            dirty(true);
+          }}
+        >
+          {aiModels
+            .filter((item) => item.assistant === mission.assistant)
+            .map((item) => (
+              <option key={item.model} value={item.model}>
+                {item.name} · {item.purpose}
+              </option>
+            ))}
+        </select>
+      </label>
       <details className="ai-catalog">
-        <summary>{aiCatalog.name} · tarifs et confidentialité</summary>
+        <summary>{model.name} · tarifs et confidentialité</summary>
         <p>
-          Catalogue vérifié le {aiCatalog.checkedOn}, utilisable jusqu’au{" "}
-          {aiCatalog.validUntil}. Tarif standard :{" "}
-          {aiCatalog.inputUsdPerMillion} USD par million de jetons en entrée et{" "}
-          {aiCatalog.outputUsdPerMillion} USD en sortie. Les écritures de cache
-          peuvent majorer l’entrée : l’estimation applique 2,50 USD par million.
-          Montants en USD, hors taxes et évolution des prix.
+          Catalogue vérifié le {model.checkedOn}, utilisable jusqu’au{" "}
+          {model.validUntil}. Tarif standard : {model.inputUsdPerMillion} USD
+          par million de jetons en entrée et {model.outputUsdPerMillion} USD en
+          sortie. L’estimation de précaution applique{" "}
+          {model.precautionInputUsdPerMillion} USD par million en entrée.
+          Montants en USD, hors taxes et évolution des prix. La limite de 20 000
+          jetons d’entrée garde Haiku sous son palier de 100 000 jetons.
         </p>
-        <a href={aiCatalog.source} target="_blank" rel="noopener noreferrer">
+        <a href={model.source} target="_blank" rel="noopener noreferrer">
           Modèle et tarifs officiels
         </a>
         <p>
-          Le texte sera transmis à OpenAI pour comptage puis génération,
-          seulement après confirmation. Conservation de réponse désactivée avec
-          store: false ; cela ne garantit pas une absence de rétention chez le
-          fournisseur. Les journaux de surveillance peuvent être conservés
-          jusqu’à 30 jours selon le compte. Ne transmettez pas de secret ou de
-          donnée sensible.
+          Le texte sera transmis à {provider} pour comptage puis génération,
+          seulement après confirmation.{" "}
+          {provider === "OpenAI"
+            ? "Conservation de réponse désactivée avec store: false ; les journaux peuvent être conservés jusqu’à 30 jours selon le compte."
+            : "La politique API prévoit une suppression sous 30 jours, avec exceptions contractuelles, de sécurité ou légales ; aucun paramètre de cette demande ne garantit une rétention nulle."}{" "}
+          Ne transmettez pas de secret ou de donnée sensible.
         </p>
-        <a
-          href={aiCatalog.privacySource}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Politique de données OpenAI
+        <a href={model.privacySource} target="_blank" rel="noopener noreferrer">
+          Politique de données {provider}
         </a>
       </details>
       {!supportsConnector() ? (
@@ -189,14 +226,14 @@ export function AiPanel({
                 </p>
               </>
             )}
-            {status && !status.configured && (
+            {status && !status.providers[provider] && (
               <p>
-                Accès IA désactivé. Configurez la clé et les limites côté
-                serveur avec <code>npm run connector:ai-setup</code>. Guide :
-                docs/API-IA.md.
+                Accès {provider} désactivé. Configurez la clé et les limites
+                côté serveur avec <code>npm run connector:ai-setup</code>. Guide
+                : docs/API-IA.md.
               </p>
             )}
-            {status?.configured && !status.paired && (
+            {status?.providers[provider] && !status.paired && (
               <div className="ai-pair">
                 <label>
                   Code d’appairage du terminal
@@ -272,14 +309,14 @@ export function AiPanel({
               disabled={
                 !!busy ||
                 !status?.paired ||
-                !status.configured ||
+                !status.providers[provider] ||
                 !status.catalogFresh ||
                 !text.trim() ||
                 (Boolean(draft) && !saved)
               }
               onClick={() => void action("prepare")}
             >
-              Préparer l’aperçu sans envoyer à OpenAI
+              Préparer l’aperçu sans envoyer à {provider}
             </button>
           )}
           {quote && (
@@ -302,29 +339,45 @@ export function AiPanel({
                 <>
                   <h3>Relire, puis autoriser</h3>
                   <p>
-                    Le texte et les consignes quitteront LifeOS. OpenAI peut
-                    conserver des journaux jusqu’à 30 jours selon les contrôles
-                    du compte ; les détails figurent dans la politique de
-                    données ci-dessus.
+                    Le texte et les consignes seront transmis à {provider}, avec{" "}
+                    {model.name}. Le fournisseur peut les conserver selon sa
+                    politique de données ci-dessus ; cet envoi ne garantit pas
+                    une rétention nulle.
                   </p>
                   <p>
                     Cet aperçu expire à{" "}
                     {new Date(quote.expiresAt).toLocaleTimeString("fr-FR")}.
                     Enveloppe de précaution :{" "}
-                    <strong>{usd(aiCatalog.reserveNanoUsd)}</strong> par essai,
+                    <strong>{usd(model.reserveNanoUsd)}</strong> par essai,
                     conservée dans la limite quotidienne même après erreur ou
                     annulation. Ce n’est pas le prix facturé. Le comptage
                     précède la génération et peut la bloquer.
                   </p>
                   <details>
-                    <summary>Requête exacte préparée pour OpenAI</summary>
+                    <summary>Requête exacte préparée pour {provider}</summary>
                     <pre>{JSON.stringify(quote.payload, null, 2)}</pre>
                   </details>
+                  <details>
+                    <summary>Requête de comptage avant génération</summary>
+                    <pre>
+                      {JSON.stringify(
+                        aiCountPayload({
+                          text,
+                          maxOutputTokens,
+                          model: modelId,
+                        }),
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </details>
                   <p className="small">
-                    Le serveur envoie d’abord le modèle, les consignes et le
-                    texte à /responses/input_tokens, puis cette requête à
-                    /responses. Aucun outil, fichier ou accès Web n’est activé.
-                    Une réponse peut être incomplète.
+                    Le serveur contacte{" "}
+                    {provider === "OpenAI"
+                      ? "api.openai.com : /v1/responses/input_tokens puis /v1/responses"
+                      : "api.anthropic.com : /v1/messages/count_tokens puis /v1/messages"}
+                    . Aucun outil, fichier ou accès Web n’est activé. Une
+                    réponse peut être incomplète.
                   </p>
                   {!attempted && (
                     <label className="ai-consent">
@@ -334,8 +387,8 @@ export function AiPanel({
                         disabled={!!busy}
                         onChange={(event) => setApproved(event.target.checked)}
                       />
-                      J’autorise la transmission à OpenAI et une enveloppe de
-                      0,10 USD pour cet essai.
+                      J’autorise la transmission à {provider} et une enveloppe
+                      de 0,10 USD pour cet essai.
                     </label>
                   )}
                   {!attempted && (
@@ -344,7 +397,7 @@ export function AiPanel({
                       disabled={!!busy || !approved}
                       onClick={() => void action("send")}
                     >
-                      Autoriser et envoyer à OpenAI
+                      Autoriser et envoyer à {provider}
                     </button>
                   )}
                 </>

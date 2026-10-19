@@ -22,7 +22,7 @@ try {
         : "Connecteurs désactivés : configurez les accès facultatifs côté serveur.",
     );
     console.log(
-      "Arrêt : Ctrl+C. Le jeton fournisseur ne quitte pas ce processus.",
+      "Arrêt : Ctrl+C. Les clés fournisseur restent dans ce processus.",
     );
   });
   const stop = () => {

@@ -5,10 +5,26 @@ import { join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { createConnector, connectorConfig } from "./connector.mjs";
 import { AiBudget } from "./ai-budget.mjs";
-import { aiConfig, projectAi } from "./ai.mjs";
-import { aiCatalog, aiInstructions } from "../src/domain/ai.ts";
+import { aiConfig, projectAi, projectAnthropic } from "./ai.mjs";
+import { aiCatalog, aiInstructions, aiCountPayload } from "../src/domain/ai.ts";
 const KEY = "fixture-openai-provider-key-not-real";
 const CODE = "fixture-ai-code";
+const ANTHROPIC_KEY = "fixture-anthropic-key-not-real";
+const claudeResponse = (model = "claude-sonnet-5-5", patch = {}) => ({
+  id: "msg_fixture",
+  type: "message",
+  role: "assistant",
+  model,
+  stop_reason: "end_turn",
+  content: [{ type: "text", text: "Une proposition Claude fictive." }],
+  usage: {
+    input_tokens: 150,
+    output_tokens: 100,
+    cache_creation_input_tokens: 0,
+    cache_read_input_tokens: 0,
+  },
+  ...patch,
+});
 const input = {
   text: "Une mission fictive à analyser. Éviter les faits inventés.",
   maxOutputTokens: 512,
@@ -60,6 +76,10 @@ async function start(options = {}) {
     options.upstream ||
     (async (url, init) => {
       calls.push({ url, init });
+      if (url === "https://api.anthropic.com/v1/messages/count_tokens")
+        return Response.json({ input_tokens: 150 });
+      if (url === "https://api.anthropic.com/v1/messages")
+        return Response.json(claudeResponse(JSON.parse(init.body).model));
       return Response.json(
         url.endsWith("/input_tokens")
           ? { object: "response.input_tokens", input_tokens: 150 }
@@ -116,6 +136,264 @@ async function start(options = {}) {
     advance: (ms) => (clock += ms),
   };
 }
+
+test("configuration Anthropic seule ou avec OpenAI, mêmes limites obligatoires", () => {
+  const env = {
+    LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY,
+    LIFEOS_AI_DAILY_USD: "0.20",
+    LIFEOS_AI_DAILY_CALLS: "2",
+  };
+  assert.equal(aiConfig(env).key, "");
+  assert.equal(aiConfig(env).anthropicKey, ANTHROPIC_KEY);
+  assert.equal(aiConfig({ ...env, LIFEOS_OPENAI_KEY: KEY }).dailyCalls, 2);
+  for (const patch of [
+    { LIFEOS_AI_DAILY_CALLS: "" },
+    { LIFEOS_ANTHROPIC_KEY: "bad\nkey" },
+  ])
+    assert.throws(() => aiConfig({ ...env, ...patch }));
+});
+for (const model of ["claude-sonnet-5-5", "claude-haiku-5-5"]) {
+  test(`${model} : aperçu sans fournisseur, comptage puis requête exacte, clé et modèle isolés`, async () => {
+    const f = await start({
+      env: { LIFEOS_OPENAI_KEY: "", LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY },
+    });
+    const status = await (await f.api("ai/status")).json();
+    assert.deepEqual(status.providers, { OpenAI: false, Anthropic: true });
+    await f.pair();
+    const value = { ...input, model };
+    const quote = await f.prepare(value);
+    assert.equal(f.calls.length, 0);
+    assert.equal(
+      quote.payload.thinking.type,
+      model.includes("sonnet") ? "between_tools" : "disabled",
+    );
+    assert.equal(quote.payload.tool_choice.type, "none");
+    assert.equal(quote.payload.service_tier, "standard_only");
+    const reply = await f.execute(quote.id);
+    assert.equal(reply.status, 200);
+    const draft = await reply.json();
+    assert.equal(draft.model, model);
+    assert.equal(draft.responseId, "msg_fixture");
+    assert.equal(
+      draft.estimatedNanoUsd,
+      model.includes("sonnet") ? 1375000 : 68750,
+    );
+    assert.deepEqual(
+      f.calls.map((call) => call.url),
+      [
+        "https://api.anthropic.com/v1/messages/count_tokens",
+        "https://api.anthropic.com/v1/messages",
+      ],
+    );
+    assert.deepEqual(JSON.parse(f.calls[0].init.body), aiCountPayload(value));
+    assert.deepEqual(JSON.parse(f.calls[1].init.body), quote.payload);
+    for (const call of f.calls) {
+      assert.equal(call.init.headers["x-api-key"], ANTHROPIC_KEY);
+      assert.equal(call.init.headers["anthropic-version"], "2023-06-01");
+      assert.equal(call.init.headers.Authorization, undefined);
+      assert.equal(call.init.redirect, "error");
+      assert.equal(call.init.credentials, "omit");
+    }
+    assert.equal((await f.execute(quote.id)).status, 409);
+    assert.equal(f.calls.length, 2);
+    const bytes = await readFile(f.ledgerPath);
+    assert.ok(!bytes.includes(Buffer.from(ANTHROPIC_KEY)));
+    assert.ok(!bytes.includes(Buffer.from(input.text)));
+  });
+}
+test("fournisseur absent et modèle arbitraire refusés sans remplacement automatique", async () => {
+  const f = await start();
+  await f.pair();
+  for (const model of [
+    "claude-sonnet-5-5",
+    "claude-haiku-5-5",
+    "https://evil.invalid",
+    "other",
+  ])
+    assert.equal((await f.api("ai/prepare", { ...input, model })).status, 409);
+  assert.equal(f.calls.length, 0);
+});
+test("changement de modèle invalide l’ancienne autorisation ; budget partagé entre fournisseurs", async () => {
+  const f = await start({ env: { LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY } });
+  await f.pair();
+  const old = await f.prepare();
+  const sonnet = await f.prepare({ ...input, model: "claude-sonnet-5-5" });
+  assert.equal((await f.execute(old.id)).status, 409);
+  assert.equal(f.calls.length, 0);
+  assert.equal((await f.execute(sonnet.id)).status, 200);
+  const openai = await f.prepare();
+  assert.equal((await f.execute(openai.id)).status, 200);
+  assert.equal(
+    (await f.api("ai/prepare", { ...input, model: "claude-haiku-5-5" })).status,
+    409,
+  );
+  assert.equal(f.calls.length, 4);
+  const status = await (await f.api("ai/status")).json();
+  assert.equal(status.budget.attempts, 2);
+  assert.equal(status.budget.reservedNanoUsd, 200000000);
+});
+test("Claude : refus et limite de sortie signalés sans confondre validation et réception", () => {
+  for (const reason of ["refusal", "max_tokens"]) {
+    const draft = projectAnthropic(
+      claudeResponse("claude-haiku-5-5", { stop_reason: reason }),
+      512,
+      Date.now(),
+      "claude-haiku-5-5",
+    );
+    assert.equal(draft.refusal, reason === "refusal");
+    assert.equal(
+      draft.status,
+      reason === "max_tokens" ? "incomplete" : "completed",
+    );
+  }
+  assert.equal(
+    projectAnthropic(
+      claudeResponse("claude-sonnet-5-5", {
+        stop_details: { type: "refusal", explanation: "Fixture" },
+      }),
+      512,
+      Date.now(),
+      "claude-sonnet-5-5",
+    ).refusal,
+    true,
+  );
+});
+test("Claude : attente 429 bloque tout nouvel appel et garde la réserve commune", async () => {
+  let calls = 0;
+  const f = await start({
+    env: { LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY },
+    upstream: async () => {
+      calls++;
+      return Response.json(
+        { error: ANTHROPIC_KEY },
+        { status: 429, headers: { "Retry-After": "30" } },
+      );
+    },
+  });
+  await f.pair();
+  const q = await f.prepare({ ...input, model: "claude-sonnet-5-5" });
+  const r = await f.execute(q.id);
+  assert.equal(r.status, 409);
+  assert.ok(!(await r.text()).includes(ANTHROPIC_KEY));
+  assert.equal((await f.api("ai/prepare", input)).status, 409);
+  assert.equal(calls, 1);
+  assert.equal((await (await f.api("ai/status")).json()).budget.attempts, 1);
+});
+test("Claude : déconnexion interrompt le fournisseur sans relance et conserve la réserve", async () => {
+  let begin;
+  const begun = new Promise((resolve) => {
+    begin = resolve;
+  });
+  let stopped = false,
+    calls = 0;
+  const f = await start({
+    env: { LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY },
+    upstream: async (_url, init) => {
+      calls++;
+      begin();
+      return new Promise((_resolve, reject) =>
+        init.signal.addEventListener(
+          "abort",
+          () => {
+            stopped = true;
+            reject(new Error(ANTHROPIC_KEY));
+          },
+          { once: true },
+        ),
+      );
+    },
+  });
+  await f.pair();
+  const q = await f.prepare({ ...input, model: "claude-sonnet-5-5" });
+  const pending = f.execute(q.id);
+  await begun;
+  assert.equal((await f.api("logout", {})).status, 200);
+  const result = await pending;
+  assert.equal(result.status, 409);
+  assert.equal(stopped, true);
+  assert.equal(calls, 1);
+  const db = new AiBudget(f.ledgerPath, f.config.ai);
+  try {
+    assert.equal(
+      db.summary(Date.parse("2026-10-19T12:00:00Z")).reservedNanoUsd,
+      100000000,
+    );
+  } finally {
+    db.close();
+  }
+});
+test("Claude : modèle, outils, cache inattendu, raisonnement, usage et forme incompatibles refusés", () => {
+  for (const patch of [
+    { model: "claude-haiku-5-5" },
+    { model: "claude-sonnet-5-5-untrusted" },
+    { id: "resp_wrong" },
+    { stop_reason: "tool_use" },
+    { stop_reason: "pause_turn" },
+    { role: "user" },
+    { content: [] },
+    { content: [{ type: "tool_use", name: "bad" }] },
+    { content: [{ type: "thinking", thinking: "not an answer" }] },
+    { usage: { input_tokens: 20001, output_tokens: 10 } },
+    { usage: { input_tokens: 10, output_tokens: 513 } },
+    {
+      usage: {
+        input_tokens: 10,
+        output_tokens: 10,
+        cache_read_input_tokens: 100,
+      },
+    },
+    { content: [{ type: "text", text: "x".repeat(8001) }] },
+  ])
+    assert.throws(() =>
+      projectAnthropic(
+        claudeResponse("claude-sonnet-5-5", patch),
+        512,
+        Date.now(),
+        "claude-sonnet-5-5",
+      ),
+    );
+});
+test("Claude : comptage hors limite empêche la génération et conserve la réserve", async () => {
+  let calls = 0;
+  const f = await start({
+    env: { LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY },
+    upstream: async () => {
+      calls++;
+      return Response.json({ input_tokens: 20001 });
+    },
+  });
+  await f.pair();
+  const q = await f.prepare({ ...input, model: "claude-haiku-5-5" });
+  assert.equal((await f.execute(q.id)).status, 409);
+  assert.equal(calls, 1);
+  assert.equal((await (await f.api("ai/status")).json()).budget.attempts, 1);
+});
+test("Claude : erreurs et réponses avec une des clés sont filtrées sans reprise OpenAI", async () => {
+  for (const secret of [KEY, ANTHROPIC_KEY]) {
+    let calls = 0;
+    const f = await start({
+      env: { LIFEOS_ANTHROPIC_KEY: ANTHROPIC_KEY },
+      upstream: async (url) => {
+        calls++;
+        return Response.json(
+          url.endsWith("/count_tokens")
+            ? { input_tokens: 150 }
+            : claudeResponse("claude-sonnet-5-5", {
+                content: [{ type: "text", text: secret }],
+              }),
+        );
+      },
+    });
+    await f.pair();
+    const q = await f.prepare({ ...input, model: "claude-sonnet-5-5" });
+    const r = await f.execute(q.id);
+    assert.equal(r.status, 409);
+    assert.ok(!(await r.text()).includes(secret));
+    assert.equal(calls, 2);
+    assert.equal((await f.execute(q.id)).status, 409);
+    assert.equal(calls, 2);
+  }
+});
 test("configuration IA explicite, clé et deux limites obligatoires", () => {
   assert.equal(aiConfig({}), null);
   for (const env of [
