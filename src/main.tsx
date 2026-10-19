@@ -6,6 +6,7 @@ import "./styles.css";
 import "./zen.css";
 import "./ecobrutalism.css";
 import "./living-garden.css";
+import "./planning.css";
 
 startWorker();
 ReactDOM.createRoot(document.getElementById("root")!).render(

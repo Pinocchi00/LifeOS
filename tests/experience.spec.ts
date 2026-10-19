@@ -1,9 +1,4 @@
 import { expect, test, type Page } from "@playwright/test";
-test.use({
-  launchOptions: {
-    args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
-  },
-});
 async function home(page: Page) {
   await page.goto("/");
   await expect(
@@ -81,7 +76,7 @@ test("concentration, passage à la suite, annulation et accès directs", async (
   ).toBeFocused();
   await nav(page).getByRole("button", { name: "Accueil", exact: true }).click();
   await page
-    .getByRole("group", { name: "Terrasses du jardin" })
+    .getByRole("group", { name: "Espaces du jardin" })
     .getByRole("button", { name: /Projets/ })
     .click();
   await page
@@ -128,11 +123,7 @@ test("préférence calme persistante et priorité à la réduction du mouvement 
   });
   await home(page);
   await expect(page.locator("html")).toHaveAttribute("data-motion", "calm");
-  await expect(page.locator(".garden-stage")).toHaveAttribute(
-    "data-scene-state",
-    "photo",
-  );
-  await expect(page.locator(".garden-canvas canvas")).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(0);
   await page
     .getByRole("button", {
       name: "Suivre les préférences d’animation de l’appareil",
@@ -156,173 +147,40 @@ test("préférence calme persistante et priorité à la réduction du mouvement 
     )
     .toBe("none");
 });
-test("vraie 3D, rendu au repos, cache hors ligne et libération à la navigation", async ({
+test("jardin illustré sans moteur 3D, commandes et image hors ligne", async ({
   page,
   context,
 }) => {
-  test.setTimeout(45000);
-  await page.addInitScript(() => localStorage.setItem("lifeos-motion", "calm"));
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
   await home(page);
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Explorer en 3D" }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("group", { name: "Espaces du jardin" })
+    .getByRole("button", { name: "Assistants" })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Votre prochaine action" }),
+  ).toContainText("Préparer une mission");
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
   await expect
     .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
     .toBe(true);
-  expect(
-    await page.evaluate(async () => {
-      const names = await caches.keys();
-      const urls = (
-        await Promise.all(
-          names.map(async (name) =>
-            (await (await caches.open(name)).keys()).map(
-              (request) => request.url,
-            ),
-          ),
-        )
-      ).flat();
-      return urls.some((url) => url.includes("gardenScene-"));
-    }),
-  ).toBe(false);
-  await page
-    .getByRole("button", { name: "Explorer en 3D", exact: true })
-    .click();
-  await expect(page.locator(".garden-stage")).toHaveAttribute(
-    "data-scene-state",
-    "ready",
-    { timeout: 15000 },
-  );
-  await expect(page.locator(".garden-canvas canvas")).toHaveCount(1);
-  await expect
-    .poll(() => page.locator(".garden-canvas").getAttribute("data-frames"))
-    .not.toBeNull();
-  const frames = await page
-    .locator(".garden-canvas")
-    .getAttribute("data-frames");
-  await page.waitForTimeout(350);
-  expect(await page.locator(".garden-canvas").getAttribute("data-frames")).toBe(
-    frames,
-  );
-  await page
-    .getByRole("group", { name: "Terrasses du jardin" })
-    .getByRole("button", { name: /Assistants/ })
-    .click();
-  await expect(
-    page.getByRole("region", { name: "Votre prochaine action" }),
-  ).toContainText("Préparer une mission");
-  await expect
-    .poll(async () =>
-      Number(await page.locator(".garden-canvas").getAttribute("data-frames")),
-    )
-    .toBeGreaterThan(Number(frames));
-  expect(
-    Number(
-      await page.locator(".garden-canvas").getAttribute("data-draw-calls"),
-    ),
-  ).toBeLessThan(50);
-  const pixelBudget = await page
-    .locator(".garden-canvas canvas")
-    .evaluate((canvas: HTMLCanvasElement) => ({
-      pixels: canvas.width,
-      logical: canvas.getBoundingClientRect().width,
-    }));
-  expect(pixelBudget.pixels).toBeLessThanOrEqual(pixelBudget.logical * 1.5 + 1);
-  await page
-    .getByRole("button", {
-      name: "Suivre les préférences d’animation de l’appareil",
-    })
-    .click();
-  await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
-  await expect(async () => {
-    const before = await page
-      .locator(".garden-canvas")
-      .getAttribute("data-frames");
-    await page.waitForTimeout(400);
-    expect(
-      await page.locator(".garden-canvas").getAttribute("data-frames"),
-    ).toBe(before);
-  }).toPass({ timeout: 12000 });
-  if (test.info().project.name === "desktop") {
-    const before = Number(
-      await page.locator(".garden-canvas").getAttribute("data-frames"),
-    );
-    const bounds = (await page.locator(".garden-canvas canvas").boundingBox())!;
-    await page.mouse.move(
-      bounds.x + bounds.width * 0.85,
-      bounds.y + bounds.height * 0.4,
-    );
-    await expect
-      .poll(async () =>
-        Number(
-          await page.locator(".garden-canvas").getAttribute("data-frames"),
-        ),
-      )
-      .toBeGreaterThan(before);
-    await expect(async () => {
-      const current = await page
-        .locator(".garden-canvas")
-        .getAttribute("data-frames");
-      await page.waitForTimeout(400);
-      expect(
-        await page.locator(".garden-canvas").getAttribute("data-frames"),
-      ).toBe(current);
-    }).toPass({ timeout: 10000 });
-  }
-  await expect
-    .poll(() =>
-      page.evaluate(async () => {
-        const cache = await caches.open("lifeos-relief");
-        return (await cache.keys()).some((request) =>
-          request.url.includes("gardenScene-"),
-        );
-      }),
-    )
-    .toBe(true);
   await context.setOffline(true);
   await page.reload();
-  await page
-    .getByRole("button", { name: "Explorer en 3D", exact: true })
-    .click();
-  await expect(page.locator(".garden-stage")).toHaveAttribute(
-    "data-scene-state",
-    "ready",
-    { timeout: 15000 },
-  );
-  await nav(page).getByRole("button", { name: "Agenda", exact: true }).click();
-  await expect(page.locator(".garden-canvas canvas")).toHaveCount(0);
-});
-test("sans WebGL, le visuel et les commandes restent utilisables", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.addInitScript(
-    `const getContext=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(...args){if(args[0]==='webgl2')return null;return getContext.apply(this,args);};`,
-  );
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await home(page);
-  await page
-    .getByRole("button", { name: "Explorer en 3D", exact: true })
-    .click();
-  await expect(page.locator(".garden-stage")).toHaveAttribute(
-    "data-scene-state",
-    "fallback",
-  );
-  await expect(
-    page.getByText("Le jardin reste accessible en image."),
-  ).toBeVisible();
-  await page
-    .getByRole("group", { name: "Terrasses du jardin" })
-    .getByRole("button", { name: /Projets/ })
-    .click();
-  await page
-    .getByRole("button", { name: "Créer un projet", exact: true })
-    .click();
-  await page.getByLabel("Nom du projet").fill("Projet sans relief");
-  await page.getByRole("button", { name: "Enregistrer le projet" }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Projet sans relief", exact: true }),
-  ).toBeVisible();
-  expect(errors).toEqual([]);
+  await expect
+    .poll(() =>
+      page
+        .locator(".garden-stage img")
+        .evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+    )
+    .toBe(true);
+  expect(requests.some((url) => /gardenScene|three\./.test(url))).toBe(false);
 });

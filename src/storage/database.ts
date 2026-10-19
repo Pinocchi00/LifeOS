@@ -18,7 +18,8 @@ export async function readData(): Promise<Data> {
     const value = await db.get("state", "current");
     if (value === undefined) return emptyData();
     const migrated = storedDataSchema.parse(value);
-    if (value.version === 1) await db.put("state", migrated, "current");
+    if (value.version !== migrated.version)
+      await db.put("state", migrated, "current");
     return migrated;
   } finally {
     db.close();

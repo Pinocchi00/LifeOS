@@ -1,5 +1,16 @@
 # Journal des modifications
 
+## 0.4.0 — 19 octobre 2026
+
+- Suppression de la scène WebGL, de Three.js, de ses types et du cache optionnel. Le jardin original, les actions contextuelles et les transitions légères restent présents.
+- Agenda semaine/mois, sélection de jour, programme chronologique et navigation directe par date.
+- Créneaux jour/heure/durée indépendants des échéances ; replanification par formulaire et retrait du créneau sans suppression de la tâche.
+- Détection des chevauchements et calcul du temps réservé sans double comptage, sur les engagements non terminés.
+- Routines hebdomadaires datées, pause, réalisation/réouverture par jour et historique conservant les informations réellement enregistrées. Aucune tâche récurrente dupliquée.
+- Objectifs liés aux tâches, progression calculée et réversible, ajout d’étapes et suppression conservant les tâches.
+- Recherche des routines et objectifs, synthèse des routines dans le jardin, sauvegardes v3 et migration locale/import v1/v2 sans perte.
+- Nouveaux tests métier, migrations IndexedDB et parcours navigateur ordinateur/mobile. Documentation d’usage et roadmap mises à jour.
+
 ## 0.3.0 — 19 octobre 2026
 
 - Accueil réorganisé autour du jardin de travail : trois terrasses sélectionnables et prochaine action selon les tâches, projets ou missions réels.

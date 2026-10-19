@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { text, id, title, day } from "./validation";
 import { missionSchema, usageSchema } from "./assistants";
+import {
+  scheduleSchema,
+  routineSchema,
+  routineEntrySchema,
+  goalSchema,
+} from "./planningSchema";
 export const taskSchema = z
   .object({
     id,
@@ -9,6 +15,7 @@ export const taskSchema = z
     status: z.enum(["todo", "done"]),
     priority: z.enum(["high", "medium", "low"]),
     due: day.or(z.literal("")),
+    schedule: scheduleSchema.optional(),
     projectId: id.or(z.literal("")),
     createdAt: z.string().datetime(),
     completedAt: z.string().datetime().nullable(),
@@ -63,52 +70,112 @@ const validateCore = (
 const legacySchema = coreSchema
   .extend({ version: z.literal(1) })
   .superRefine(validateCore);
+const v2Base = coreSchema.extend({
+  version: z.literal(2),
+  missions: z.array(missionSchema).max(5000),
+  usage: z.array(usageSchema).max(2),
+});
+const validateMissions = (
+  data: z.infer<typeof v2Base>,
+  context: z.RefinementCtx,
+) => {
+  validateCore(data, context);
+  const ids = [
+    ...data.tasks,
+    ...data.projects,
+    ...data.notes,
+    ...data.missions,
+    ...data.missions.flatMap((mission) => mission.reports),
+  ].map((item) => item.id);
+  if (new Set(ids).size !== ids.length)
+    context.addIssue({
+      code: "custom",
+      message: "Identifiants de missions ou rapports dupliqués.",
+    });
+  const projects = new Set(data.projects.map((project) => project.id));
+  if (
+    data.missions.some(
+      (mission) => mission.projectId && !projects.has(mission.projectId),
+    )
+  )
+    context.addIssue({
+      code: "custom",
+      message: "Une mission référence un projet inexistant.",
+    });
+  if (
+    new Set(data.usage.map((usage) => usage.assistant)).size !==
+    data.usage.length
+  )
+    context.addIssue({
+      code: "custom",
+      message: "Compteur d’assistant dupliqué.",
+    });
+};
+const v2Schema = v2Base.superRefine(validateMissions);
 export const dataSchema = coreSchema
   .extend({
-    version: z.literal(2),
     missions: z.array(missionSchema).max(5000),
     usage: z.array(usageSchema).max(2),
+    version: z.literal(3),
+    routines: z.array(routineSchema).max(2000),
+    routineEntries: z.array(routineEntrySchema).max(50000),
+    goals: z.array(goalSchema).max(2000),
   })
   .superRefine((data, context) => {
-    validateCore(data, context);
-    const ids = [
+    validateMissions({ ...data, version: 2 }, context);
+    const items = [
       ...data.tasks,
       ...data.projects,
       ...data.notes,
       ...data.missions,
-      ...data.missions.flatMap((mission) => mission.reports),
-    ].map((item) => item.id);
-    if (new Set(ids).size !== ids.length)
+      ...data.missions.flatMap((m) => m.reports),
+      ...data.routines,
+      ...data.routineEntries,
+      ...data.goals,
+    ];
+    if (new Set(items.map((item) => item.id)).size !== items.length)
       context.addIssue({
         code: "custom",
-        message: "Identifiants de missions ou rapports dupliqués.",
+        message: "Identifiants de planification dupliqués.",
       });
-    const projects = new Set(data.projects.map((project) => project.id));
+    const routines = new Map(
+      data.routines.map((routine) => [routine.id, routine]),
+    );
+    const tasks = new Set(data.tasks.map((task) => task.id));
+    const occurrences = new Set<string>();
+    for (const entry of data.routineEntries) {
+      const key = `${entry.routineId}/${entry.day}`;
+      if (!routines.has(entry.routineId) || occurrences.has(key))
+        context.addIssue({
+          code: "custom",
+          message: "Réalisation de routine orpheline ou dupliquée.",
+        });
+      occurrences.add(key);
+    }
     if (
-      data.missions.some(
-        (mission) => mission.projectId && !projects.has(mission.projectId),
+      data.goals.some((goal) =>
+        goal.taskIds.some((taskId) => !tasks.has(taskId)),
       )
     )
       context.addIssue({
         code: "custom",
-        message: "Une mission référence un projet inexistant.",
-      });
-    if (
-      new Set(data.usage.map((usage) => usage.assistant)).size !==
-      data.usage.length
-    )
-      context.addIssue({
-        code: "custom",
-        message: "Compteur d’assistant dupliqué.",
+        message: "Un objectif référence une tâche inexistante.",
       });
   });
 export const storedDataSchema = z
-  .union([dataSchema, legacySchema])
-  .transform((data) =>
-    data.version === 1
-      ? { ...data, version: 2 as const, missions: [], usage: [] }
-      : data,
-  );
+  .union([dataSchema, v2Schema, legacySchema])
+  .transform((data) => {
+    if (data.version === 3) return data;
+    return {
+      ...data,
+      version: 3 as const,
+      missions: data.version === 1 ? [] : data.missions,
+      usage: data.version === 1 ? [] : data.usage,
+      routines: [],
+      routineEntries: [],
+      goals: [],
+    };
+  });
 export const backupSchema = z
   .object({
     application: z.literal("LifeOS"),
@@ -121,7 +188,10 @@ export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Data = z.infer<typeof dataSchema>;
 export const emptyData = (): Data => ({
-  version: 2,
+  version: 3,
+  routines: [],
+  routineEntries: [],
+  goals: [],
   tasks: [],
   projects: [],
   notes: [],
@@ -145,9 +215,15 @@ export function briefing(data: Data, today: string) {
   const overdue = open.filter((task) => task.due && task.due < today);
   return {
     priorities: sortedTasks(
-      open.filter((task) => !task.due || task.due <= today),
+      open.filter(
+        (task) =>
+          (task.due && task.due <= today) ||
+          (task.schedule ? task.schedule.day <= today : !task.due),
+      ),
     ).slice(0, 3),
-    planned: sortedTasks(open.filter((task) => task.due === today)),
+    planned: sortedTasks(
+      open.filter((task) => task.schedule?.day === today || task.due === today),
+    ),
     completed: data.tasks.filter(
       (task) =>
         task.completedAt && localDay(new Date(task.completedAt)) === today,

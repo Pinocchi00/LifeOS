@@ -4,7 +4,7 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
-Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Le reste de la roadmap ci-dessous conserve l'ordre convenu, avec l'agenda avancé comme prochain lot.
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré ; Vie est le prochain lot.
 
 ## Phase 0 — Architecture et fondations
 
@@ -18,7 +18,7 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Tâches : accueil calculé à partir des données locales, tâches et projets CRUD, agenda mois/jour, échéances, priorités, recherche, capture rapide, briefings matin/soir.
 - Dépendances : phase 0.
 - Acceptation : créer/modifier/terminer/supprimer une tâche ; gérer un projet ; retrouver les données après rechargement ; briefings sans données inventées.
-- État : premier lot fonctionnel livré et testé. Accueil, agenda mois/jour, tâches et projets CRUD, recherche, idées et briefings locaux utilisables. À poursuivre : vue hebdomadaire, créneaux horaires, routines, objectifs et planification avancée.
+- État : premier lot fonctionnel livré et testé. Accueil, agenda mois/jour, tâches et projets CRUD, recherche, idées et briefings locaux utilisables. Lot 0.4 : vue hebdomadaire, navigation mois/jour, créneaux horaires indépendants des échéances, programme chronologique, chevauchements, routines hebdomadaires et réalisations datées, objectifs à étapes liées aux tâches, recherche et sauvegarde v3 livrés et testés. Les déplacements se font par le formulaire ; pas de glisser-déposer, récurrence mensuelle ou calendrier externe. Les raffinements ultérieurs de planification restent possibles.
 
 ## Phase 2 — Assistants
 
@@ -27,7 +27,7 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
 - État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
 
-Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. Chaque suite se traite en lot cohérent avec vérifications réelles.
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4. Prochain lot : Vie. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 

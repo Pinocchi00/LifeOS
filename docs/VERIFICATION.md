@@ -1,5 +1,20 @@
 # Vérifications LifeOS
 
+## Lot 0.4 — 19 octobre 2026
+
+- Retrait du moteur WebGL, de `three` et `@types/three`, du chunk et de sa règle de cache. Le jardin illustré et ses commandes HTML restent utilisables hors ligne. L’ancien cache optionnel est supprimé au démarrage.
+- **42 tests Vitest**, cinq fichiers : migrations IndexedDB v1/v2 → v3, validation et aller-retour JSON de toute la planification, calcul de semaine au changement d’année/d’heure, horaires invalides, chevauchements y compris intervalles emboîtés, temps réservé sans double comptage, échéance indépendante du créneau, routines datées, pause/historique et objectifs réversibles.
+- **26 parcours Playwright** sur ordinateur et format Pixel 7 : régressions existantes, semaine/mois, navigation par date, retrait d’un créneau, avertissement de conflit, routines réalisées et futures désactivées, modification/pause conservant les faits passés, suppression/restauration, usage hors ligne, objectifs et ajout d’étapes, réouverture, recherche et suppression sans référence orpheline. Le test 3D est remplacé par le contrôle du jardin illustré hors ligne sans canvas ni requête de moteur.
+- Le premier lancement navigateur a commencé avant la fin de la génération du service worker : les attentes hors ligne ont expiré. La compilation a ensuite été attendue jusqu’à sa fin avant relance. Un sélecteur de test d’objectif visant plusieurs commandes a aussi été précisé pour cibler la case à cocher. Les parcours ont été rejoués avec succès.
+- Compilation TypeScript/Vite/PWA réussie. Le JavaScript principal représente environ **124 Ko gzip** ; le chunk 3D d’environ 135 Ko gzip est supprimé. Le visuel original et les données métier restent précachés pour le hors ligne. Aucun avertissement de chunk de plus de 500 Ko dans cette version.
+- Contrôle visuel avec données fictives isolées : semaine, mois, routines et objectifs à 1440, 768, 393 et 320 pixels, sans débordement horizontal ni erreur JavaScript de page. Captures locales de l’agenda et des objectifs inspectées.
+- `npm uninstall` a signalé **0 vulnérabilité** lors du retrait des dépendances. Projet Capacitor resynchronisé avec la compilation web.
+- Limites : aucun APK ni essai Android physique ; ni Safari/Firefox ni lecteur d’écran réel testés. Pas de calendrier externe, glisser-déposer, récurrence mensuelle ou horaire traversant minuit. Les dates/heures suivent l’appareil, sans conversion de fuseau. Les occurrences de routine passées non réalisées suivent la définition actuelle ; seules les réalisations sont historisées. Le temps réservé n’est pas une mesure de temps effectivement travaillé.
+
+Principaux fichiers : `src/components/Planning.tsx`, `PlanningForms.tsx`, `src/domain/planning.ts`, `planningSchema.ts`, `planning.test.ts`, `src/planning.css`, `src/App.tsx`, `src/domain/model.ts`, `src/storage/database.ts`, `tests/planning.spec.ts`. Suppression de `src/experience/gardenScene.ts` ; adaptations du jardin, du PWA et des tests existants. Aucun jeu de données personnel publié.
+
+Prochain lot : Vie, avec sport, nutrition, recettes et habitudes ; les futures données de santé auront un stockage séparé.
+
 ## Lot 0.3 — 19 octobre 2026
 
 - **28 tests Vitest réussis**, dont les six nouveaux scénarios de direction : espace vide, priorité réelle, tâches futures, projets conservés sans projet actif, missions à vérifier et bilan du jour local.

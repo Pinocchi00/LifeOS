@@ -1,6 +1,6 @@
 # LifeOS — Jardin de travail
 
-Direction demandée : une identité affirmée, calme et structurée. Après le lot 0.2 inspiré des trois références fournies, le lot 0.3 fait évoluer ce langage en jardin de travail interactif : béton brut végétalisé, profondeur réelle, mouvement contextualisé et composition éditoriale. L'image originale est conservée sans retouche.
+Direction demandée : une identité affirmée, calme et structurée. Après le lot 0.2 inspiré des trois références fournies, le lot 0.3 fait évoluer ce langage en jardin de travail interactif : béton brut végétalisé, profondeur visuelle, mouvement contextualisé et composition éditoriale. L’image originale est conservée sans retouche. Au lot 0.4, la 3D est supprimée à la demande de l’utilisateur ; le jardin illustré et l’identité écobrutaliste restent la référence.
 
 ## Matière et couleur
 
@@ -17,15 +17,17 @@ Direction demandée : une identité affirmée, calme et structurée. Après le l
 - Espaces généreux et hiérarchie explicite ; grands nombres calculés sur les données réelles.
 - Jardin original devant des piliers en béton brut ; lumière et végétation apportent le contraste organique. Visuel local original décrit dans `ASSETS.md`. Aucun asset distant ni police externe.
 - Bureau : navigation sombre, contenu clair, grands blocs structurés. Mobile : même identité avec composition verticale et navigation inférieure contrastée.
-- Trois terrasses en vraie 3D représentent journée, projets et assistants. Leur sélection révèle un contexte et une action, sans coder artificiellement une progression dans la taille des plantes.
+- Trois commandes HTML représentent journée, projets et assistants. Leur sélection révèle un contexte et une action, devant le jardin illustré original. Aucun moteur 3D.
 
 ## Interactions
 
 - Boutons rectangulaires et libellés visibles ; focus terre cuite au clavier.
 - Statuts, erreurs, échéances et confirmations restent textuels.
-- Le mouvement relie un geste à sa conséquence : orientation du regard, changement de terrasse, changement de page, validation d'une tâche ou ouverture d'un dialogue. La scène se stabilise et s'arrête ; aucun carrousel ni rotation permanente.
+- Le mouvement relie un geste à sa conséquence : changement de contexte, changement de page, validation d’une tâche ou ouverture d’un dialogue. Aucun carrousel ni animation permanente.
 - Le thème ne modifie ni le modèle de données, ni le stockage, ni les sauvegardes.
-- Le mode calme et les réglages de l'appareil désactivent les animations ; une vue illustrée complète remplace la 3D lorsque nécessaire. Les informations et commandes restent en HTML accessible.
+- Le mode calme et les réglages de l'appareil désactivent les animations ; le jardin reste une illustration stable. Les informations et commandes restent en HTML accessible.
 - Les textes indiquent une action ou un état vérifiable : créer, retrouver, se concentrer, terminer, rouvrir, enregistrer. Les durées, résultats et activités distantes ne sont pas inventés.
 
-Implémentation : les feuilles de structure et d'écobrutalisme sont complétées par `src/living-garden.css`. `DailyGarden` porte la prochaine action et les commandes HTML ; `gardenScene.ts` est chargé séparément pour le relief ; `FocusSession` réduit l'interface à une tâche. Les futurs composants doivent reprendre ces tokens et ces principes.
+Implémentation : les feuilles de structure et d'écobrutalisme sont complétées par `src/living-garden.css`. `DailyGarden` porte la prochaine action et les commandes HTML ; `FocusSession` réduit l'interface à une tâche. Les futurs composants doivent reprendre ces tokens et ces principes.
+
+L’agenda utilise les mêmes couleurs et angles droits : sept jours alignés, programme chronologique distinct des échéances, conflits textuels et objectifs dont la progression est issue des tâches. Les états ne reposent jamais uniquement sur une couleur. Styles dédiés dans `src/planning.css`.

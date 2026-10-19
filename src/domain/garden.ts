@@ -1,4 +1,5 @@
 import { briefing, type Data } from "./model";
+import { dayAppointments } from "./planning";
 export type GardenScope = "day" | "projects" | "assistants";
 export type GardenAction =
   "focus" | "task" | "agenda" | "projects" | "assistants";
@@ -9,6 +10,9 @@ export function gardenDirection(
   evening: boolean,
 ) {
   const brief = briefing(data, today);
+  const routines = dayAppointments(data, today).filter(
+    (item) => item.kind === "routine" && !item.done,
+  );
   if (scope === "projects") {
     const active = data.projects.filter(
       (project) => project.status === "active",
@@ -61,7 +65,7 @@ export function gardenDirection(
   if (evening)
     return {
       title: "Voir le chemin\nparcouru.",
-      description: `${brief.completed.length} tâche${brief.completed.length > 1 ? "s terminées" : " terminée"} aujourd’hui. Consultez les réalisations et préparez la suite à votre rythme.`,
+      description: `${brief.completed.length} tâche${brief.completed.length > 1 ? "s terminées" : " terminée"} aujourd’hui. ${data.routineEntries.filter((entry) => entry.day === today).length} réalisation(s) de routine enregistrée(s). Consultez votre agenda pour préparer la suite.`,
       label: "Voir les tâches terminées",
       action: "agenda" as GardenAction,
       metric: `${brief.completed.length} terminée${brief.completed.length > 1 ? "s" : ""}`,
@@ -80,6 +84,15 @@ export function gardenDirection(
       taskId: next.id,
     };
   const future = data.tasks.some((task) => task.status === "todo");
+  if (routines.length)
+    return {
+      title: "Retrouver\nvotre rythme.",
+      description: `${routines.length} routine${routines.length > 1 ? "s" : ""} prévue${routines.length > 1 ? "s" : ""} aujourd’hui. Ouvrez votre programme pour retrouver les horaires et enregistrer vos réalisations.`,
+      label: "Ouvrir mon programme",
+      action: "agenda" as GardenAction,
+      metric: `${routines.length} routine${routines.length > 1 ? "s" : ""} à faire`,
+      taskId: undefined,
+    };
   return {
     title: "De l’espace\npour l’essentiel.",
     description: future

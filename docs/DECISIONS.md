@@ -63,3 +63,26 @@ La dernière modification de réalisation d'une tâche est réversible en mémoi
 ## 013 — Mise à jour contrôlée
 
 Le service worker signale une nouvelle version à un petit store d'interface. L'utilisateur déclenche le rechargement avec **Mettre à jour** ; le bouton attend la fin des écritures et reste derrière tout dialogue ouvert. Les préférences de mouvement sont purement visuelles et enregistrées séparément dans le navigateur, sans modifier le schéma v2.
+
+
+## 014 — Retour au jardin illustré
+
+À la demande de l’utilisateur au lot 0.4, la scène 3D et les dépendances Three.js sont supprimées. Le JPEG original et les trois contextes HTML restent disponibles hors ligne. Le cache `lifeos-relief` des versions précédentes est supprimé au démarrage de la nouvelle version ; aucune donnée métier n’y était stockée. Le mode calme et les transitions utiles restent présents.
+
+## 015 — Planification locale, échéance indépendante
+
+Une tâche possède une échéance facultative et un créneau facultatif `{ day, start, duration }`. Le programme ne déplace pas la date limite lorsqu’un créneau change. La durée est bornée à 5–720 minutes et le créneau doit finir au plus tard à minuit. Les heures sont des heures murales locales de l’appareil ; aucune conversion de fuseau ou calendrier externe n’est annoncée. Les calculs de jour utilisent midi local et l’arithmétique calendaire pour traverser les changements d’heure sans sauter de date.
+
+Les chevauchements entre tâches et routines non terminées sont explicites mais autorisés. Le temps réservé est l’union de leurs intervalles ; il ne double pas les plages superposées, n’inclut pas les éléments terminés et ne représente pas un temps réellement passé. La replanification utilise le formulaire, utilisable au clavier et sur téléphone.
+
+## 016 — Routines calculées et réalisations explicites
+
+Le rythme hebdomadaire est une définition, pas un générateur automatique de tâches. Les occurrences du jour sont calculées selon les jours de semaine et les bornes inclusives. Une réalisation datée, unique pour la paire routine/jour, est créée uniquement après un geste utilisateur ; le futur est refusé. Elle conserve le titre, l’heure et la durée de la définition au moment de l’enregistrement. Modifier ou mettre en pause la routine ne réécrit pas ces faits et les réalisations restent visibles et réversibles.
+
+Les occurrences passées non réalisées suivent la définition actuelle : ce lot ne versionne pas les anciens programmes. Supprimer une routine supprime ses réalisations après confirmation ; la pause est l’alternative proposée pour les conserver. Ces routines sont des repères d’organisation, pas un dossier de santé.
+
+## 017 — Objectifs mesurés par des tâches et enveloppe v3
+
+Un objectif relie des tâches existantes, chacune de même poids. Les réalisations déterminent la progression ; rouvrir une tâche la recalcule, sans état de réussite forcé. Sans étape, la progression est zéro et le résultat n’est pas déclaré accompli. Supprimer une tâche la détache des objectifs, dont le total est recalculé ; supprimer un objectif conserve toutes ses tâches.
+
+L’enveloppe v3 ajoute `routines`, `routineEntries` et `goals`. Le magasin IndexedDB reste le même, car il contient une enveloppe unique. Les lectures v1/v2 sont validées puis transformées en v3 et réécrites en place ; la restauration garde sa confirmation et son écriture atomique. Une enveloppe invalide n’est jamais remplacée par du vide. Les doublons, relations orphelines et heures impossibles sont refusés avant écriture. Les exports v3 ne sont pas lisibles par les applications antérieures ; les anciens exports restent importables.

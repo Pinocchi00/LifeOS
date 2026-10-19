@@ -3,6 +3,8 @@ let available = false;
 let apply: ((reloadPage?: boolean) => Promise<void>) | undefined;
 const listeners = new Set<() => void>();
 export function startWorker() {
+  if ("caches" in window)
+    void caches.delete("lifeos-relief").catch(() => undefined);
   apply = registerSW({
     onNeedRefresh() {
       available = true;

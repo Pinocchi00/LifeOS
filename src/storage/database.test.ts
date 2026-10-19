@@ -26,11 +26,11 @@ describe("IndexedDB", () => {
     await db.put("state", legacy, "current");
     db.close();
     const migrated = await readData();
-    expect(migrated.version).toBe(2);
+    expect(migrated.version).toBe(3);
     expect(migrated.notes).toEqual(legacy.notes);
     expect(migrated.missions).toEqual([]);
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(2);
+    expect((await check.get("state", "current")).version).toBe(3);
     check.close();
     await writeData(emptyData());
   });
@@ -51,6 +51,30 @@ describe("IndexedDB", () => {
     expect(await readData()).toEqual(data);
     await writeData(emptyData());
     expect(await readData()).toEqual(emptyData());
+  });
+  it("migre aussi v2 en place et conserve les tâches existantes", async () => {
+    const { routines, routineEntries, goals, ...legacy } = emptyData();
+    const note = {
+      id: "v2-note",
+      title: "Avant l’agenda",
+      body: "À garder",
+      createdAt: new Date().toISOString(),
+    };
+    const db = await openDB("lifeos-core", 1);
+    await db.put("state", { ...legacy, version: 2, notes: [note] }, "current");
+    db.close();
+    expect(await readData()).toEqual({
+      ...legacy,
+      version: 3,
+      notes: [note],
+      routines,
+      routineEntries,
+      goals,
+    });
+    const check = await openDB("lifeos-core", 1);
+    expect((await check.get("state", "current")).version).toBe(3);
+    check.close();
+    await writeData(emptyData());
   });
   it("ne remplace pas les données si la validation échoue", async () => {
     const original = {

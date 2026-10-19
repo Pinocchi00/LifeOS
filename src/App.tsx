@@ -15,7 +15,6 @@ import {
   BookOpen,
   CalendarDays,
   Check,
-  ChevronLeft,
   ChevronRight,
   CircleHelp,
   ClipboardList,
@@ -62,11 +61,31 @@ import { FocusSession } from "./components/FocusSession";
 import { useMotion } from "./experience/useMotion";
 import { UpdateNotice } from "./components/UpdateNotice";
 import type { GardenAction } from "./domain/garden";
+import { Planning } from "./components/Planning";
+import {
+  GoalForm,
+  RoutineForm,
+  TaskScheduleFields,
+} from "./components/PlanningForms";
+import {
+  type Goal,
+  type Routine,
+  scheduleSchema,
+} from "./domain/planningSchema";
+import { removeTask, setRoutineDone } from "./domain/planning";
 import { version } from "../package.json";
 
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
-  | { type: "task"; value?: Task; due?: string }
+  | {
+      type: "task";
+      value?: Task;
+      due?: string;
+      scheduleDay?: string;
+      goalId?: string;
+    }
+  | { type: "routine"; value?: Routine }
+  | { type: "goal"; value?: Goal }
   | { type: "project"; value?: Project }
   | { type: "note"; value?: Note }
   | { type: "backup" }
@@ -193,12 +212,16 @@ function Modal({
 function TaskForm({
   task,
   due,
+  scheduleDay,
+  data,
   projects,
   save,
   close,
 }: {
   task?: Task;
   due?: string;
+  scheduleDay?: string;
+  data: Data;
   projects: Project[];
   save: (task: Task) => Promise<void>;
   close: () => void;
@@ -213,6 +236,20 @@ function TaskForm({
       setError("Saisissez un titre.");
       return;
     }
+    const reserve = fields.has("reserve");
+    const slot = reserve
+      ? scheduleSchema.safeParse({
+          day: fields.get("scheduleDay"),
+          start: fields.get("scheduleStart"),
+          duration: Number(fields.get("scheduleDuration")),
+        })
+      : null;
+    if (slot && !slot.success) {
+      setError(
+        "Vérifiez le créneau : date, heure et durée, avec une fin avant minuit.",
+      );
+      return;
+    }
     setSaving(true);
     try {
       await save({
@@ -220,6 +257,7 @@ function TaskForm({
         title,
         description: String(fields.get("description")).trim(),
         due: String(fields.get("due")),
+        ...(slot?.success ? { schedule: slot.data } : {}),
         priority: fields.get("priority") as Task["priority"],
         projectId: String(fields.get("projectId")),
         status: task?.status ?? "todo",
@@ -270,6 +308,7 @@ function TaskForm({
           </select>
         </label>
       </div>
+      <TaskScheduleFields task={task} day={scheduleDay} data={data} />
       <label htmlFor="task-project">Projet</label>
       <select
         id="task-project"
@@ -513,6 +552,15 @@ function Backup({
         <span>
           <b>{data.missions.length}</b> missions
         </span>
+        <span>
+          <b>{data.routines.length}</b> routines
+        </span>
+        <span>
+          <b>{data.goals.length}</b> objectifs
+        </span>
+        <span>
+          <b>{data.routineEntries.length}</b> réalisations de routines
+        </span>
       </div>
       <button className="button primary" onClick={download}>
         <ArrowDownToLine size={17} /> Exporter mes données
@@ -533,7 +581,7 @@ function Backup({
               setPending(parseBackup(await file.text()));
             } catch {
               setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 ou v2 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
+                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1, v2 ou v3 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
               );
             }
             event.target.value = "";
@@ -547,7 +595,10 @@ function Backup({
             Le fichier contient {pending.tasks.length} tâches,{" "}
             {pending.projects.length} projets, {pending.notes.length} idées,{" "}
             {pending.missions.length} missions et {pending.usage.length}{" "}
-            compteurs. Exportez vos données actuelles avant de continuer.
+            compteurs, {pending.routines.length} routines,{" "}
+            {pending.routineEntries.length} réalisations et{" "}
+            {pending.goals.length} objectifs. Exportez vos données actuelles
+            avant de continuer.
           </p>
           <button
             disabled={busy}
@@ -635,9 +686,6 @@ export default function App() {
   );
   const [today, setToday] = useState(localDay());
   const [selectedDay, setSelectedDay] = useState(localDay());
-  const [month, setMonth] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-  );
   useEffect(() => {
     const interval = setInterval(() => setToday(localDay()), 30000);
     return () => clearInterval(interval);
@@ -690,7 +738,6 @@ export default function App() {
       if (!data.missions.length) setEditor({ type: "mission" });
     } else {
       setSelectedDay(today);
-      setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
       setTaskFilter(briefingMode === "evening" ? "done" : "open");
       setSpace("agenda");
     }
@@ -823,19 +870,27 @@ export default function App() {
                 {project.name}
               </span>
             )}
+            {task.schedule && (
+              <span>
+                {dateLabel(task.schedule.day)} · {task.schedule.start} ·{" "}
+                {task.schedule.duration} min
+              </span>
+            )}
             {task.due && (
               <span
                 className={
                   task.due < today && task.status !== "done" ? "overdue" : ""
                 }
               >
-                {dateLabel(task.due)}
+                Échéance : {dateLabel(task.due)}
                 {task.due < today && task.status !== "done"
                   ? " · En retard"
                   : ""}
               </span>
             )}
-            {!project && !task.due && <span>Sans échéance</span>}
+            {!project && !task.due && !task.schedule && (
+              <span>Sans échéance</span>
+            )}
           </span>
         </button>
         <span className={`priority ${task.priority}`}>
@@ -852,7 +907,7 @@ export default function App() {
                 change(
                   (previous) => ({
                     ...previous,
-                    tasks: previous.tasks.filter((item) => item.id !== task.id),
+                    ...removeTask(previous, task.id),
                   }),
                   "Tâche supprimée",
                 ),
@@ -949,13 +1004,6 @@ export default function App() {
       )}
     </div>
   );
-  const monthStart =
-    (new Date(month.getFullYear(), month.getMonth(), 1).getDay() + 6) % 7;
-  const monthDays = new Date(
-    month.getFullYear(),
-    month.getMonth() + 1,
-    0,
-  ).getDate();
   const deferredQuery = useDeferredValue(query);
   const resultQuery = deferredQuery.trim().toLocaleLowerCase("fr");
   const matches = (text: string) =>
@@ -1148,7 +1196,7 @@ export default function App() {
                 {space === "home"
                   ? "Une prochaine action claire. Vos projets et vos idées à portée de main."
                   : space === "agenda"
-                    ? "Choisissez un jour pour planifier, terminer ou reprogrammer vos tâches."
+                    ? "Réservez du temps, trouvez votre rythme et avancez vers vos objectifs."
                     : space === "projects"
                       ? projectView === "missions"
                         ? "Vos missions, leurs résultats, votre validation."
@@ -1168,7 +1216,10 @@ export default function App() {
                       : { type: "project" }
                     : space === "explore"
                       ? { type: "note" }
-                      : { type: "task", due: today },
+                      : {
+                          type: "task",
+                          due: space === "agenda" ? selectedDay : today,
+                        },
                 )
               }
             >
@@ -1192,7 +1243,6 @@ export default function App() {
                 setEvening={(value) =>
                   setBriefingMode(value ? "evening" : "morning")
                 }
-                calm={motion.calm}
                 act={gardenAct}
               />
               <div className="stats-grid" aria-label="Accès à votre activité">
@@ -1209,7 +1259,7 @@ export default function App() {
                     <CalendarDays size={19} />
                   </span>
                   <span className="stat-copy">
-                    <span>À faire aujourd’hui</span>
+                    <span>Tâches aujourd’hui</span>
                     <strong>{brief.planned.length}</strong>
                     <small>
                       Ouvrir l’agenda <ArrowUpRight size={12} />
@@ -1411,124 +1461,62 @@ export default function App() {
 
           {space === "agenda" && (
             <div className="agenda-layout">
-              <section className="panel calendar-panel">
-                <div className="section-heading">
-                  <h2 className="capitalize">
-                    {month.toLocaleDateString("fr-FR", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </h2>
-                  <div className="inline">
-                    <button
-                      className="icon-button"
-                      aria-label="Mois précédent"
-                      onClick={() =>
-                        setMonth(
-                          new Date(
-                            month.getFullYear(),
-                            month.getMonth() - 1,
-                            1,
+              <Planning
+                data={data}
+                today={today}
+                selectedDay={selectedDay}
+                selectDay={setSelectedDay}
+                busy={busy}
+                renderTask={taskRow}
+                toggleTask={toggle}
+                editTask={(task) => setEditor({ type: "task", value: task })}
+                createTask={(scheduleDay, goalId) =>
+                  setEditor({ type: "task", scheduleDay, goalId })
+                }
+                editRoutine={(value) => setEditor({ type: "routine", value })}
+                toggleRoutine={(id, day) =>
+                  change(
+                    (previous) => setRoutineDone(previous, id, day, today),
+                    "Réalisation de routine mise à jour",
+                  )
+                }
+                deleteRoutine={(routine) =>
+                  setConfirm({
+                    title: "Supprimer cette routine ?",
+                    message: `« ${routine.title} » et son historique seront supprimés. Vous pouvez aussi la mettre en pause pour les conserver.`,
+                    action: () =>
+                      change(
+                        (previous) => ({
+                          ...previous,
+                          routines: previous.routines.filter(
+                            (item) => item.id !== routine.id,
                           ),
-                        )
-                      }
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button
-                      className="icon-button"
-                      aria-label="Mois suivant"
-                      onClick={() =>
-                        setMonth(
-                          new Date(
-                            month.getFullYear(),
-                            month.getMonth() + 1,
-                            1,
+                          routineEntries: previous.routineEntries.filter(
+                            (entry) => entry.routineId !== routine.id,
                           ),
-                        )
-                      }
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-                </div>
-                <div className="calendar-grid">
-                  {["L", "M", "M", "J", "V", "S", "D"].map((day, index) => (
-                    <span key={`heading-${index}`} className="day-name">
-                      {day}
-                    </span>
-                  ))}
-                  {Array.from({ length: monthStart }, (_, index) => (
-                    <span key={`blank-${index}`} />
-                  ))}
-                  {Array.from({ length: monthDays }, (_, index) => {
-                    const day = localDay(
-                      new Date(
-                        month.getFullYear(),
-                        month.getMonth(),
-                        index + 1,
+                        }),
+                        "Routine supprimée",
                       ),
-                    );
-                    return (
-                      <button
-                        key={day}
-                        aria-label={dateLabel(day, {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                        })}
-                        aria-pressed={selectedDay === day}
-                        className={`calendar-day ${day === selectedDay ? "selected" : ""} ${day === today ? "today" : ""}`}
-                        onClick={() => setSelectedDay(day)}
-                      >
-                        {index + 1}
-                        {data.tasks.some(
-                          (task) => task.due === day && task.status === "todo",
-                        ) && <i />}
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    setMonth(
-                      new Date(
-                        new Date().getFullYear(),
-                        new Date().getMonth(),
-                        1,
+                  })
+                }
+                editGoal={(value) => setEditor({ type: "goal", value })}
+                deleteGoal={(goal) =>
+                  setConfirm({
+                    title: "Supprimer cet objectif ?",
+                    message: `« ${goal.title} » sera supprimé. Ses tâches seront conservées.`,
+                    action: () =>
+                      change(
+                        (previous) => ({
+                          ...previous,
+                          goals: previous.goals.filter(
+                            (item) => item.id !== goal.id,
+                          ),
+                        }),
+                        "Objectif supprimé ; tâches conservées",
                       ),
-                    );
-                    setSelectedDay(today);
-                  }}
-                >
-                  Revenir à aujourd’hui
-                  <ArrowRight size={14} />
-                </button>
-                <hr />
-                <h3 className="capitalize">
-                  {dateLabel(selectedDay, {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}
-                </h3>
-                {data.tasks
-                  .filter((task) => task.due === selectedDay)
-                  .map(taskRow)}
-                {!data.tasks.some((task) => task.due === selectedDay) && (
-                  <p className="muted small">
-                    Un peu d’espace dans cette journée.
-                  </p>
-                )}
-                <button
-                  className="add-row"
-                  onClick={() => setEditor({ type: "task", due: selectedDay })}
-                >
-                  <Plus size={16} />
-                  Planifier une tâche
-                </button>
-              </section>
+                  })
+                }
+              />
               <section className="panel">
                 <div className="section-heading">
                   <h2>Toutes vos tâches</h2>
@@ -1823,31 +1811,39 @@ export default function App() {
         <Modal
           close={close}
           title={
-            editor.type === "task"
+            editor.type === "routine"
               ? editor.value
-                ? "Modifier la tâche"
-                : "Un nouveau petit pas"
-              : editor.type === "project"
+                ? "Modifier la routine"
+                : "Nouvelle routine"
+              : editor.type === "goal"
                 ? editor.value
-                  ? "Modifier le projet"
-                  : "Un nouveau projet"
-                : editor.type === "note"
+                  ? "Modifier l’objectif"
+                  : "Nouvel objectif"
+                : editor.type === "task"
                   ? editor.value
-                    ? "Modifier l’idée"
-                    : "Capturer une idée"
-                  : editor.type === "backup"
-                    ? "Vos données, en sécurité"
-                    : editor.type === "search"
-                      ? "Retrouver l’essentiel"
-                      : editor.type === "mission"
-                        ? editor.value
-                          ? "Modifier la mission"
-                          : "Nouvelle mission"
-                        : editor.type === "usage"
-                          ? "Votre compteur personnel"
-                          : editor.type === "focus"
-                            ? "Une chose à la fois"
-                            : "Instructions de mission"
+                    ? "Modifier la tâche"
+                    : "Un nouveau petit pas"
+                  : editor.type === "project"
+                    ? editor.value
+                      ? "Modifier le projet"
+                      : "Un nouveau projet"
+                    : editor.type === "note"
+                      ? editor.value
+                        ? "Modifier l’idée"
+                        : "Capturer une idée"
+                      : editor.type === "backup"
+                        ? "Vos données, en sécurité"
+                        : editor.type === "search"
+                          ? "Retrouver l’essentiel"
+                          : editor.type === "mission"
+                            ? editor.value
+                              ? "Modifier la mission"
+                              : "Nouvelle mission"
+                            : editor.type === "usage"
+                              ? "Votre compteur personnel"
+                              : editor.type === "focus"
+                                ? "Une chose à la fois"
+                                : "Instructions de mission"
           }
         >
           {editor.type === "focus" && (
@@ -1869,9 +1865,71 @@ export default function App() {
             <TaskForm
               task={editor.value}
               due={editor.due}
+              scheduleDay={editor.scheduleDay}
+              data={data}
               projects={data.projects}
-              save={saveTask}
+              save={async (task) => {
+                if (!editor.goalId) return saveTask(task);
+                await change(
+                  (previous) => ({
+                    ...previous,
+                    tasks: [
+                      ...previous.tasks.filter((item) => item.id !== task.id),
+                      task,
+                    ],
+                    goals: previous.goals.map((goal) =>
+                      goal.id === editor.goalId
+                        ? {
+                            ...goal,
+                            taskIds: [...new Set([...goal.taskIds, task.id])],
+                          }
+                        : goal,
+                    ),
+                  }),
+                  "Étape ajoutée à l’objectif",
+                );
+              }}
               close={close}
+            />
+          )}
+          {editor.type === "routine" && (
+            <RoutineForm
+              routine={editor.value}
+              today={today}
+              close={close}
+              save={(routine) =>
+                change(
+                  (previous) => ({
+                    ...previous,
+                    routines: [
+                      ...previous.routines.filter(
+                        (item) => item.id !== routine.id,
+                      ),
+                      routine,
+                    ],
+                  }),
+                  "Routine enregistrée",
+                )
+              }
+            />
+          )}
+          {editor.type === "goal" && (
+            <GoalForm
+              goal={editor.value}
+              data={data}
+              close={close}
+              save={(goal) =>
+                change(
+                  (previous) => ({
+                    ...previous,
+                    goals: [
+                      ...previous.goals.filter((item) => item.id !== goal.id),
+                      goal,
+                    ],
+                  }),
+                  "Objectif enregistré",
+                )
+              }
             />
           )}
           {editor.type === "project" && (
@@ -1923,7 +1981,7 @@ export default function App() {
                 <Search size={19} />
                 <input
                   autoFocus
-                  placeholder="Tâches, projets, idées, missions…"
+                  placeholder="Tâches, projets, idées, missions, routines, objectifs…"
                   aria-label="Rechercher"
                   value={query}
                   maxLength={180}
@@ -1953,6 +2011,44 @@ export default function App() {
                           <span>
                             {task.title}
                             <small>Tâche</small>
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </button>
+                      ))}
+                    {data.routines
+                      .filter((item) =>
+                        matches(item.title + " " + item.description),
+                      )
+                      .map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() =>
+                            setEditor({ type: "routine", value: item })
+                          }
+                        >
+                          <CalendarDays size={18} />
+                          <span>
+                            {item.title}
+                            <small>Routine</small>
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </button>
+                      ))}
+                    {data.goals
+                      .filter((item) =>
+                        matches(item.title + " " + item.description),
+                      )
+                      .map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() =>
+                            setEditor({ type: "goal", value: item })
+                          }
+                        >
+                          <Check size={18} />
+                          <span>
+                            {item.title}
+                            <small>Objectif</small>
                           </span>
                           <ArrowUpRight size={16} />
                         </button>
@@ -2018,15 +2114,21 @@ export default function App() {
                           <ArrowUpRight size={16} />
                         </button>
                       ))}
-                    {!data.missions.some((mission) =>
-                      matches(
-                        mission.title +
-                          " " +
-                          mission.objective +
-                          " " +
-                          mission.criteria,
-                      ),
+                    {!data.routines.some((item) =>
+                      matches(item.title + " " + item.description),
                     ) &&
+                      !data.goals.some((item) =>
+                        matches(item.title + " " + item.description),
+                      ) &&
+                      !data.missions.some((mission) =>
+                        matches(
+                          mission.title +
+                            " " +
+                            mission.objective +
+                            " " +
+                            mission.criteria,
+                        ),
+                      ) &&
                       !data.tasks.some((task) =>
                         matches(task.title + " " + task.description),
                       ) &&
