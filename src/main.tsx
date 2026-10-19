@@ -10,6 +10,7 @@ import "./planning.css";
 import "./personal.css";
 import "./explorer.css";
 import "./android.css";
+import "./adaptation.css";
 
 startWorker();
 ReactDOM.createRoot(document.getElementById("root")!).render(

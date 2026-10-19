@@ -1,0 +1,170 @@
+.adaptation-panel {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+}
+.settings-section {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  min-width: 0;
+}
+.settings-section h3 {
+  font: 28px var(--serif);
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+.settings-section > p {
+  line-height: 1.65;
+}
+.settings-section > label {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+.preference-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  margin: 18px 0;
+  background: var(--paper);
+}
+.preference-details div {
+  padding: 14px;
+  min-width: 0;
+}
+.preference-details dt {
+  font: 10px var(--mono);
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.preference-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.adaptation-entry {
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+  overflow-wrap: anywhere;
+}
+.adaptation-entry p {
+  line-height: 1.65;
+}
+.adaptation-entry summary,
+.settings-section > details > summary {
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--ink);
+}
+.adaptation-entry details ul,
+.adaptation-advice details ul {
+  padding-left: 20px;
+}
+.adaptation-panel .text-button {
+  white-space: normal;
+  text-align: left;
+  margin: 8px 0;
+}
+.adaptation-panel .danger {
+  color: var(--terracotta, #91482f);
+}
+.adaptation-panel .button.danger {
+  color: #fff9f0;
+  background: #823d2b;
+  border-color: #823d2b;
+}
+.settings-section > label {
+  font: 11px var(--mono);
+  text-transform: uppercase;
+}
+.settings-section input[type="search"] {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.decision-title {
+  display: block;
+  text-align: left;
+  font: 24px var(--serif);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+}
+.decision-review {
+  border-left: 3px solid var(--olive);
+  padding-left: 12px;
+}
+.advice-reactions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.adaptation-advice .advice-settings {
+  margin-top: 18px;
+  font-size: 11px;
+}
+.adaptation-advice > h2 {
+  font: 34px var(--serif);
+}
+.adaptation-advice p {
+  overflow-wrap: anywhere;
+}
+.adaptation-advice .small {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.personalize-button {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+@media (max-width: 650px) {
+  .adaptation-panel {
+    padding: 20px;
+  }
+  .top-actions {
+    gap: 10px;
+  }
+  .personalize-button {
+    width: 30px;
+    height: 30px;
+  }
+}
+@media (max-width: 380px) {
+  .preference-details {
+    grid-template-columns: 1fr;
+  }
+  .topbar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .top-actions {
+    gap: 8px;
+  }
+}
+
+/* Keep the explanation and actions in reading order at intermediate widths. */
+.adaptation-advice {
+  display: block;
+}
+.adaptation-advice > svg {
+  margin-bottom: 18px;
+  color: var(--olive);
+}
+.adaptation-advice > h2 {
+  text-transform: none;
+  line-height: 1.08;
+  letter-spacing: -1px;
+}

@@ -210,7 +210,7 @@ describe("Apprentissage et conservation des liens", () => {
 });
 describe("Enveloppe v4", () => {
   it("migre v3 en conservant les collections antérieures et restaure v4 exactement", () => {
-    const { resources, learningPaths, learningEntries, ...legacy } =
+    const { adaptation, resources, learningPaths, learningEntries, ...legacy } =
       emptyData();
     const note = {
       id: "old",
@@ -222,7 +222,8 @@ describe("Enveloppe v4", () => {
       storedDataSchema.parse({ ...legacy, version: 3, notes: [note] }),
     ).toEqual({
       ...legacy,
-      version: 4,
+      version: 5,
+      adaptation,
       notes: [note],
       resources,
       learningPaths,

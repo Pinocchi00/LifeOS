@@ -4,7 +4,7 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
-Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Le lot 0.7 apporte l’APK de développement, les sauvegardes et rappels natifs ; la recette physique et la distribution de production restent ouvertes.
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Le lot 0.7 apporte l’APK de développement, les sauvegardes et rappels natifs ; la recette physique et la distribution de production restent ouvertes. Le lot 0.8 ajoute l’adaptation explicable et les sauvegardes v5.
 
 ## Phase 0 — Architecture et fondations
 
@@ -27,7 +27,7 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
 - État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
 
-Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6, l’APK de développement et les fonctions natives au lot 0.7. Prochain lot de développement : adaptation explicable. La recette Android sur téléphone physique et la signature de production restent à valider. Chaque suite se traite en lot cohérent avec vérifications réelles.
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6, l’APK de développement et les fonctions natives au lot 0.7. Le lot 0.8 livre l’adaptation explicable. Prochain lot de développement : connecteurs facultatifs, avec secrets hors client et accès explicitement configurés. La recette Android sur téléphone physique et la signature de production restent à valider. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 
@@ -55,7 +55,7 @@ Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objec
 - Tâches : règles explicables, préférences explicites, feedback, historique des décisions et versions de configuration réversibles.
 - Dépendances : historique d'usage réel ; validations utilisateur.
 - Acceptation : chaque recommandation explique sa source, feedback conservé, configuration restaurable.
-- État : partiellement livré. Première règle locale expliquée dans le tableau de bord ; préférences, feedback, mémoire et historique des configurations restent prévus.
+- État : lot local 0.8 livré. Une à cinq priorités et ordre choisis explicitement, conseils déterministes avec sources/chiffres/version, masquage par type ou global, retours utiles ou écartés pour la journée locale avec annulation et instantanés, carnet de décisions recherchable avec réexamen manuel, configurations motivées et restaurables par nouvelle version. Sauvegarde générale v5 et migrations v1 à v4, base Vie inchangée. Aucun apprentissage caché ni conseil fondé sur Vie ; mode calme et notifications restent propres à l’appareil. Vérifications dans `VERIFICATION.md`.
 
 ## Phase 7 — Connecteurs facultatifs
 

@@ -147,7 +147,7 @@ export function DailyGarden({
             ? "Missions saisies dans LifeOS. Vous gardez la validation."
             : scope === "projects"
               ? "Projets et tâches enregistrés sur cet appareil."
-              : "Priorité, puis échéance. Vous pouvez toujours choisir une autre tâche."}
+              : `${data.adaptation.preferences.taskOrder === "priority" ? "Priorité, puis échéance" : "Échéance, puis priorité"}. Vous pouvez toujours choisir une autre tâche.`}
         </span>
       </div>
       <GardenStage scope={scope} select={setScope} />

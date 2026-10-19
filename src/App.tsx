@@ -111,6 +111,16 @@ import { isAndroid } from "./platform/runtime";
 import { useAndroid } from "./platform/useAndroid";
 import { AndroidReminders } from "./components/AndroidReminders";
 
+import { AdviceCard } from "./components/AdviceCard";
+import { PreferencesForm, DecisionForm } from "./components/AdaptationForms";
+import { changePreferences, recordFeedback } from "./domain/adaptation";
+import type { Decision } from "./domain/adaptationSchema";
+const AdaptationPanel = lazy(() =>
+  import("./components/AdaptationPanel").then((module) => ({
+    default: module.AdaptationPanel,
+  })),
+);
+
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
   | {
@@ -137,6 +147,9 @@ type Editor =
       pathId?: string;
       stepId?: string;
     }
+  | { type: "adaptation" }
+  | { type: "preferences" }
+  | { type: "decision"; value?: Decision }
   | { type: "backup" }
   | { type: "search" }
   | { type: "mission"; value?: Mission }
@@ -528,7 +541,20 @@ function Backup({
         <span>
           <b>{data.routineEntries.length}</b> réalisations de routines
         </span>
+        <span>
+          <b>{data.adaptation.decisions.length}</b> décisions
+        </span>
+        <span>
+          <b>{data.adaptation.feedback.length}</b> retours
+        </span>
+        <span>
+          <b>{data.adaptation.revisions.length}</b> versions de réglages
+        </span>
       </div>
+      <p className="small muted">
+        Les réglages, les décisions et leurs historiques font partie de cette
+        sauvegarde d’organisation v5.
+      </p>
       <button
         className="button primary"
         onClick={() => void download()}
@@ -560,7 +586,7 @@ function Backup({
               setPending(parseBackup(await file.text()));
             } catch {
               setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v4 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
+                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v5 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
               );
             }
             event.target.value = "";
@@ -579,8 +605,11 @@ function Backup({
             {pending.goals.length} objectifs, {pending.resources.length}{" "}
             ressources, {pending.learningPaths.length} parcours et{" "}
             {pending.learningEntries.length} séances d’apprentissage. Exportez
-            vos données actuelles avant de continuer. Les suivis Vie ne seront
-            pas modifiés.
+            vos données actuelles avant de continuer. Vos réglages seront
+            également remplacés, avec {pending.adaptation.decisions.length}{" "}
+            décisions, {pending.adaptation.feedback.length} retours et{" "}
+            {pending.adaptation.revisions.length} versions de réglages. Les
+            suivis Vie ne seront pas modifiés.
           </p>
           <button
             disabled={busy || exporting}
@@ -1112,6 +1141,14 @@ export default function App() {
           </span>
           <div className="top-actions">
             <button
+              className="personalize-button"
+              aria-label="Personnaliser LifeOS"
+              title="Mes réglages et décisions"
+              onClick={() => setEditor({ type: "adaptation" })}
+            >
+              <Settings2 size={18} />
+            </button>
+            <button
               className="motion-toggle"
               aria-label={
                 motion.preference === "calm"
@@ -1379,7 +1416,7 @@ export default function App() {
                         ? "Votre prochain petit pas ?"
                         : "Le chemin reste ouvert.",
                       briefingMode === "morning"
-                        ? "Ajoutez une tâche pour aujourd’hui ou sans échéance. Vos trois priorités apparaîtront ici."
+                        ? "Ajoutez une tâche pour aujourd’hui ou sans échéance. Vos priorités apparaîtront ici, selon vos réglages."
                         : "Les tâches cochées aujourd’hui apparaîtront ici.",
                       () => setEditor({ type: "task", due: today }),
                       "Créer une tâche",
@@ -1392,29 +1429,31 @@ export default function App() {
                     Ajouter une tâche
                   </button>
                 </section>
-                <section className="insight-card">
-                  <span className="insight-icon">
-                    <Sparkles size={21} />
-                  </span>
-                  <p className="eyebrow">UN PEU DE RECUL</p>
-                  <h2>
-                    {brief.overdue.length
-                      ? "Revoir les\néchéances."
-                      : "Garder\nun cap clair."}
-                  </h2>
-                  <p>{brief.recommendation}</p>
-                  <details>
-                    <summary>Pourquoi ce conseil ?</summary>
-                    <p>{brief.reason}</p>
-                  </details>
-                  <button
-                    className="text-button"
-                    onClick={() => setSpace("agenda")}
-                  >
-                    Faire le point
-                    <ArrowRight size={15} />
-                  </button>
-                </section>
+                <AdviceCard
+                  data={data}
+                  today={today}
+                  react={(advice, choice) =>
+                    change(
+                      (previous) =>
+                        recordFeedback(previous, advice, choice, localDay()),
+                      "Retour enregistré",
+                    )
+                  }
+                  settings={() => setEditor({ type: "adaptation" })}
+                  act={(action) => {
+                    if (action === "missions") openMissions();
+                    else if (action === "learning") {
+                      setExploreView("learning");
+                      setSpace("explore");
+                    } else if (action === "task")
+                      setEditor({ type: "task", due: today });
+                    else {
+                      setSelectedDay(today);
+                      setTaskFilter("open");
+                      setSpace("agenda");
+                    }
+                  }}
+                />
               </div>
               <AssistantOverview
                 data={data}
@@ -1861,51 +1900,105 @@ export default function App() {
         <Modal
           close={close}
           title={
-            editor.type === "resource"
-              ? editor.value
-                ? "Modifier la ressource"
-                : "Garder une ressource"
-              : editor.type === "learningPath"
-                ? editor.value
-                  ? "Modifier le parcours"
-                  : "Un parcours d’apprentissage"
-                : editor.type === "learningEntry"
-                  ? "Votre séance d’apprentissage"
-                  : editor.type === "routine"
+            editor.type === "adaptation"
+              ? "Vos repères, vos choix"
+              : editor.type === "preferences"
+                ? "Ajuster mes réglages"
+                : editor.type === "decision"
+                  ? editor.value
+                    ? "Relire ma décision"
+                    : "Consigner une décision"
+                  : editor.type === "resource"
                     ? editor.value
-                      ? "Modifier la routine"
-                      : "Nouvelle routine"
-                    : editor.type === "goal"
+                      ? "Modifier la ressource"
+                      : "Garder une ressource"
+                    : editor.type === "learningPath"
                       ? editor.value
-                        ? "Modifier l’objectif"
-                        : "Nouvel objectif"
-                      : editor.type === "task"
-                        ? editor.value
-                          ? "Modifier la tâche"
-                          : "Un nouveau petit pas"
-                        : editor.type === "project"
+                        ? "Modifier le parcours"
+                        : "Un parcours d’apprentissage"
+                      : editor.type === "learningEntry"
+                        ? "Votre séance d’apprentissage"
+                        : editor.type === "routine"
                           ? editor.value
-                            ? "Modifier le projet"
-                            : "Un nouveau projet"
-                          : editor.type === "note"
+                            ? "Modifier la routine"
+                            : "Nouvelle routine"
+                          : editor.type === "goal"
                             ? editor.value
-                              ? "Modifier l’idée"
-                              : "Capturer une idée"
-                            : editor.type === "backup"
-                              ? "Vos données, en sécurité"
-                              : editor.type === "search"
-                                ? "Retrouver l’essentiel"
-                                : editor.type === "mission"
+                              ? "Modifier l’objectif"
+                              : "Nouvel objectif"
+                            : editor.type === "task"
+                              ? editor.value
+                                ? "Modifier la tâche"
+                                : "Un nouveau petit pas"
+                              : editor.type === "project"
+                                ? editor.value
+                                  ? "Modifier le projet"
+                                  : "Un nouveau projet"
+                                : editor.type === "note"
                                   ? editor.value
-                                    ? "Modifier la mission"
-                                    : "Nouvelle mission"
-                                  : editor.type === "usage"
-                                    ? "Votre compteur personnel"
-                                    : editor.type === "focus"
-                                      ? "Une chose à la fois"
-                                      : "Instructions de mission"
+                                    ? "Modifier l’idée"
+                                    : "Capturer une idée"
+                                  : editor.type === "backup"
+                                    ? "Vos données, en sécurité"
+                                    : editor.type === "search"
+                                      ? "Retrouver l’essentiel"
+                                      : editor.type === "mission"
+                                        ? editor.value
+                                          ? "Modifier la mission"
+                                          : "Nouvelle mission"
+                                        : editor.type === "usage"
+                                          ? "Votre compteur personnel"
+                                          : editor.type === "focus"
+                                            ? "Une chose à la fois"
+                                            : "Instructions de mission"
           }
         >
+          {editor.type === "adaptation" && (
+            <Suspense fallback={<p role="status">Ouverture de vos repères…</p>}>
+              <AdaptationPanel
+                data={data}
+                today={today}
+                change={(operation) => change(operation, "Repères mis à jour")}
+                editPreferences={() => setEditor({ type: "preferences" })}
+                editDecision={(value) => setEditor({ type: "decision", value })}
+              />
+            </Suspense>
+          )}
+          {editor.type === "preferences" && (
+            <PreferencesForm
+              value={data.adaptation.preferences}
+              save={(value, reason) =>
+                change(
+                  (previous) => changePreferences(previous, value, reason),
+                  "Réglages enregistrés",
+                )
+              }
+              close={() => setEditor({ type: "adaptation" })}
+            />
+          )}
+          {editor.type === "decision" && (
+            <DecisionForm
+              decision={editor.value}
+              save={(value) =>
+                change(
+                  (previous) => ({
+                    ...previous,
+                    adaptation: {
+                      ...previous.adaptation,
+                      decisions: [
+                        ...previous.adaptation.decisions.filter(
+                          (item) => item.id !== value.id,
+                        ),
+                        value,
+                      ],
+                    },
+                  }),
+                  "Décision enregistrée",
+                )
+              }
+              close={() => setEditor({ type: "adaptation" })}
+            />
+          )}
           {editor.type === "focus" && (
             <FocusSession
               data={data}

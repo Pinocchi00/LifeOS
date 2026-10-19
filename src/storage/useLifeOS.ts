@@ -53,20 +53,20 @@ export function useLifeOS() {
       setBusy(true);
       const operation = queue.current.then(async () => {
         const next = change(current.current);
-        await writeData(next);
+        try {
+          await writeData(next);
+        } catch {
+          setError(
+            "Enregistrement impossible. Vos dernières modifications ne sont pas sauvegardées ; réessayez et exportez vos données.",
+          );
+          throw new Error("Échec de sauvegarde");
+        }
         current.current = next;
         setData(next);
         setError("");
       });
       queue.current = operation.catch(() => undefined);
-      return operation
-        .catch(() => {
-          setError(
-            "Enregistrement impossible. Vos dernières modifications ne sont pas sauvegardées ; réessayez et exportez vos données.",
-          );
-          throw new Error("Échec de sauvegarde");
-        })
-        .finally(() => setBusy(false));
+      return operation.finally(() => setBusy(false));
     },
     [],
   );

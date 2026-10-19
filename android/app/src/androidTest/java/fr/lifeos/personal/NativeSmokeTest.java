@@ -69,7 +69,8 @@ public class NativeSmokeTest {
     }
     private void fill(String selector, String value) throws Exception {
         js("(()=>{const el=document.querySelector(" + JSONObject.quote(selector) + ");"
-            + "Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el," + JSONObject.quote(value) + ");"
+            + "const proto=el instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:el instanceof HTMLSelectElement?HTMLSelectElement.prototype:HTMLInputElement.prototype;"
+            + "Object.getOwnPropertyDescriptor(proto,'value').set.call(el," + JSONObject.quote(value) + ");"
             + "el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));el.blur();})()");
     }
     @Test public void nativeOfflinePersistenceBackExportAndNotifications() throws Exception {
@@ -100,6 +101,17 @@ public class NativeSmokeTest {
         js("window.smokeBeforeReload=true");
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> activity.getActivity().getBridge().getWebView().reload());
         waitFor("window.smokeBeforeReload===undefined && document.body.innerText.includes('Essai Android local')");
+        // Explicit preferences use the same offline IndexedDB envelope in WebView.
+        js("document.querySelector('[aria-label=\"Personnaliser LifeOS\"]').click()");
+        click("Modifier mes réglages");
+        waitFor("document.querySelector('select[name=priorityCount]')");
+        fill("select[name=priorityCount]", "1");
+        fill("textarea[name=reason]", "Une priorité sur Android");
+        click("Appliquer mes réglages");
+        waitFor("document.querySelector('.preference-details dd')?.textContent.trim()==='1'");
+        capture("native-adaptation.png");
+        js("document.querySelector('dialog [aria-label=Fermer]').click()");
+        waitFor("!document.querySelector('dialog[open]')");
         click("Explorer");
         waitFor("document.querySelector('[aria-label=\"Rubriques Explorer\"]')");
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
@@ -115,6 +127,9 @@ public class NativeSmokeTest {
         assertNotNull(files); assertTrue(files.length > 0);
         JSONObject backup = new JSONObject(new String(Files.readAllBytes(files[0].toPath()), StandardCharsets.UTF_8));
         assertEquals("LifeOS", backup.getString("application"));
+        assertEquals(5, backup.getJSONObject("data").getInt("version"));
+        assertEquals(1, backup.getJSONObject("data").getJSONObject("adaptation").getJSONObject("preferences").getInt("priorityCount"));
+        assertEquals(2, backup.getJSONObject("data").getJSONObject("adaptation").getJSONArray("revisions").length());
         assertEquals("Essai Android local", backup.getJSONObject("data").getJSONArray("tasks").getJSONObject(0).getString("title"));
         // Verify the real system chooser is present, then cancel without claiming
         // that a destination saved the file.

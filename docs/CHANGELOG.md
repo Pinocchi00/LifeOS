@@ -1,5 +1,16 @@
 # Journal des modifications
 
+## 0.8.0 — 19 octobre 2026
+
+- Réglages explicites accessibles depuis l’en-tête : une à cinq priorités et ordre par priorité ou échéance, appliqués au briefing, au jardin et à la concentration.
+- Six règles locales expliquées avec preuves chiffrées, source et version ; masquage par type ou global, sans consulter les suivis Vie.
+- Retours « Utile » et « Pas aujourd’hui », écart limité au jour local, annulation et conservation de l’instantané. Aucun apprentissage ni changement de préférence automatique.
+- Carnet de décisions : choix, contexte, raison, état et date facultative de relecture sans notification ; recherche propre au carnet, édition et suppression confirmée.
+- Historique motivé des configurations, prévisualisation et restauration créant une nouvelle version ; effacement explicite conservant les réglages actifs comme point de départ.
+- Format général v5, migrations locales et imports v1 à v4 conservés, récapitulatif de restauration incluant réglages et historiques. Format et base Vie v1 indépendants.
+- Panneau chargé séparément et précaché, listes par lots, formulaires protégés et erreurs métier conservées dans leur formulaire. Style écobrutaliste sans 3D.
+- Tests métier, parcours ordinateur/mobile, APK 0.8 et extension du scénario natif aux réglages et à leur export.
+
 ## 0.7.0 — 19 octobre 2026
 
 - Construction reproductible de l’APK de développement, version Android issue du package, empreinte SHA-256 et clé locale hors Git.

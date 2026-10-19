@@ -26,11 +26,11 @@ describe("IndexedDB", () => {
     await db.put("state", legacy, "current");
     db.close();
     const migrated = await readData();
-    expect(migrated.version).toBe(4);
+    expect(migrated.version).toBe(5);
     expect(migrated.notes).toEqual(legacy.notes);
     expect(migrated.missions).toEqual([]);
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(4);
+    expect((await check.get("state", "current")).version).toBe(5);
     check.close();
     await writeData(emptyData());
   });
@@ -54,6 +54,7 @@ describe("IndexedDB", () => {
   });
   it("migre aussi v2 en place et conserve les tâches existantes", async () => {
     const {
+      adaptation,
       resources,
       learningPaths,
       learningEntries,
@@ -73,7 +74,8 @@ describe("IndexedDB", () => {
     db.close();
     expect(await readData()).toEqual({
       ...legacy,
-      version: 4,
+      version: 5,
+      adaptation,
       resources,
       learningPaths,
       learningEntries,
@@ -83,7 +85,7 @@ describe("IndexedDB", () => {
       goals,
     });
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(4);
+    expect((await check.get("state", "current")).version).toBe(5);
     check.close();
     await writeData(emptyData());
   });
@@ -105,8 +107,8 @@ describe("IndexedDB", () => {
     ).rejects.toThrow();
     expect(await readData()).toEqual(original);
   });
-  it("migre une enveloppe v3 réelle et réécrit v4 sans effacer le planning", async () => {
-    const { resources, learningPaths, learningEntries, ...legacy } =
+  it("migre une enveloppe v3 réelle et réécrit v5 sans effacer le planning", async () => {
+    const { adaptation, resources, learningPaths, learningEntries, ...legacy } =
       emptyData();
     const task = {
       id: "planned-v3",
@@ -125,13 +127,35 @@ describe("IndexedDB", () => {
     const migrated = await readData();
     expect(migrated).toEqual({
       ...legacy,
-      version: 4,
+      version: 5,
+      adaptation,
       tasks: [task],
       resources,
       learningPaths,
       learningEntries,
     });
-    expect((await db.get("state", "current")).version).toBe(4);
+    expect((await db.get("state", "current")).version).toBe(5);
+    db.close();
+    await writeData(emptyData());
+  });
+  it("migre v4 en place et conserve Explorer sans consulter la base Vie", async () => {
+    const { adaptation, ...legacy } = emptyData();
+    const note = {
+      id: "note-v4",
+      title: "Conservée",
+      body: "Une idée",
+      createdAt: "2026-10-19T10:00:00.000Z",
+    };
+    const db = await openDB("lifeos-core", 1);
+    await db.put("state", { ...legacy, version: 4, notes: [note] }, "current");
+    const migrated = await readData();
+    expect(migrated).toEqual({
+      ...legacy,
+      version: 5,
+      notes: [note],
+      adaptation,
+    });
+    expect(await db.get("state", "current")).toEqual(migrated);
     db.close();
     await writeData(emptyData());
   });

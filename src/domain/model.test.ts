@@ -44,14 +44,14 @@ describe("Briefings locaux", () => {
     expect(result.priorities.map((task) => task.id)).not.toContain("t5");
     expect(result.completed).toHaveLength(1);
   });
-  it("explique les retards et ne fabrique pas de bilan", () => {
+  it("compte les retards réels et ne fabrique pas de bilan", () => {
     expect(briefing(emptyData(), "2026-10-18").completed).toEqual([]);
     const result = briefing(
       { ...emptyData(), tasks: [task({ due: "2026-10-17" })] },
       "2026-10-18",
     );
     expect(result.overdue).toHaveLength(1);
-    expect(result.reason).toContain("échéance passée");
+    expect(result.overdue[0].due).toBe("2026-10-17");
   });
   it("trie sans modifier la liste source et respecte les dates locales", () => {
     const tasks = [task(), task({ id: "t2", priority: "high" })];

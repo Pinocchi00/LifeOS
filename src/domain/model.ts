@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { text, id, title, day } from "./validation";
+import { adaptationSchema, emptyAdaptation } from "./adaptationSchema";
 import {
   resourceSchema,
   learningPathSchema,
@@ -168,16 +169,85 @@ const validatePlanning = (
     });
 };
 const v3Schema = v3Base.superRefine(validatePlanning);
-export const dataSchema = coreSchema
-  .extend({
-    ...v3Base.shape,
-    version: z.literal(4),
-    resources: z.array(resourceSchema).max(10000),
-    learningPaths: z.array(learningPathSchema).max(2000),
-    learningEntries: z.array(learningEntrySchema).max(20000),
-  })
+const v4Base = coreSchema.extend({
+  ...v3Base.shape,
+  version: z.literal(4),
+  resources: z.array(resourceSchema).max(10000),
+  learningPaths: z.array(learningPathSchema).max(2000),
+  learningEntries: z.array(learningEntrySchema).max(20000),
+});
+const validateExplorer = (
+  data: z.infer<typeof v4Base>,
+  context: z.RefinementCtx,
+) => {
+  validatePlanning({ ...data, version: 3 }, context);
+  const items = [
+    ...data.tasks,
+    ...data.projects,
+    ...data.notes,
+    ...data.missions,
+    ...data.missions.flatMap((item) => item.reports),
+    ...data.routines,
+    ...data.routineEntries,
+    ...data.goals,
+    ...data.resources,
+    ...data.learningPaths,
+    ...data.learningPaths.flatMap((path) => path.steps),
+    ...data.learningEntries,
+  ];
+  if (new Set(items.map((item) => item.id)).size !== items.length)
+    context.addIssue({
+      code: "custom",
+      message: "Identifiants Explorer dupliqués.",
+    });
+  const projects = new Set(data.projects.map((project) => project.id));
+  const notes = new Set(data.notes.map((note) => note.id));
+  const resources = new Set(data.resources.map((resource) => resource.id));
+  if (
+    data.resources.some(
+      (resource) =>
+        (resource.projectId && !projects.has(resource.projectId)) ||
+        resource.noteIds.some((noteId) => !notes.has(noteId)),
+    )
+  )
+    context.addIssue({
+      code: "custom",
+      message: "Une ressource référence un projet ou une idée inexistants.",
+    });
+  if (
+    data.learningPaths.some(
+      (path) =>
+        (path.projectId && !projects.has(path.projectId)) ||
+        path.steps.some(
+          (step) => step.resourceId && !resources.has(step.resourceId),
+        ),
+    )
+  )
+    context.addIssue({
+      code: "custom",
+      message: "Un parcours référence un projet ou une ressource inexistants.",
+    });
+  const paths = new Map(
+    data.learningPaths.map((path) => [
+      path.id,
+      new Set(path.steps.map((step) => step.id)),
+    ]),
+  );
+  if (
+    data.learningEntries.some(
+      (entry) => entry.pathId && !paths.get(entry.pathId)?.has(entry.stepId),
+    )
+  )
+    context.addIssue({
+      code: "custom",
+      message: "Une séance référence une étape inexistante.",
+    });
+};
+const v4Schema = v4Base.superRefine(validateExplorer);
+export const dataSchema = v4Base
+  .extend({ version: z.literal(5), adaptation: adaptationSchema })
   .superRefine((data, context) => {
-    validatePlanning({ ...data, version: 3 }, context);
+    validateExplorer({ ...data, version: 4 }, context);
     const items = [
       ...data.tasks,
       ...data.projects,
@@ -189,73 +259,35 @@ export const dataSchema = coreSchema
       ...data.goals,
       ...data.resources,
       ...data.learningPaths,
-      ...data.learningPaths.flatMap((path) => path.steps),
+      ...data.learningPaths.flatMap((item) => item.steps),
       ...data.learningEntries,
+      ...data.adaptation.revisions,
+      ...data.adaptation.feedback,
+      ...data.adaptation.decisions,
     ];
     if (new Set(items.map((item) => item.id)).size !== items.length)
       context.addIssue({
         code: "custom",
-        message: "Identifiants Explorer dupliqués.",
-      });
-    const projects = new Set(data.projects.map((project) => project.id));
-    const notes = new Set(data.notes.map((note) => note.id));
-    const resources = new Set(data.resources.map((resource) => resource.id));
-    if (
-      data.resources.some(
-        (resource) =>
-          (resource.projectId && !projects.has(resource.projectId)) ||
-          resource.noteIds.some((noteId) => !notes.has(noteId)),
-      )
-    )
-      context.addIssue({
-        code: "custom",
-        message: "Une ressource référence un projet ou une idée inexistants.",
-      });
-    if (
-      data.learningPaths.some(
-        (path) =>
-          (path.projectId && !projects.has(path.projectId)) ||
-          path.steps.some(
-            (step) => step.resourceId && !resources.has(step.resourceId),
-          ),
-      )
-    )
-      context.addIssue({
-        code: "custom",
-        message:
-          "Un parcours référence un projet ou une ressource inexistants.",
-      });
-    const paths = new Map(
-      data.learningPaths.map((path) => [
-        path.id,
-        new Set(path.steps.map((step) => step.id)),
-      ]),
-    );
-    if (
-      data.learningEntries.some(
-        (entry) => entry.pathId && !paths.get(entry.pathId)?.has(entry.stepId),
-      )
-    )
-      context.addIssue({
-        code: "custom",
-        message: "Une séance référence une étape inexistante.",
+        message: "Identifiants d’organisation dupliqués.",
       });
   });
 export const storedDataSchema = z
-  .union([dataSchema, v3Schema, v2Schema, legacySchema])
+  .union([dataSchema, v4Schema, v3Schema, v2Schema, legacySchema])
   .transform((data) => {
-    if (data.version === 4) return data;
+    if (data.version === 5) return data;
     return {
       ...data,
-      version: 4 as const,
+      version: 5 as const,
+      adaptation: emptyAdaptation(),
       missions: data.version === 1 ? [] : data.missions,
       usage: data.version === 1 ? [] : data.usage,
-      routines: data.version === 3 ? data.routines : [],
-      routineEntries: data.version === 3 ? data.routineEntries : [],
-      goals: data.version === 3 ? data.goals : [],
-      resources: [],
-      learningPaths: [],
-      learningEntries: [],
+      routines: data.version === 3 || data.version === 4 ? data.routines : [],
+      routineEntries:
+        data.version === 3 || data.version === 4 ? data.routineEntries : [],
+      goals: data.version === 3 || data.version === 4 ? data.goals : [],
+      resources: data.version === 4 ? data.resources : [],
+      learningPaths: data.version === 4 ? data.learningPaths : [],
+      learningEntries: data.version === 4 ? data.learningEntries : [],
     };
   });
 export const backupSchema = z
@@ -270,7 +302,8 @@ export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Data = z.infer<typeof dataSchema>;
 export const emptyData = (): Data => ({
-  version: 4,
+  version: 5,
+  adaptation: emptyAdaptation(),
   resources: [],
   learningPaths: [],
   learningEntries: [],
@@ -286,14 +319,20 @@ export const emptyData = (): Data => ({
 export const localDay = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 export const priorityNames = { high: "Haute", medium: "Normale", low: "Basse" };
-export function sortedTasks(tasks: Task[]) {
+export function sortedTasks(
+  tasks: Task[],
+  order: "priority" | "due" = "priority",
+) {
   const rank = { high: 0, medium: 1, low: 2 };
-  return [...tasks].sort(
-    (a, b) =>
-      rank[a.priority] - rank[b.priority] ||
-      (a.due || "9999").localeCompare(b.due || "9999") ||
-      a.createdAt.localeCompare(b.createdAt),
-  );
+  return [...tasks].sort((a, b) => {
+    const priority = rank[a.priority] - rank[b.priority];
+    const due = (a.due || "9999").localeCompare(b.due || "9999");
+    return (
+      (order === "due" ? due || priority : priority || due) ||
+      a.createdAt.localeCompare(b.createdAt) ||
+      a.id.localeCompare(b.id)
+    );
+  });
 }
 export function briefing(data: Data, today: string) {
   const open = data.tasks.filter((task) => task.status === "todo");
@@ -305,7 +344,8 @@ export function briefing(data: Data, today: string) {
           (task.due && task.due <= today) ||
           (task.schedule ? task.schedule.day <= today : !task.due),
       ),
-    ).slice(0, 3),
+      data.adaptation.preferences.taskOrder,
+    ).slice(0, data.adaptation.preferences.priorityCount),
     planned: sortedTasks(
       open.filter((task) => task.schedule?.day === today || task.due === today),
     ),
@@ -314,14 +354,6 @@ export function briefing(data: Data, today: string) {
         task.completedAt && localDay(new Date(task.completedAt)) === today,
     ),
     overdue,
-    recommendation: overdue.length
-      ? `${overdue.length} tâche${overdue.length > 1 ? "s ont dépassé leur" : " a dépassé son"} échéance. Replanifiez ce qui compte pour alléger votre journée.`
-      : open.length > 0
-        ? "Choisissez une première tâche et réservez-lui un moment sans interruption."
-        : "Votre journée est ouverte. Capturez une idée ou choisissez votre prochaine priorité.",
-    reason: overdue.length
-      ? "Règle locale : échéance passée et tâche non terminée."
-      : "Règle locale : calcul à partir de vos tâches ouvertes.",
   };
 }
 export function removeProject(data: Data, projectId: string): Data {
