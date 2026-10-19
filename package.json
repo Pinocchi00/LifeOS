@@ -1,6 +1,6 @@
 {
   "name": "lifeos",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "android:verify": "node scripts/android-build.mjs --verify",
     "connector:start": "node scripts/connector-start.mjs",
     "test:server": "node --test server/*.test.mjs",
-    "connector:setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-Connector.ps1"
+    "connector:setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-Connector.ps1",
+    "connector:ai-setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-AiConnector.ps1"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

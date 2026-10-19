@@ -457,6 +457,7 @@ export function AssistantsCenter({
   edit,
   instructions,
   github,
+  ai,
   remove,
   editUsage,
 }: {
@@ -464,6 +465,7 @@ export function AssistantsCenter({
   edit: (mission?: Mission) => void;
   instructions: (mission: Mission) => void;
   github: (mission: Mission) => void;
+  ai: (mission: Mission) => void;
   remove: (mission: Mission) => void;
   editUsage: (assistant: Assistant) => void;
 }) {
@@ -483,7 +485,9 @@ export function AssistantsCenter({
       <div className="assistants-intro">
         <span className="small">ATELIER / DEUX ASSISTANTS, UN CAP</span>
         <p>Définir. Transmettre. Vérifier.</p>
-        <span className="manual-tag">Suivi manuel · aucune connexion IA</span>
+        <span className="manual-tag">
+          Validation manuelle · API facultative
+        </span>
       </div>
       <section aria-label="Limites des assistants" className="usage-grid">
         {(["chatgpt", "claude"] as const).map((key) => {
@@ -666,6 +670,15 @@ export function AssistantsCenter({
                   }
                 </button>
               </div>
+              {mission.assistant === "chatgpt" && (
+                <button
+                  className="text-button"
+                  aria-label={`API OpenAI pour ${mission.title}`}
+                  onClick={() => ai(mission)}
+                >
+                  Préparer une demande API
+                </button>
+              )}
               <div className="between mission-actions">
                 <button
                   className="text-button"

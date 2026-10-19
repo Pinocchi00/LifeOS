@@ -2,6 +2,8 @@
 
 Le serveur sert la version web compilée de LifeOS et ajoute la lecture d’issues, PR et exécutions Actions de dépôts privés **GitHub.com** autorisés. Il écoute uniquement sur **127.0.0.1**, sur cet ordinateur. Il ne synchronise pas les données et ne publie aucun service sur le réseau. L’application locale et l’APK restent autonomes.
 
+Depuis le lot 0.11, ce même serveur peut aussi héberger le [connecteur OpenAI facultatif](API-IA.md). Ce guide décrit la lecture GitHub ; les règles de transmission de texte et de réservations IA figurent dans le guide dédié.
+
 ## Démarrage sur Windows
 
 Node.js **24.12 minimum**, npm et Chrome/Edge récent. Dans `E:\LifeOS` :

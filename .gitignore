@@ -18,3 +18,5 @@ android/capacitor-cordova-android-plugins/build/
 *.jks
 *.keystore
 google-services.json
+
+.local-server/

@@ -14,6 +14,11 @@ export default defineConfig({
       url: "http://127.0.0.1:4174",
       reuseExistingServer: !process.env.CI,
     },
+    {
+      command: "node scripts/ai-fixture.mjs",
+      url: "http://127.0.0.1:4176",
+      reuseExistingServer: !process.env.CI,
+    },
   ],
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },

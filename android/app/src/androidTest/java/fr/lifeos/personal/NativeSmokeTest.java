@@ -129,6 +129,10 @@ public class NativeSmokeTest {
         fill("textarea[name=criteria]", "Vérifier les critères manuellement");
         click("Enregistrer la mission");
         waitFor("!document.querySelector('dialog[open]')");
+        js("document.querySelector('[aria-label=\"API OpenAI pour Mission GitHub Android\"]').click()");
+        waitFor("document.querySelector('.ai-panel')?.textContent.includes('Android conserve')");
+        assertEquals("true", js("!Array.from(document.querySelectorAll('.ai-panel button')).some(b=>b.textContent.includes('Vérifier l’accès IA'))"));
+        js("document.querySelector('dialog [aria-label=Fermer]').click()");
         js("document.querySelector('[aria-label=\"GitHub pour Mission GitHub Android\"]').click()");
         click("Relier un lien GitHub");
         waitFor("document.querySelector('input[name=url]')");

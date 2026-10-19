@@ -32,10 +32,11 @@ export function supportsConnector(): boolean {
     window.location.hostname === "127.0.0.1"
   );
 }
-async function request(
+export async function connectorRequest(
   path: string,
   body?: unknown,
   signal?: AbortSignal,
+  durationMs = 18000,
 ): Promise<unknown> {
   if (!supportsConnector())
     throw new Error(
@@ -45,7 +46,7 @@ async function request(
   const controller = new AbortController();
   const cancel = () => controller.abort();
   signal?.addEventListener("abort", cancel, { once: true });
-  const timeout = setTimeout(cancel, 18000);
+  const timeout = setTimeout(cancel, durationMs);
   try {
     const response = await fetch(`/api/connector/${path}`, {
       method: body === undefined ? "GET" : "POST",
@@ -98,18 +99,24 @@ async function request(
 export async function connectorStatus(
   signal?: AbortSignal,
 ): Promise<ConnectorStatus> {
-  return compatible(statusSchema, await request("status", undefined, signal));
+  return compatible(
+    statusSchema,
+    await connectorRequest("status", undefined, signal),
+  );
 }
 export async function pairConnector(
   code: string,
   signal?: AbortSignal,
 ): Promise<ConnectorStatus> {
-  return compatible(statusSchema, await request("pair", { code }, signal));
+  return compatible(
+    statusSchema,
+    await connectorRequest("pair", { code }, signal),
+  );
 }
 export async function disconnectConnector(signal?: AbortSignal): Promise<void> {
   compatible(
     z.object({ disconnected: z.literal(true) }).strict(),
-    await request("logout", {}, signal),
+    await connectorRequest("logout", {}, signal),
   );
 }
 export async function readPrivateGithub(
@@ -119,7 +126,7 @@ export async function readPrivateGithub(
   const valid = githubTargetSchema.parse(target);
   const result = compatible(
     z.object({ target: githubTargetSchema, check: githubCheckSchema }).strict(),
-    await request("github/read", valid, signal),
+    await connectorRequest("github/read", valid, signal),
   );
   if (
     githubKey(result.target) !== githubKey(valid) ||

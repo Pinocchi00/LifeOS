@@ -134,6 +134,12 @@ const GithubLinkForm = lazy(() =>
   })),
 );
 
+const AiPanel = lazy(() =>
+  import("./components/AiPanel").then((module) => ({
+    default: module.AiPanel,
+  })),
+);
+
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
   | {
@@ -168,6 +174,7 @@ type Editor =
   | { type: "mission"; value?: Mission }
   | { type: "usage"; assistant: Assistant }
   | { type: "instructions"; mission: Mission }
+  | { type: "ai"; missionId: string }
   | { type: "github"; missionId: string }
   | { type: "githubAdd"; missionId: string }
   | { type: "focus"; taskId?: string }
@@ -582,7 +589,9 @@ function Backup({
         Les réglages, les décisions et leurs historiques font partie de cette
         sauvegarde d’organisation v6. Les titres, adresses et états des
         références GitHub privées y figurent aussi en clair. Les accès du
-        serveur n’y sont pas enregistrés.
+        serveur n’y sont pas enregistrés. Les brouillons IA adoptés sont inclus
+        en clair ; les clés et le registre de limites du serveur restent
+        séparés.
       </p>
       <button
         className="button primary"
@@ -726,6 +735,10 @@ export default function App() {
     "projects",
   );
   const [editor, setEditor] = useState<Editor>(null);
+  const [aiPending, setAiPending] = useState(false);
+  useEffect(() => {
+    setAiPending(false);
+  }, [editor]);
   const [confirm, setConfirm] = useState<{
     title: string;
     message: string;
@@ -1672,6 +1685,7 @@ export default function App() {
               instructions={(mission) =>
                 setEditor({ type: "instructions", mission })
               }
+              ai={(mission) => setEditor({ type: "ai", missionId: mission.id })}
               github={(mission) =>
                 setEditor({ type: "github", missionId: mission.id })
               }
@@ -1932,64 +1946,81 @@ export default function App() {
       {editor && (
         <Modal
           close={close}
+          pending={editor.type === "ai" && aiPending}
           title={
-            editor.type === "github"
-              ? "GitHub, les faits conservés"
-              : editor.type === "githubAdd"
-                ? "Relier une référence GitHub"
-                : editor.type === "adaptation"
-                  ? "Vos repères, vos choix"
-                  : editor.type === "preferences"
-                    ? "Ajuster mes réglages"
-                    : editor.type === "decision"
-                      ? editor.value
-                        ? "Relire ma décision"
-                        : "Consigner une décision"
-                      : editor.type === "resource"
+            editor.type === "ai"
+              ? "Un brouillon à relire"
+              : editor.type === "github"
+                ? "GitHub, les faits conservés"
+                : editor.type === "githubAdd"
+                  ? "Relier une référence GitHub"
+                  : editor.type === "adaptation"
+                    ? "Vos repères, vos choix"
+                    : editor.type === "preferences"
+                      ? "Ajuster mes réglages"
+                      : editor.type === "decision"
                         ? editor.value
-                          ? "Modifier la ressource"
-                          : "Garder une ressource"
-                        : editor.type === "learningPath"
+                          ? "Relire ma décision"
+                          : "Consigner une décision"
+                        : editor.type === "resource"
                           ? editor.value
-                            ? "Modifier le parcours"
-                            : "Un parcours d’apprentissage"
-                          : editor.type === "learningEntry"
-                            ? "Votre séance d’apprentissage"
-                            : editor.type === "routine"
-                              ? editor.value
-                                ? "Modifier la routine"
-                                : "Nouvelle routine"
-                              : editor.type === "goal"
+                            ? "Modifier la ressource"
+                            : "Garder une ressource"
+                          : editor.type === "learningPath"
+                            ? editor.value
+                              ? "Modifier le parcours"
+                              : "Un parcours d’apprentissage"
+                            : editor.type === "learningEntry"
+                              ? "Votre séance d’apprentissage"
+                              : editor.type === "routine"
                                 ? editor.value
-                                  ? "Modifier l’objectif"
-                                  : "Nouvel objectif"
-                                : editor.type === "task"
+                                  ? "Modifier la routine"
+                                  : "Nouvelle routine"
+                                : editor.type === "goal"
                                   ? editor.value
-                                    ? "Modifier la tâche"
-                                    : "Un nouveau petit pas"
-                                  : editor.type === "project"
+                                    ? "Modifier l’objectif"
+                                    : "Nouvel objectif"
+                                  : editor.type === "task"
                                     ? editor.value
-                                      ? "Modifier le projet"
-                                      : "Un nouveau projet"
-                                    : editor.type === "note"
+                                      ? "Modifier la tâche"
+                                      : "Un nouveau petit pas"
+                                    : editor.type === "project"
                                       ? editor.value
-                                        ? "Modifier l’idée"
-                                        : "Capturer une idée"
-                                      : editor.type === "backup"
-                                        ? "Vos données, en sécurité"
-                                        : editor.type === "search"
-                                          ? "Retrouver l’essentiel"
-                                          : editor.type === "mission"
-                                            ? editor.value
-                                              ? "Modifier la mission"
-                                              : "Nouvelle mission"
-                                            : editor.type === "usage"
-                                              ? "Votre compteur personnel"
-                                              : editor.type === "focus"
-                                                ? "Une chose à la fois"
-                                                : "Instructions de mission"
+                                        ? "Modifier le projet"
+                                        : "Un nouveau projet"
+                                      : editor.type === "note"
+                                        ? editor.value
+                                          ? "Modifier l’idée"
+                                          : "Capturer une idée"
+                                        : editor.type === "backup"
+                                          ? "Vos données, en sécurité"
+                                          : editor.type === "search"
+                                            ? "Retrouver l’essentiel"
+                                            : editor.type === "mission"
+                                              ? editor.value
+                                                ? "Modifier la mission"
+                                                : "Nouvelle mission"
+                                              : editor.type === "usage"
+                                                ? "Votre compteur personnel"
+                                                : editor.type === "focus"
+                                                  ? "Une chose à la fois"
+                                                  : "Instructions de mission"
           }
         >
+          {editor.type === "ai" && (
+            <Suspense
+              fallback={<p className="form">Ouverture de la demande…</p>}
+            >
+              <AiPanel
+                data={data}
+                missionId={editor.missionId}
+                dirty={setAiPending}
+                change={(operation) =>
+                  change(operation, "Brouillon IA conservé")
+                }
+              />
+            </Suspense>
+          )}
           {editor.type === "github" && (
             <Suspense
               fallback={

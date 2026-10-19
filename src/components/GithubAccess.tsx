@@ -53,7 +53,7 @@ export function GithubAccess({
             : await connectorStatus(controller.signal);
         if (mounted.current) {
           setStatus(result);
-          setReady(result.paired);
+          setReady(result.paired && result.githubConfigured);
         }
       }
     } catch (error) {

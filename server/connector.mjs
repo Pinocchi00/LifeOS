@@ -1,3 +1,5 @@
+import { StringDecoder } from "node:string_decoder";
+import { aiConfig, createAi } from "./ai.mjs";
 import { createServer } from "node:http";
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
@@ -67,7 +69,7 @@ export function connectorConfig(env) {
   const port = Number(env.LIFEOS_CONNECTOR_PORT || 4317);
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
     throw new Error("Port serveur invalide (1024 à 65535).");
-  return { token, repositories: new Set(entries), port };
+  return { token, repositories: new Set(entries), port, ai: aiConfig(env) };
 }
 async function staticFiles(root) {
   const files = new Map();
@@ -87,20 +89,21 @@ async function staticFiles(root) {
   files.set("/", files.get("/index.html"));
   return files;
 }
-async function bodyJson(req) {
+async function bodyJson(req, maximum = 4096) {
   if (req.headers["content-type"] !== "application/json")
     throw new Refusal(415, "JSON requis.");
-  if (Number(req.headers["content-length"]) > 4096)
+  if (Number(req.headers["content-length"]) > maximum)
     throw new Refusal(413, "Requête trop volumineuse.");
+  const decoder = new StringDecoder("utf8");
   let length = 0,
     raw = "";
   for await (const chunk of req) {
     length += chunk.length;
-    if (length > 4096) throw new Refusal(413, "Requête trop volumineuse.");
-    raw += chunk.toString("utf8");
+    if (length > maximum) throw new Refusal(413, "Requête trop volumineuse.");
+    raw += decoder.write(chunk);
   }
   try {
-    return JSON.parse(raw);
+    return JSON.parse(raw + decoder.end());
   } catch {
     throw new Refusal(400, "JSON illisible.");
   }
@@ -115,8 +118,17 @@ export async function createConnector({
   now = Date.now,
   upstream = fetch,
   timeoutMs = 15000,
+  aiTimeoutMs = 60000,
+  ledgerPath = resolve(distRoot, "../.local-server/ai-budget.sqlite"),
 }) {
   const files = await staticFiles(distRoot);
+  const ai = createAi({
+    config: config.ai,
+    ledgerPath,
+    now,
+    upstream,
+    timeoutMs: aiTimeoutMs,
+  });
   const started = now();
   let usedCode = false,
     failures = 0,
@@ -126,7 +138,8 @@ export async function createConnector({
     nextRead = 0;
   let windowStart = now(),
     reads = 0;
-  const configured = Boolean(config.token && config.repositories.size);
+  const githubConfigured = Boolean(config.token && config.repositories.size);
+  const configured = githubConfigured || ai.configured;
   const cookie = (value, age) =>
     `${COOKIE}=${value}; HttpOnly; SameSite=Strict; Path=${PREFIX}; Max-Age=${age}`;
   function validSession(req) {
@@ -206,7 +219,7 @@ export async function createConnector({
           const paired = validSession(req);
           send(200, {
             version: 1,
-            githubConfigured: configured,
+            githubConfigured,
             paired,
             expiresAt: paired
               ? new Date(session.expiresAt).toISOString()
@@ -218,7 +231,7 @@ export async function createConnector({
           if (!configured)
             throw new Refusal(
               503,
-              "GitHub n’est pas configuré sur ce serveur.",
+              "Aucun connecteur n’est configuré sur ce serveur.",
             );
           const body = await bodyJson(req);
           // Check after the asynchronous body read: concurrent requests must
@@ -247,7 +260,7 @@ export async function createConnector({
             200,
             {
               version: 1,
-              githubConfigured: true,
+              githubConfigured,
               paired: true,
               expiresAt: new Date(session.expiresAt).toISOString(),
             },
@@ -260,7 +273,51 @@ export async function createConnector({
             throw new Refusal(401, "Session absente ou expirée.");
           session = null;
           active?.abort();
+          ai.revoke();
           send(200, { disconnected: true }, { "Set-Cookie": cookie("", 0) });
+          return;
+        }
+        if (path === `${PREFIX}/ai/status` && req.method === "GET") {
+          send(200, ai.status(validSession(req) ? session : null));
+          return;
+        }
+        if (
+          [`${PREFIX}/ai/prepare`, `${PREFIX}/ai/execute`].includes(path) &&
+          req.method === "POST"
+        ) {
+          if (!validSession(req))
+            throw new Refusal(
+              401,
+              "Session absente ou expirée. Appairez votre navigateur.",
+            );
+          const input = await bodyJson(
+            req,
+            path.endsWith("/prepare") ? 32000 : 4096,
+          );
+          if (res.destroyed || req.aborted || !validSession(req))
+            throw new Refusal(401, "Session expirée ou requête annulée.");
+          const authorized = session;
+          try {
+            const result = path.endsWith("/prepare")
+              ? ai.prepare(input, authorized)
+              : await ai.execute(
+                  input,
+                  authorized,
+                  req,
+                  res,
+                  () => session === authorized && validSession(req),
+                );
+            send(200, result);
+          } catch (error) {
+            throw new Refusal(
+              409,
+              error instanceof Error &&
+                error.message.length < 300 &&
+                !error.message.startsWith("[")
+                ? error.message
+                : "Requête IA incompatible. Aucun réessai automatique.",
+            );
+          }
           return;
         }
         if (path !== `${PREFIX}/github/read` || req.method !== "POST")
@@ -395,6 +452,7 @@ export async function createConnector({
   server.on("close", () => {
     active?.abort();
     session = null;
+    ai.close();
   });
   return { server, code };
 }

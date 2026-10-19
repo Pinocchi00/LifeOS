@@ -17,9 +17,9 @@ try {
   server.listen(config.port, "127.0.0.1", () => {
     console.log(`LifeOS : http://127.0.0.1:${config.port}`);
     console.log(
-      config.token
+      config.token || config.ai
         ? `Code d’appairage local (10 min, usage unique) : ${code}`
-        : "GitHub privé désactivé : configurez le jeton serveur et les dépôts autorisés.",
+        : "Connecteurs désactivés : configurez les accès facultatifs côté serveur.",
     );
     console.log(
       "Arrêt : Ctrl+C. Le jeton fournisseur ne quitte pas ce processus.",

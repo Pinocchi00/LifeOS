@@ -1,0 +1,89 @@
+.ai-panel {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  min-width: 0;
+}
+.ai-panel h3 {
+  font: 26px/1.25 var(--serif);
+  margin: 0;
+}
+.ai-panel p {
+  line-height: 1.65;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ai-panel label,
+.ai-pair {
+  display: grid;
+  gap: 10px;
+}
+.ai-panel textarea,
+.ai-panel select,
+.ai-pair input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+.ai-panel textarea {
+  resize: vertical;
+}
+.ai-panel .button {
+  white-space: normal;
+}
+.ai-panel summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+.ai-catalog,
+.ai-approval,
+.ai-draft {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.ai-access {
+  background: var(--paper);
+  border-left: 3px solid var(--ink);
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+.ai-panel pre {
+  font: 13px/1.7 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding: 16px;
+  background: var(--paper);
+  max-height: 480px;
+  overflow-y: auto;
+}
+.ai-notice {
+  padding: 16px;
+  background: var(--paper);
+  border-left: 3px solid var(--ink);
+}
+.ai-panel .ai-consent {
+  display: flex;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+.ai-consent input {
+  margin-top: 5px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--ink);
+}
+@media (max-width: 650px) {
+  .ai-panel {
+    padding: 20px;
+  }
+}

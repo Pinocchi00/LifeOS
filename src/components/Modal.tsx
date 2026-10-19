@@ -4,10 +4,12 @@ export function Modal({
   title,
   children,
   close,
+  pending = false,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
+  pending?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [dirty, setDirty] = useState(false);
@@ -15,7 +17,7 @@ export function Modal({
   const backdropDown = useRef(false);
   const lastControl = useRef<HTMLElement | null>(null);
   function requestClose() {
-    if (dirty) setDiscard(true);
+    if (dirty || pending) setDiscard(true);
     else close();
   }
   useEffect(() => {
@@ -23,14 +25,14 @@ export function Modal({
     setDiscard(false);
   }, [title]);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !pending) return;
     const protect = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
-  }, [dirty]);
+  }, [dirty, pending]);
   useEffect(() => {
     ref.current?.showModal();
     ref.current
@@ -81,8 +83,9 @@ export function Modal({
         <div className="unsaved-prompt" role="alert">
           <strong>Garder vos modifications ?</strong>
           <p>
-            Le formulaire n’est pas enregistré. Vous pouvez continuer ou quitter
-            sans enregistrer.
+            {pending
+              ? "Un brouillon ou un envoi IA reste en cours. Fermer peut perdre la réponse et n’annule pas forcément sa facturation."
+              : "Le formulaire n’est pas enregistré. Vous pouvez continuer ou quitter sans enregistrer."}
           </p>
           <div>
             <button

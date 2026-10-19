@@ -1,5 +1,15 @@
 # Journal des modifications
 
+## 0.11.0 — 19 octobre 2026
+
+- Premier connecteur OpenAI facultatif sur le serveur local : clé en processus uniquement, configuration explicite des deux limites et saisie Windows masquée.
+- Aperçu exact préparé sans appel fournisseur, lié à une autorisation unique et temporaire. Consentement avant comptage puis génération ; aucun outil, fichier, rapport existant, lien GitHub ou suivi Vie transmis automatiquement.
+- Catalogue daté GPT-5.6 Terra et tarifs officiels liés, expiration bloquant les envois, limites de texte et jetons, estimation de précaution distincte de la facture.
+- Registre SQLite de réservations quotidiennes en USD et nombre d’essais, partagé entre connexions et conservé après redémarrage. Dépassements, doublons, verrous, retour d’horloge et versions futures refusés. Aucun remboursement automatique après erreur ou annulation ; aucune relance implicite.
+- Réponses comme texte, refus et sortie incomplète signalés, adoption volontaire en compte-rendu non vérifié, fermeture protégée et mission non validée automatiquement.
+- Organisation v6 et Vie v1 inchangées ; réponses adoptées dans les sauvegardes en clair, clés/sessions/registre serveur exclus. L’APK conserve le mode manuel et explique l’absence d’API native.
+- Tests métier/client, HTTP et navigateur avec fournisseur fictif ; scénario Android étendu. Aucune vraie clé ni dépense configurée par les vérifications.
+
 ## 0.10.0 — 19 octobre 2026
 
 - Serveur Node facultatif pour la version web compilée, limité à 127.0.0.1 : lecture privée GitHub.com des seuls dépôts autorisés, jeton conservé uniquement côté serveur.
