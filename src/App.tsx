@@ -1973,7 +1973,11 @@ export default function App() {
                   "Réglages enregistrés",
                 )
               }
-              close={() => setEditor({ type: "adaptation" })}
+              close={() =>
+                setEditor((current) =>
+                  current === editor ? { type: "adaptation" } : current,
+                )
+              }
             />
           )}
           {editor.type === "decision" && (
@@ -1996,7 +2000,11 @@ export default function App() {
                   "Décision enregistrée",
                 )
               }
-              close={() => setEditor({ type: "adaptation" })}
+              close={() =>
+                setEditor((current) =>
+                  current === editor ? { type: "adaptation" } : current,
+                )
+              }
             />
           )}
           {editor.type === "focus" && (

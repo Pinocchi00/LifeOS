@@ -78,7 +78,10 @@ export function AdviceCard({
             </p>
             <p className="small">
               Affichage : {data.adaptation.preferences.priorityCount}{" "}
-              priorité(s),{" "}
+              {data.adaptation.preferences.priorityCount === 1
+                ? "priorité"
+                : "priorités"}
+              ,{" "}
               {data.adaptation.preferences.taskOrder === "priority"
                 ? "priorité puis échéance"
                 : "échéance puis priorité"}
@@ -99,8 +102,9 @@ export function AdviceCard({
           </button>
           {feedback ? (
             <p role="status" className="small">
-              Retour utile enregistré pour aujourd’hui. Vous pouvez l’annuler
-              dans vos repères.
+              Retour utile enregistré pour aujourd’hui. L’instantané d’origine
+              reste dans vos repères ; annulez ce retour pour répondre à
+              nouveau.
             </p>
           ) : (
             <div className="advice-reactions">

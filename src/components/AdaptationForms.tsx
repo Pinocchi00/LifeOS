@@ -47,7 +47,7 @@ export function PreferencesForm({
     }
   }
   return (
-    <form className="form" onSubmit={submit}>
+    <form className="form adaptation-preferences" onSubmit={submit}>
       <p className="muted">
         Ces choix s’appliquent au briefing, au mode concentration et aux
         conseils. Ils ne changent ni les tâches ni les dates enregistrées.
@@ -61,7 +61,7 @@ export function PreferencesForm({
         >
           {[1, 2, 3, 4, 5].map((count) => (
             <option key={count} value={count}>
-              {count} priorité(s)
+              {count} {count === 1 ? "priorité" : "priorités"}
             </option>
           ))}
         </select>
@@ -124,7 +124,12 @@ export function PreferencesForm({
         </p>
       )}
       <div className="form-actions">
-        <button type="button" className="button secondary" onClick={close}>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={busy}
+          onClick={close}
+        >
           Annuler
         </button>
         <button className="button primary" disabled={busy}>
@@ -251,7 +256,12 @@ export function DecisionForm({
         </p>
       )}
       <div className="form-actions">
-        <button type="button" className="button secondary" onClick={close}>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={busy}
+          onClick={close}
+        >
           Annuler
         </button>
         <button className="button primary" disabled={busy}>

@@ -113,7 +113,7 @@ export function adviceCandidates(data: Data, today: string): Advice[] {
     add(
       "overdue",
       "Revoir ce qui reste ouvert.",
-      `${overdue.length} tâche(s) ont dépassé leur échéance. Choisissez ce qui mérite une nouvelle date.`,
+      `${overdue.length} ${overdue.length === 1 ? "tâche a dépassé son échéance" : "tâches ont dépassé leur échéance"}. Choisissez ce qui mérite une nouvelle date.`,
       "Échéance antérieure à aujourd’hui et tâche non terminée. Le créneau réservé n’est pas une échéance.",
       [`Date locale : ${today}`, `Tâches en retard : ${overdue.length}`],
       "agenda",
@@ -123,7 +123,7 @@ export function adviceCandidates(data: Data, today: string): Advice[] {
     add(
       "review",
       "Votre regard est attendu.",
-      `${review.length} mission(s) attendent votre vérification. Relisez les résultats avant de valider.`,
+      `${review.length} ${review.length === 1 ? "mission attend" : "missions attendent"} votre vérification. Relisez les résultats avant de valider.`,
       "Seul le statut « À vérifier » saisi dans vos missions est compté. Aucun résultat d’assistant n’est évalué automatiquement.",
       [`Missions à vérifier : ${review.length}`],
       "missions",
@@ -136,7 +136,7 @@ export function adviceCandidates(data: Data, today: string): Advice[] {
     add(
       "load",
       "Choisir une journée tenable.",
-      `${planned.length} tâche(s) sont prévues ou arrivent à échéance aujourd’hui, pour ${count} priorité(s) affichée(s). Revoyez ce qui peut attendre.`,
+      `${planned.length} tâches sont prévues ou arrivent à échéance aujourd’hui, pour ${count} ${count === 1 ? "priorité affichée" : "priorités affichées"}. Revoyez ce qui peut attendre.`,
       "Comparaison avec le nombre de priorités que vous avez choisi. Ce seuil ne mesure ni votre capacité ni la durée réelle des tâches.",
       [
         `Tâches du jour, sans doublon : ${planned.length}`,
@@ -151,7 +151,7 @@ export function adviceCandidates(data: Data, today: string): Advice[] {
     add(
       "reserve",
       "Donner une place à une tâche.",
-      `${unscheduled.length} tâche(s) disponible(s) n’ont pas de créneau. Réservez un moment si cela vous aide.`,
+      `${unscheduled.length} ${unscheduled.length === 1 ? "tâche disponible n’a" : "tâches disponibles n’ont"} pas de créneau. Réservez un moment si cela vous aide.`,
       "Tâche ouverte sans créneau, avec une échéance passée/du jour ou sans échéance. Aucun temps de travail n’est déduit.",
       [`Tâches disponibles sans créneau : ${unscheduled.length}`],
       "agenda",
@@ -163,7 +163,7 @@ export function adviceCandidates(data: Data, today: string): Advice[] {
     add(
       "learning",
       "Reprendre un fil d’apprentissage.",
-      `${learning.length} parcours actif(s) ont encore une étape ouverte. Ouvrez celui que vous souhaitez poursuivre.`,
+      `${learning.length} ${learning.length === 1 ? "parcours actif a" : "parcours actifs ont"} encore une étape ouverte. Ouvrez celui que vous souhaitez poursuivre.`,
       "Parcours non en pause avec au moins une étape non cochée. Aucune maîtrise ou durée d’étude n’est estimée.",
       [`Parcours actifs à poursuivre : ${learning.length}`],
       "learning",

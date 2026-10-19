@@ -168,3 +168,13 @@
   line-height: 1.08;
   letter-spacing: -1px;
 }
+
+.adaptation-preferences .check-label {
+  flex-direction: row;
+  align-items: flex-start;
+  text-align: left;
+  padding: 8px 0;
+}
+.adaptation-preferences input[type="checkbox"] {
+  margin-top: 2px;
+}
