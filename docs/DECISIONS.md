@@ -86,3 +86,24 @@ Les occurrences passées non réalisées suivent la définition actuelle : ce lo
 Un objectif relie des tâches existantes, chacune de même poids. Les réalisations déterminent la progression ; rouvrir une tâche la recalcule, sans état de réussite forcé. Sans étape, la progression est zéro et le résultat n’est pas déclaré accompli. Supprimer une tâche la détache des objectifs, dont le total est recalculé ; supprimer un objectif conserve toutes ses tâches.
 
 L’enveloppe v3 ajoute `routines`, `routineEntries` et `goals`. Le magasin IndexedDB reste le même, car il contient une enveloppe unique. Les lectures v1/v2 sont validées puis transformées en v3 et réécrites en place ; la restauration garde sa confirmation et son écriture atomique. Une enveloppe invalide n’est jamais remplacée par du vide. Les doublons, relations orphelines et heures impossibles sont refusés avant écriture. Les exports v3 ne sont pas lisibles par les applications antérieures ; les anciens exports restent importables.
+
+
+## 018 — Une base et des sauvegardes distinctes pour Vie
+
+Tous les suivis personnels, y compris sport, cuisine, habitudes et sommeil, sont conservés dans `lifeos-personal`, avec une enveloppe version 1 indépendante de `lifeos-core` v3. Cette base n’est ouverte qu’en entrant dans Vie. L’export général et la recherche générale n’en lisent aucune donnée. Cette séparation limite les inclusions accidentelles ; elle ne chiffre pas les informations et n’isole pas un navigateur compromis ou une session système accessible.
+
+Le verrou global de l’application reste requis. Une file de mutations propre à Vie lit, valide et écrit dans une transaction, sans partir d’un état de composant devenu obsolète. Les écritures survivent à une navigation interne ; la lecture attend les opérations déjà en file. Une donnée incompatible ou un refus d’écriture ne remplace jamais le contenu par du vide. L’avis de mise à jour PWA attend aussi les écritures Vie. Le module d’interface est chargé séparément et précaché pour le hors ligne.
+
+Le format `LifeOS-Vie` propose quatre groupes cohérents : sport ; cuisine/stock/repas/courses ; habitudes/réalisations ; sommeil. L’utilisateur choisit les groupes à exporter, puis à remplacer à l’import. Les groupes non choisis et l’organisation restent intacts. Les relations des habitudes, doublons, tailles et valeurs sont validés avant toute écriture ; le remplacement sélectionné est atomique dans la base Vie. Le format général ne change pas : aucune migration de données d’organisation nécessaire au lot 0.5.
+
+## 019 — Repas et courses sans modification implicite du stock
+
+Un repas conserve un instantané des ingrédients ajustés à ses portions. Les changements de la recette ne réécrivent pas les repas. La liste des manquants agrège tous les repas encore prévus, convertit uniquement les unités de même famille (g/kg, ml/l) et rapproche les noms sans casse ni accents. Aucun synonyme ni conversion poids/volume n’est supposé. Le stock et toutes les lignes de courses déjà présentes, cochées comprises, sont déduits ; une nouvelle demande ne duplique pas le même besoin.
+
+Les lignes existantes ne sont pas diminuées lorsqu’un repas change : leur modification/suppression reste explicite. Cocher un achat marque son état ; `Ranger les achats cochés` réalise une mutation atomique stock/liste. Marquer un repas pris ne déduit pas les réserves automatiquement, car les quantités réellement utilisées peuvent différer. Pas de calories, allergies déduites, recette distante ou conseil nutritionnel inventé.
+
+## 020 — Des traces personnelles, sans estimation médicale
+
+Les séances, réalisations et nuits sont saisies explicitement. Une séance peut être décrite par sa durée seule ou détaillée en séries/répétitions/charges ; les comparaisons rapprochent les exercices de même nom. Reprendre comme modèle préremplit un nouveau formulaire et exige un enregistrement. Les habitudes personnelles sont indépendantes des routines d’organisation. Leur historique garde le titre au moment de la réalisation ; une pause conserve les faits, une suppression confirmée les retire. Les anciens rythmes non réalisés ne sont pas versionnés.
+
+Le sommeil stocke des instants UTC et une date locale de réveil, avec une entrée par nuit et une durée technique maximale de 24 h. Les saisies locales sont contrôlées par aller-retour pour refuser une heure inexistante ; une heure répétée suit le choix de décalage du navigateur. Les heures affichées suivent le fuseau courant. La moyenne ne remplit pas les jours absents avec des zéros. Le lot ne mesure rien en arrière-plan et ne produit ni diagnostic ni recommandation médicale.

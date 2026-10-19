@@ -4,7 +4,7 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
-Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré ; Vie est le prochain lot.
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; Explorer est le prochain lot.
 
 ## Phase 0 — Architecture et fondations
 
@@ -27,14 +27,14 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
 - État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
 
-Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4. Prochain lot : Vie. Chaque suite se traite en lot cohérent avec vérifications réelles.
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Prochain lot : Explorer. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 
 - Tâches : sport et progression, recettes et ingrédients, courses, habitudes, sommeil ; stockage santé distinct.
 - Dépendances : phase 0 et modèle de confidentialité dédié.
 - Acceptation : suivis datés persistants, données santé séparées, export sélectif vérifié.
-- État : prévu.
+- État : lot local 0.5 livré. Séances sportives datées, exercices et historique comparable, reprise comme modèle ; recettes, repas prévus/pris et quantités conservées ; stock, calcul des manquants et rangement explicite des courses ; habitudes avec réalisations et pause ; nuits avec durée et ressenti saisis. Base Vie distincte des données d’organisation, export sélectif et restauration par rubrique vérifiés. Aucun suivi Vie dans la recherche ou l’export général. À poursuivre ultérieurement : programmes sportifs structurés, mesures connectées, siestes multiples et fonctions de santé plus détaillées ; aucun diagnostic ni recommandation médicale dans ce lot.
 
 ## Phase 4 — Explorer
 

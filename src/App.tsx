@@ -1,11 +1,12 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
   useMemo,
   useDeferredValue,
   type FormEvent,
-  type ReactNode,
 } from "react";
 import { flushSync } from "react-dom";
 import {
@@ -31,7 +32,6 @@ import {
   Sparkles,
   Sprout,
   Trash2,
-  X,
   Waves,
 } from "lucide-react";
 import {
@@ -73,6 +73,13 @@ import {
   scheduleSchema,
 } from "./domain/planningSchema";
 import { removeTask, setRoutineDone } from "./domain/planning";
+import { Modal } from "./components/Modal";
+import { usePersonalBusy } from "./storage/usePersonal";
+const PersonalSpace = lazy(() =>
+  import("./components/personal/PersonalSpace").then((module) => ({
+    default: module.PersonalSpace,
+  })),
+);
 import { version } from "../package.json";
 
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
@@ -106,108 +113,6 @@ const dateLabel = (
   day: string,
   options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" },
 ) => new Date(day + "T12:00:00").toLocaleDateString("fr-FR", options);
-
-function Modal({
-  title,
-  children,
-  close,
-}: {
-  title: string;
-  children: ReactNode;
-  close: () => void;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const [dirty, setDirty] = useState(false);
-  const [discard, setDiscard] = useState(false);
-  const backdropDown = useRef(false);
-  const lastControl = useRef<HTMLElement | null>(null);
-  function requestClose() {
-    if (dirty) setDiscard(true);
-    else close();
-  }
-  useEffect(() => {
-    setDirty(false);
-    setDiscard(false);
-  }, [title]);
-  useEffect(() => {
-    if (!dirty) return;
-    const protect = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", protect);
-    return () => window.removeEventListener("beforeunload", protect);
-  }, [dirty]);
-  useEffect(() => {
-    ref.current?.showModal();
-    ref.current
-      ?.querySelector<HTMLElement>(
-        '[data-dialog-initial],form input:not([type="checkbox"]),.search-input input',
-      )
-      ?.focus({ preventScroll: true });
-  }, []);
-  return (
-    <dialog
-      ref={ref}
-      className="modal"
-      aria-labelledby="modal-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        requestClose();
-      }}
-      onChangeCapture={(event) => {
-        if ((event.target as HTMLElement).closest("form")) setDirty(true);
-      }}
-      onFocusCapture={(event) => {
-        if ((event.target as HTMLElement).matches("input,textarea,select"))
-          lastControl.current = event.target as HTMLElement;
-      }}
-      onPointerDown={(event) => {
-        backdropDown.current = event.target === ref.current;
-      }}
-      onClick={(event) => {
-        if (event.target === ref.current && backdropDown.current)
-          requestClose();
-      }}
-    >
-      <div className="modal-head">
-        <h2 id="modal-title">{title}</h2>
-        <button
-          className="icon-button"
-          aria-label="Fermer"
-          onClick={requestClose}
-        >
-          <X size={20} />
-        </button>
-      </div>
-      {discard && (
-        <div className="unsaved-prompt" role="alert">
-          <strong>Garder vos modifications ?</strong>
-          <p>
-            Le formulaire n’est pas enregistré. Vous pouvez continuer ou quitter
-            sans enregistrer.
-          </p>
-          <div>
-            <button
-              autoFocus
-              className="button primary"
-              onClick={() => {
-                setDiscard(false);
-                lastControl.current?.focus();
-              }}
-            >
-              Continuer la modification
-            </button>
-            <button className="button danger" onClick={close}>
-              Quitter sans enregistrer
-            </button>
-          </div>
-        </div>
-      )}
-      {children}
-    </dialog>
-  );
-}
 
 function TaskForm({
   task,
@@ -535,9 +440,10 @@ function Backup({
   return (
     <div className="form">
       <p className="muted">
-        Vos données restent sur cet appareil, dans ce navigateur. Exportez
-        régulièrement une copie dans un endroit sûr. Le fichier JSON est lisible
-        et n’est pas chiffré.
+        Vos données d’organisation restent sur cet appareil, dans ce navigateur.
+        Les suivis Vie ont leur propre sauvegarde. Exportez régulièrement une
+        copie dans un endroit sûr. Le fichier JSON est lisible et n’est pas
+        chiffré.
       </p>
       <div className="backup-counts">
         <span>
@@ -598,7 +504,7 @@ function Backup({
             compteurs, {pending.routines.length} routines,{" "}
             {pending.routineEntries.length} réalisations et{" "}
             {pending.goals.length} objectifs. Exportez vos données actuelles
-            avant de continuer.
+            avant de continuer. Les suivis Vie ne seront pas modifiés.
           </p>
           <button
             disabled={busy}
@@ -639,6 +545,7 @@ export default function App() {
   const { data, ready, error, busy, mutate } = useLifeOS();
   const [space, updateSpace] = useState<Space>("home");
   const motion = useMotion();
+  const personalBusy = usePersonalBusy();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const transition = useRef<ViewTransition | null>(null);
   function setSpace(next: Space) {
@@ -1162,7 +1069,7 @@ export default function App() {
           </div>
         </header>
         <main data-space={space} id="main-content" tabIndex={-1}>
-          <UpdateNotice busy={busy} />
+          <UpdateNotice busy={busy || personalBusy} />
           {error && (
             <div className="error-banner" role="alert">
               {error}
@@ -1202,36 +1109,38 @@ export default function App() {
                         ? "Vos missions, leurs résultats, votre validation."
                         : "Reliez vos projets à leurs tâches et à leurs missions."
                       : space === "life"
-                        ? "Le suivi personnel se prépare. Planifiez déjà un moment pour vous."
+                        ? "Votre mouvement, vos repas et vos repères, réunis dans un espace personnel."
                         : "Conservez une idée, une ressource ou une décision pour la retrouver."}
               </p>
             </div>
-            <button
-              className="button primary heading-action"
-              onClick={() =>
-                setEditor(
-                  space === "projects"
-                    ? projectView === "missions"
-                      ? { type: "mission" }
-                      : { type: "project" }
-                    : space === "explore"
-                      ? { type: "note" }
-                      : {
-                          type: "task",
-                          due: space === "agenda" ? selectedDay : today,
-                        },
-                )
-              }
-            >
-              <Plus size={17} />
-              {space === "projects"
-                ? projectView === "missions"
-                  ? "Nouvelle mission"
-                  : "Nouveau projet"
-                : space === "explore"
-                  ? "Nouvelle idée"
-                  : "Nouvelle tâche"}
-            </button>
+            {space !== "life" && (
+              <button
+                className="button primary heading-action"
+                onClick={() =>
+                  setEditor(
+                    space === "projects"
+                      ? projectView === "missions"
+                        ? { type: "mission" }
+                        : { type: "project" }
+                      : space === "explore"
+                        ? { type: "note" }
+                        : {
+                            type: "task",
+                            due: space === "agenda" ? selectedDay : today,
+                          },
+                  )
+                }
+              >
+                <Plus size={17} />
+                {space === "projects"
+                  ? projectView === "missions"
+                    ? "Nouvelle mission"
+                    : "Nouveau projet"
+                  : space === "explore"
+                    ? "Nouvelle idée"
+                    : "Nouvelle tâche"}
+              </button>
+            )}
           </div>
 
           {space === "home" && (
@@ -1631,47 +1540,9 @@ export default function App() {
           )}
 
           {space === "life" && (
-            <section className="life-intro">
-              <span className="life-art">
-                <Heart size={50} strokeWidth={1.2} />
-                <Leaf size={30} />
-              </span>
-              <p className="eyebrow">BIENTÔT, UN QUOTIDIEN PLUS ÉQUILIBRÉ</p>
-              <h2>
-                Votre énergie mérite
-                <br />
-                aussi son espace.
-              </h2>
-              <p>
-                Le suivi du sport, des repas et des habitudes arrivera dans un
-                prochain lot. Aucune donnée de santé n’est enregistrée dans
-                cette version.
-              </p>
-              <div className="life-topics">
-                <span>
-                  <Sprout size={19} />
-                  Habitudes
-                </span>
-                <span>
-                  <Heart size={19} />
-                  Mouvement
-                </span>
-                <span>
-                  <Leaf size={19} />
-                  Nutrition
-                </span>
-              </div>
-              <button
-                className="button primary"
-                onClick={() => setEditor({ type: "task", due: today })}
-              >
-                <Plus size={17} />
-                Planifier un moment pour moi
-              </button>
-              <p className="small muted">
-                Cette action crée une tâche ordinaire dans votre agenda.
-              </p>
-            </section>
+            <Suspense fallback={<p role="status">Ouverture de Vie…</p>}>
+              <PersonalSpace today={today} />
+            </Suspense>
           )}
 
           {space === "explore" && (

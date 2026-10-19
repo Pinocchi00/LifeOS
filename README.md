@@ -1,4 +1,4 @@
-# LifeOS 0.4
+# LifeOS 0.5
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -61,7 +61,7 @@ Le bouton **Mouvement / Mode calme** suit d'abord les préférences de l'apparei
 
 Les mises à jour PWA sont proposées avec **Mettre à jour**, sans rechargement forcé pendant une saisie. Ce bouton reste inaccessible derrière un dialogue ouvert et attend la fin d'un enregistrement.
 
-L'espace Vie présente les prochaines étapes. Les rapports et chiffres des assistants sont saisis par vous : aucune activité distante, actualité ou intégration IA n'est simulée.
+L’espace Vie permet les suivis personnels décrits ci-dessous. Les rapports et chiffres des assistants sont saisis par vous : aucune activité distante, actualité ou intégration IA n'est simulée.
 
 ## Planifier sa semaine
 
@@ -77,6 +77,25 @@ Dans **Routines**, créer un rythme hebdomadaire : jours, date de début, fin fa
 Modifier un rythme ou le mettre en pause conserve les réalisations, leur titre et leur horaire historiques. Les anciennes occurrences non réalisées suivent le rythme actuellement configuré : ce n’est pas un historique versionné des programmes. Supprimer une routine demande confirmation et supprime aussi ses réalisations ; utiliser la pause pour conserver cet historique. Les 30 réalisations les plus récentes sont visibles ; l’export conserve toutes les réalisations.
 
 Dans **Objectifs**, définir un résultat et lui associer des tâches existantes ou **Ajouter une étape**. Chaque tâche compte pour une étape de même poids. La progression suit les statuts réels et diminue si une étape est rouverte. Sans étape, aucun résultat accompli n’est annoncé. Une tâche supprimée est détachée des objectifs et le total est recalculé. Supprimer un objectif conserve ses tâches. Routines et objectifs sont aussi accessibles par la recherche universelle et inclus dans les sauvegardes.
+
+## Utiliser Vie
+
+Ouvrir **Vie**, puis choisir **Jour**, **Sport**, **Cuisine**, **Habitudes** ou **Sommeil**. La date au-dessus des rubriques sert à consulter et saisir les suivis datés. Les chiffres du jour sont calculés uniquement à partir des informations enregistrées.
+
+- **Sport** : consigner une séance réalisée, sa durée et, facultativement, les exercices avec séries, répétitions et charge en kg. Une activité sans exercice peut être suivie uniquement par sa durée. Choisir un exercice pour comparer les charges et répétitions enregistrées. **Reprendre comme modèle** ouvre une nouvelle saisie à ajuster et confirmer ; aucune réalisation n’est ajoutée automatiquement. Pas de programme généré ni de mesure sportive connectée.
+- **Cuisine** : créer une recette et ses quantités de base, puis **Prévoir un repas** à une date et pour un nombre de portions. Les ingrédients sont ajustés et conservés avec le repas ; modifier ou supprimer la recette ne réécrit pas les repas existants. Un repas reste prévu jusqu’au geste **Repas pris**. Modifier un repas permet aussi de changer sa date ou ses portions.
+- **Mon stock** contient les quantités déclarées. Modifier une ligne pour ajuster la réserve, la supprimer lorsqu’elle est épuisée. Un nom d’ingrédient et sa famille d’unités ne peuvent apparaître qu’une fois dans le stock. Les noms sont rapprochés sans accents, majuscules ou espaces superflus ; aucun rapprochement de synonymes.
+- **Courses** : **Compléter pour les repas prévus** additionne les ingrédients de tous les repas encore prévus, déduit le stock et la liste existante, puis ajoute uniquement les quantités supplémentaires. Le calcul convertit g/kg et ml/l ; les unités à la pièce, les volumes et les poids restent distincts. Les anciennes lignes ne sont jamais supprimées automatiquement lorsque les repas changent. Cocher un achat puis **Ranger les achats cochés** augmente explicitement le stock et retire ces lignes des courses. Marquer un repas pris ne consomme pas automatiquement le stock : les quantités utilisées sont à ajuster soi-même.
+- **Habitudes** : définir les jours choisis et la date de début, puis cocher chaque réalisation. Le futur est désactivé ; le passé peut être renseigné explicitement. Les réalisations gardent leur titre historique après renommage ou pause. Les occurrences passées non réalisées suivent la définition actuelle. La suppression confirmée d’une habitude supprime aussi ses réalisations ; la pause les conserve. Ces habitudes personnelles restent distinctes des routines d’organisation de l’agenda.
+- **Sommeil** : saisir le début et le réveil d’une nuit passée, avec un ressenti de 1 à 5 et une note facultative. La durée provient des instants saisis et peut traverser minuit. Une nuit par date de réveil, de durée positive et au plus égale à 24 h ; les siestes multiples ne sont pas modélisées. La moyenne porte uniquement sur les nuits effectivement saisies dans les sept jours affichés. Aucun diagnostic, conseil médical ou estimation automatique.
+
+Les dernières séances, comparaisons d’exercice, réalisations et nuits affichées sont limitées pour garder une vue lisible ; les exports conservent toutes les données. Les dates/heures suivent le fuseau de l’appareil. Le sommeil conserve des instants UTC et la date locale de réveil au moment de la saisie ; les heures affichées peuvent changer si vous changez de fuseau. Une heure locale inexistante lors d’un changement d’heure est refusée ; une heure répétée à l’automne suit l’interprétation du navigateur, sans choix explicite du décalage.
+
+### Sauvegarde personnelle séparée
+
+**Sauvegarder Vie** permet de sélectionner Sport, Cuisine, Habitudes et/ou Sommeil ; aucune rubrique n’est cochée par défaut. Le fichier **LifeOS-Vie v1** contient uniquement cette sélection. À l’import, sélectionner les rubriques à remplacer puis confirmer ; les autres suivis et toutes les données d’organisation sont conservés. Les fichiers incohérents, inconnus ou de plus de 10 Mo sont refusés avant l’écriture. Les exports généraux LifeOS v1/v2/v3 ne contiennent aucun suivi Vie et ne modifient pas Vie lors d’une restauration.
+
+Vie est conservé dans une base IndexedDB distincte `lifeos-personal`, ouverte uniquement en entrant dans cet espace. Le verrou d’écriture de l’application s’applique aussi à Vie ; les mutations sont validées et sérialisées. La recherche générale, les briefings de l’accueil et les missions n’incluent pas ces informations. Les fichiers sont en clair et le stockage n’est pas chiffré : conserver une copie adaptée à leur caractère personnel. Il faut sauvegarder séparément l’organisation et les rubriques Vie souhaitées. Aucun suivi réel n’est livré dans le code ni envoyé à GitHub.
 
 ## Utiliser les assistants
 
@@ -94,11 +113,11 @@ Les compteurs affichent uniquement votre dernier relevé. Si un plafond est inco
 
 Ouvrir l'avatar en haut à droite ou **Données & sauvegardes** sur ordinateur. Choisir **Exporter mes données**. Conserver le JSON dans un endroit sûr : il contient vos informations en clair, sans chiffrement.
 
-Pour restaurer : sélectionner un JSON LifeOS, vérifier le nombre d'éléments puis confirmer le remplacement. Exporter d'abord les données actuelles : la restauration remplace l'intégralité du contenu, elle ne fusionne pas les appareils. Les fichiers inconnus, trop volumineux (10 Mo), incohérents ou de version non prise en charge sont refusés avant toute écriture.
+Pour restaurer : sélectionner un JSON LifeOS, vérifier le nombre d'éléments puis confirmer le remplacement. Exporter d'abord les données actuelles : la restauration remplace les données d’organisation, sans modifier Vie ; elle ne fusionne pas les appareils. Les fichiers inconnus, trop volumineux (10 Mo), incohérents ou de version non prise en charge sont refusés avant toute écriture.
 
 Le format de données courant est **v3** : il ajoute les créneaux, routines, réalisations et objectifs. Les données locales et sauvegardes **v1 et v2** sont validées puis migrées sans perdre leur contenu. Les anciennes versions de l’application ne savent pas lire un export v3 ; conserver les exports historiques si nécessaire. Pour charger une mise à jour PWA, fermer toutes les fenêtres LifeOS puis relancer l'application.
 
-Le stockage n'est pas une sauvegarde garantie : le nettoyage des données du navigateur, la navigation privée, une désinstallation ou une réinitialisation peuvent l'effacer. Aucune synchronisation cloud ni chiffrement applicatif dans cette version. Les données santé ne sont pas encore prises en charge ; leur stockage séparé est prévu.
+Le stockage n'est pas une sauvegarde garantie : le nettoyage des données du navigateur, la navigation privée, une désinstallation ou une réinitialisation peuvent l'effacer. Aucune synchronisation cloud ni chiffrement applicatif dans cette version. Les suivis Vie sont dans une base séparée et ont une sauvegarde distincte ; cette séparation ne constitue pas un chiffrement ni une frontière de sécurité contre un accès à votre session.
 
 ## Tests
 
@@ -129,7 +148,9 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 - `src/domain/` : modèles, règles, missions, validation des sauvegardes et migrations v1/v2 → v3.
 - `src/components/Assistants.tsx` : centre de missions, formulaires, rapports et compteurs manuels.
-- `src/storage/` : IndexedDB et coordination des mutations et fenêtres.
+- `src/storage/` : IndexedDB d’organisation et base Vie distincte, coordination des mutations et fenêtres.
+- `src/components/personal/`, `src/domain/personal.ts`, `src/personal.css` : suivis Vie, formulaires, sauvegardes sélectives et règles métier.
+- `src/components/Modal.tsx` : dialogue partagé et protection des saisies.
 - `src/App.tsx` et les feuilles CSS : écrans, structure responsive et identité écobrutaliste.
 - `src/components/DailyGarden.tsx`, `FocusSession.tsx`, `UpdateNotice.tsx` : jardin, concentration et mise à jour explicite.
 - `src/components/Planning.tsx`, `PlanningForms.tsx` : semaine, mois, routines, objectifs et formulaires.
@@ -142,4 +163,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Prochain lot dans l’ordre convenu : Vie (sport, nutrition, recettes et habitudes), avec une séparation explicite des données de santé. Ensuite : Explorer, Android, adaptation et connecteurs facultatifs.
+Prochain lot dans l’ordre convenu : Explorer (ressources structurées, sources et apprentissage). Ensuite : Android, adaptation et connecteurs facultatifs. Les flux d’actualités resteront sourcés et explicitement datés.

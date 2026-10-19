@@ -1,5 +1,17 @@
 # Journal des modifications
 
+## 0.5.0 — 19 octobre 2026
+
+- Espace Vie fonctionnel : synthèse du jour, sport, cuisine, habitudes et sommeil, avec date de consultation.
+- Séances réalisées, exercices (séries, répétitions et charges), historique comparable et reprise explicite comme modèle.
+- Recettes, repas prévus/pris, ajustement des portions et conservation des quantités historiques après modification/suppression d’une recette.
+- Stock d’ingrédients, calcul des manquants pour les repas prévus, conversions g/kg et ml/l, courses sans ajout en double et rangement explicite des achats.
+- Habitudes datées, réalisation/réouverture, pause et conservation du titre historique ; réalisations futures désactivées.
+- Nuits saisies avec début/réveil, durée réelle et ressenti ; moyenne sur les seules nuits enregistrées, sans estimation ni conseil médical.
+- Base IndexedDB Vie séparée ; exports et restaurations sélectifs par rubrique, exclus des données générales. Format d’organisation v3 conservé ; nouveau format Vie v1 indépendant.
+- Dialogues partagés, protection des formulaires y compris ajout/retrait de lignes, erreurs d’écriture visibles et PWA attendant aussi les écritures Vie.
+- Interface Vie chargée séparément, disponible hors ligne après précache ; tests métier, stockage et parcours navigateur dédiés.
+
 ## 0.4.0 — 19 octobre 2026
 
 - Suppression de la scène WebGL, de Three.js, de ses types et du cache optionnel. Le jardin original, les actions contextuelles et les transitions légères restent présents.

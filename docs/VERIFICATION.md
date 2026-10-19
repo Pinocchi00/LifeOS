@@ -1,5 +1,20 @@
 # Vérifications LifeOS
 
+## Lot 0.5 — 19 octobre 2026
+
+- **57 tests Vitest réussis**, sept fichiers. Les 15 nouveaux tests couvrent portions et instantanés de repas, conversions et rapprochement des noms, déduction du stock et des courses, rangement explicite et idempotence, refus des quantités impossibles, habitudes datées, sommeil traversant minuit/changement d’heure, synthèse des seules saisies, exports sélectifs et restauration partielle.
+- Trois tests du nouveau stockage vérifient la séparation réelle d’IndexedDB d’organisation, la sérialisation de deux mutations, le refus d’un état invalide sans écrasement et la conservation d’une enveloppe incompatible. La base d’organisation reste en v3 et les imports existants restent couverts par la suite.
+- **34 parcours Playwright réussis**, dont huit nouveaux parcours ordinateur/Pixel 7 : sport (lignes d’exercices, suppression d’une ligne conservant la suivante, modification, modèle et persistance), recettes/portions/stock/courses, repas conservés après suppression de recette, habitudes et pause gardant les faits passés, nuit réelle et refus du futur, exclusion de la recherche générale, export général sans suivi Vie, export sélectif, restauration ne modifiant pas les rubriques non choisies et utilisation hors ligne.
+- Un sélecteur initial de test du stock exigeait le texte exact d’un label englobant un menu : il vise maintenant le rôle accessible du menu. Les deux parcours cuisine ont été rejoués avec la suite complète. Après le dernier ajustement d’erreur de suppression, les deux parcours sport ont été rejoués avec une exception IndexedDB simulée : erreur visible dans le dialogue, données conservées et nouvelle tentative réussie.
+- Compilation TypeScript/Vite/PWA réussie : JavaScript principal environ **127,4 Ko gzip**, module d’interface Vie environ **10,4 Ko gzip**, CSS environ **19,9 Ko gzip** ; 13 ressources précachées. Aucun moteur 3D ajouté. L’interface Vie est chargée séparément et le stockage personnel n’est ouvert qu’en entrant dans cet espace.
+- Contrôle visuel avec données fictives isolées des données de l’utilisateur : cinq rubriques à 1440, 768, 393 et 320 pixels, sans débordement horizontal ni erreur JavaScript de page ; formulaire de sommeil contrôlé à 320 pixels. Captures Jour/Cuisine et formulaire inspectées. Captures et données d’essai restent hors du dépôt.
+- Projet Capacitor resynchronisé avec les ressources compilées. Aucun APK construit ni essai Android physique. Pas de test Safari/Firefox ou lecteur d’écran réel ; pas de mesure de batterie ni d’affirmation de performance universelle.
+- Limites explicites : aucun programme sportif structuré ou capteur connecté ; pas de calories ou conseils médicaux ; pas de consommation automatique du stock ni de synonymes d’ingrédients ; courses à ajuster lorsqu’un repas change ; une entrée de sommeil par date de réveil, durée maximale technique de 24 h et pas de siestes multiples. Les heures répétées à l’automne suivent le choix du navigateur. Stockage et fichiers non chiffrés, sans synchronisation cloud.
+
+Créations principales : `src/domain/personal.ts`, `personal.test.ts`, `src/storage/personalDatabase.ts`, `personalDatabase.test.ts`, `usePersonal.ts`, `src/components/personal/PersonalSpace.tsx`, `PersonalForms.tsx`, `PersonalBackup.tsx`, `src/components/Modal.tsx`, `src/personal.css`, `tests/personal.spec.ts`. Adaptations : `src/App.tsx`, `src/main.tsx`, versions du package et documentation. L’ancien écran d’attente de Vie est remplacé ; le format général v3 et le visuel sans 3D sont conservés.
+
+Prochain lot : Explorer, ressources structurées avec sources et apprentissage ; aucune fausse actualité en temps réel.
+
 ## Lot 0.4 — 19 octobre 2026
 
 - Retrait du moteur WebGL, de `three` et `@types/three`, du chunk et de sa règle de cache. Le jardin illustré et ses commandes HTML restent utilisables hors ligne. L’ancien cache optionnel est supprimé au démarrage.
