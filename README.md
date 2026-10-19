@@ -192,4 +192,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Suite de la roadmap : terminer la recette sur téléphone physique et la distribution Android, puis adaptation et connecteurs facultatifs. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.
+Prochain lot de développement : adaptation explicable, puis connecteurs facultatifs. La recette sur téléphone physique et la distribution Android de production restent à valider. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.
