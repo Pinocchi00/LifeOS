@@ -30,6 +30,22 @@ beforeEach(() => {
   mocks.getPending.mockResolvedValue({ notifications: [] });
 });
 describe("rappels Android explicites", () => {
+  it("n’attend jamais le Proxy natif lui-même comme une promesse", async () => {
+    Object.defineProperty(mocks, "then", {
+      configurable: true,
+      get() {
+        throw new Error(
+          "Le Proxy natif ne doit pas être assimilé à une promesse.",
+        );
+      },
+    });
+    try {
+      await enableReminder("09:00");
+      expect(mocks.schedule).toHaveBeenCalledTimes(1);
+    } finally {
+      Reflect.deleteProperty(mocks, "then");
+    }
+  });
   it("conserve uniquement une heure valide et un texte général, sans alarme exacte", () => {
     expect(() => dailyNotification("24:00")).toThrow();
     expect(() => dailyNotification("9:30")).toThrow();

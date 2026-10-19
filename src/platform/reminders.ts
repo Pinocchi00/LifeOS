@@ -58,15 +58,17 @@ async function authorize() {
     visibility: 0,
     vibration: false,
   });
-  return LocalNotifications;
+  // Capacitor plugins are Proxies: returning one from an async function would
+  // make Promise resolution call its nonexistent native `then` method.
+  return { LocalNotifications };
 }
 export async function enableReminder(time: string) {
   const notification = dailyNotification(time);
-  const LocalNotifications = await authorize();
+  const { LocalNotifications } = await authorize();
   await LocalNotifications.schedule({ notifications: [notification] });
 }
 export async function testReminder() {
-  const LocalNotifications = await authorize();
+  const { LocalNotifications } = await authorize();
   const notification = dailyNotification("09:00");
   await LocalNotifications.schedule({
     notifications: [
