@@ -5,6 +5,9 @@ mkdir -p artifacts
 capture() {
   adb exec-out screencap -p > artifacts/LifeOS-Android.png || true
   adb logcat -d -v threadtime > artifacts/android-logcat.txt || true
+  for image in native-home.png native-failure.png native-reminders.png; do
+    adb pull "/sdcard/Android/data/fr.lifeos.personal/files/$image" "artifacts/$image" || true
+  done
 }
 trap capture EXIT
 adb shell svc wifi disable

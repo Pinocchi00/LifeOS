@@ -47,12 +47,17 @@ public class NativeSmokeTest {
         assertTrue("JavaScript callback timed out", done.await(10, TimeUnit.SECONDS));
         return value.get();
     }
+    private void capture(String name) {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).takeScreenshot(
+            new File(activity.getActivity().getExternalFilesDir(null), name));
+    }
     private void waitFor(String predicate) throws Exception {
         long end = SystemClock.elapsedRealtime() + 20000;
         while (SystemClock.elapsedRealtime() < end) {
             if ("true".equals(js("(()=>{try{return !!(" + predicate + ")}catch(e){return false}})()"))) return;
             SystemClock.sleep(150);
         }
+        capture("native-failure.png");
         fail("Condition: " + predicate + "\nPage: " + js("document.body.innerText.slice(0,5000)"));
     }
     private void click(String text) throws Exception {
@@ -68,6 +73,7 @@ public class NativeSmokeTest {
     @Test public void nativeOfflinePersistenceBackExportAndNotifications() throws Exception {
         waitFor("document.querySelector('h1')?.textContent.includes('Faites de la place')");
         assertEquals("\"android\"", js("window.Capacitor.getPlatform()"));
+        capture("native-home.png");
         js("navigator.serviceWorker.getRegistrations().then(r=>window.smokeWorkerCount=r.length)");
         waitFor("window.smokeWorkerCount===0");
         Context context = activity.getActivity();
@@ -111,8 +117,8 @@ public class NativeSmokeTest {
         // Verify the real system chooser is present, then cancel without claiming
         // that a destination saved the file.
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        assertTrue(device.wait(androidx.test.uiautomator.Until.hasObject(
-            androidx.test.uiautomator.By.pkg("android")), 10000));
+        assertTrue("Android system share sheet is visible", device.wait(androidx.test.uiautomator.Until.hasObject(
+            androidx.test.uiautomator.By.pkg("com.android.intentresolver")), 10000));
         device.pressBack();
         waitFor("!Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Exporter mes données'))?.disabled");
 
@@ -158,12 +164,12 @@ public class NativeSmokeTest {
         waitFor("window.smokePending?.some(n=>n.id===7301 && n.isExactNotification===false)");
         click("Tester dans une minute");
         waitFor("document.body.innerText.includes('Un essai est en attente')");
-        // Force a short test alarm using the same native API, then observe an
-        // actual delivered notification; inexact Android timing has a margin.
-        js("window.Capacitor.nativePromise('LocalNotifications','schedule',{notifications:[{id:7302,title:'Essai natif LifeOS',body:'Essai',channelId:'lifeos-rendezvous',isExactNotification:false,schedule:{at:new Date(Date.now()+1000).toISOString()}}]}).then(()=>window.smokeScheduled=true)");
+        // Scheduling was checked above. Observe native delivery with an immediate
+        // test notification, independently of Android's inexact-alarm batching.
+        js("window.Capacitor.nativePromise('LocalNotifications','schedule',{notifications:[{id:7302,title:'Essai natif LifeOS',body:'Essai',channelId:'lifeos-rendezvous',isExactNotification:false}]}).then(()=>window.smokeScheduled=true)");
         waitFor("window.smokeScheduled===true");
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        until = SystemClock.elapsedRealtime() + 70000;
+        until = SystemClock.elapsedRealtime() + 20000;
         boolean delivered = false;
         while (SystemClock.elapsedRealtime() < until) {
             for (android.service.notification.StatusBarNotification n : manager.getActiveNotifications())
@@ -176,5 +182,6 @@ public class NativeSmokeTest {
         waitFor("document.body.innerText.includes('Rappel quotidien et essai annulés')");
         js("window.Capacitor.nativePromise('LocalNotifications','getPending',{}).then(r=>window.smokeAfter=r.notifications)");
         waitFor("window.smokeAfter?.every(n=>n.id!==7301 && n.id!==7302)");
+        capture("native-reminders.png");
     }
 }
