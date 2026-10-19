@@ -5,7 +5,7 @@ mkdir -p artifacts
 capture() {
   adb exec-out screencap -p > artifacts/LifeOS-Android.png || true
   adb logcat -d -v threadtime > artifacts/android-logcat.txt || true
-  for image in native-home.png native-failure.png native-reminders.png native-adaptation.png native-github.png; do
+  for image in native-home.png native-failure.png native-reminders.png native-adaptation.png native-github.png native-ai-claude.png native-eco-explorer.png native-eco-projects.png; do
     adb pull "/sdcard/Android/data/fr.lifeos.personal/files/$image" "artifacts/$image" || true
   done
 }

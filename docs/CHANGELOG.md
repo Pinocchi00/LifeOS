@@ -2,6 +2,9 @@
 
 ## 0.12.0 — 19 octobre 2026
 
+- Trois nouvelles images écobrutalistes originales dans Projets, Vie et Explorer ; WebP adaptatifs embarqués et disponibles hors ligne, sans moteur 3D.
+- Protection des saisies dès l’événement d’entrée, y compris Retour immédiat avant le rendu suivant ; scénario Android attendant un dialogue réellement ouvert.
+
 - Connecteur Anthropic facultatif pour les missions Claude, sur le serveur local existant ; clé distincte en processus et saisie masquée OpenAI, Anthropic ou les deux.
 - Catalogue sourcé élargi à GPT-5.6 Terra, Claude Sonnet 5.5 et Claude Haiku 5.5, avec modèle choisi explicitement, paramètres et tarifs propres à chacun. Comptage et génération visibles avant accord.
 - Nouvelle autorisation après changement de modèle, fournisseur indisponible expliqué sans remplacement, réserve quotidienne commune aux fournisseurs et registre existant conservé.

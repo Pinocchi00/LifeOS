@@ -56,6 +56,7 @@ import {
 } from "./components/Assistants";
 import { type Assistant, type Mission, type Usage } from "./domain/assistants";
 import { DailyGarden } from "./components/DailyGarden";
+import { EcoScene } from "./components/EcoScene";
 import { FocusSession } from "./components/FocusSession";
 import { useMotion } from "./experience/useMotion";
 import { UpdateNotice } from "./components/UpdateNotice";
@@ -1326,6 +1327,9 @@ export default function App() {
             )}
           </div>
 
+          {(space === "projects" ||
+            space === "life" ||
+            space === "explore") && <EcoScene space={space} />}
           {space === "home" && (
             <>
               <DailyGarden

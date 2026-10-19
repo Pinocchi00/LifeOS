@@ -46,6 +46,7 @@ async function start(options = {}) {
   );
   await writeFile(join(directory, ".private.js"), TOKEN);
   await writeFile(join(directory, "source.js.map"), "SOURCE-EXCLUDED");
+  await writeFile(join(directory, "scene.webp"), "WEBP-TRANSPORT-FIXTURE");
   let clock = Date.parse("2026-10-19T12:00:00Z");
   const calls = [];
   const upstream =
@@ -356,6 +357,10 @@ test("soixante lectures par heure au plus et reprise explicite après la fenêtr
 });
 test("serveur statique isolé : code source, dotfiles, secrets, cartes et API inconnues absents", async () => {
   const f = await start();
+  const image = await fetch(`${f.origin}/scene.webp`);
+  assert.equal(image.status, 200);
+  assert.equal(image.headers.get("content-type"), "image/webp");
+  assert.equal(await image.text(), "WEBP-TRANSPORT-FIXTURE");
   const root = await fetch(f.origin);
   assert.equal(root.status, 200);
   assert.match(

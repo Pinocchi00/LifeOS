@@ -184,3 +184,82 @@ test("jardin illustré sans moteur 3D, commandes et image hors ligne", async ({
     .toBe(true);
   expect(requests.some((url) => /gardenScene|three\./.test(url))).toBe(false);
 });
+
+test("saisie puis Retour immédiat conserve le formulaire avant le rendu suivant", async ({
+  page,
+}) => {
+  await home(page);
+  await page
+    .getByRole("button", { name: "Nouvelle tâche", exact: true })
+    .click();
+  await page.getByRole("dialog").waitFor();
+  await page.evaluate(() => {
+    const input = document.querySelector<HTMLInputElement>(
+      'dialog form input[name="title"]',
+    )!;
+    Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!.call(input, "Saisie à conserver");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input
+      .closest("dialog")!
+      .dispatchEvent(new Event("cancel", { cancelable: true }));
+  });
+  await expect(page.locator(".unsaved-prompt")).toContainText(
+    "Garder vos modifications",
+  );
+  await page
+    .getByRole("button", { name: "Continuer la modification", exact: true })
+    .click();
+  await expect(page.locator('dialog input[name="title"]')).toHaveValue(
+    "Saisie à conserver",
+  );
+});
+
+test("trois paysages locaux lisibles et disponibles hors ligne dans leurs rubriques", async ({
+  page,
+  context,
+}) => {
+  await home(page);
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await expect
+    .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
+    .toBe(true);
+  await context.setOffline(true);
+  for (const name of ["Projets", "Vie", "Explorer"]) {
+    await page
+      .getByRole("navigation", {
+        name:
+          page.viewportSize()!.width < 651
+            ? "Navigation mobile"
+            : "Navigation principale",
+        exact: true,
+      })
+      .getByRole("button", { name, exact: true })
+      .click();
+    const image = page.locator(".eco-scene img");
+    await expect(image).toBeVisible();
+    await expect
+      .poll(() =>
+        image.evaluate(
+          (node: HTMLImageElement) => node.complete && node.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    expect(
+      await image.evaluate(
+        (node: HTMLImageElement) =>
+          new URL(node.currentSrc).origin === location.origin,
+      ),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await expect(page.locator("canvas")).toHaveCount(0);
+  }
+});

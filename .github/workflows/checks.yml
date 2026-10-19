@@ -25,6 +25,13 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm audit --omit=dev
+      - name: Preuves des parcours en échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: LifeOS-web-test-failures
+          retention-days: 7
+          path: test-results/
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 25

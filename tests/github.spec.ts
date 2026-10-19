@@ -36,15 +36,13 @@ async function restore(page: Page, data: unknown) {
   await page
     .getByRole("button", { name: "Ouvrir les sauvegardes", exact: true })
     .click();
-  await page
-    .getByLabel("Restaurer une sauvegarde JSON")
-    .setInputFiles({
-      name: "fixture.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(
-        JSON.stringify({ application: "LifeOS", exportedAt: date, data }),
-      ),
-    });
+  await page.getByLabel("Restaurer une sauvegarde JSON").setInputFiles({
+    name: "fixture.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({ application: "LifeOS", exportedAt: date, data }),
+    ),
+  });
   await page
     .getByRole("button", { name: "Confirmer le remplacement", exact: true })
     .click();
@@ -96,6 +94,14 @@ test.beforeEach(async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Faites de la place à l’essentiel." }),
   ).toBeVisible();
+  // Install the API fixture after the worker has claimed this document, so
+  // its ownership cannot change during the intercepted public request.
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await expect
+    .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
+    .toBe(true);
   await restore(page, fixture());
   await center(page);
 });
@@ -377,15 +383,13 @@ test("quota respecté sans répétition réseau, annulation et refus d’un impo
       },
     ],
   };
-  await page
-    .getByLabel("Restaurer une sauvegarde JSON")
-    .setInputFiles({
-      name: "invalid.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(
-        JSON.stringify({ application: "LifeOS", exportedAt: date, data }),
-      ),
-    });
+  await page.getByLabel("Restaurer une sauvegarde JSON").setInputFiles({
+    name: "invalid.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({ application: "LifeOS", exportedAt: date, data }),
+    ),
+  });
   await expect(page.getByRole("alert")).toContainText("Fichier invalide");
   await expect(
     page.getByRole("button", {

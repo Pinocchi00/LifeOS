@@ -85,7 +85,7 @@ public class NativeSmokeTest {
                 context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS));
 
         click("Nouvelle tâche");
-        waitFor("document.querySelector('form input[name=title]')");
+        waitFor("document.querySelector('dialog[open] form input[name=title]')");
         fill("form input[name=title]", "Essai Android local");
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
         SystemClock.sleep(500);
@@ -114,12 +114,16 @@ public class NativeSmokeTest {
         waitFor("!document.querySelector('dialog[open]')");
         click("Explorer");
         waitFor("document.querySelector('[aria-label=\"Rubriques Explorer\"]')");
+        waitFor("document.querySelector('.eco-scene img')?.naturalWidth>0");
+        capture("native-eco-explorer.png");
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
         waitFor("document.querySelector('h1')?.textContent.includes('Faites de la place')");
 
         // GitHub uses an explicit synthetic HTTP response in this offline
         // emulator. This verifies WebView integration, not live GitHub access.
         js("Array.from(document.querySelectorAll('nav button')).find(b=>b.getClientRects().length && b.textContent.trim()==='Projets').click()");
+        waitFor("document.querySelector('.eco-scene img')?.naturalWidth>0");
+        capture("native-eco-projects.png");
         waitFor("Array.from(document.querySelectorAll('button')).some(b=>b.getClientRects().length && b.textContent.includes('Missions IA'))");
         js("Array.from(document.querySelectorAll('button')).find(b=>b.getClientRects().length && b.textContent.includes('Missions IA')).click()");
         click("Nouvelle mission");
@@ -143,8 +147,8 @@ public class NativeSmokeTest {
         waitFor("!document.querySelector('dialog[open]')");
         js("document.querySelector('[aria-label=\"API Anthropic pour Mission Claude Android\"]').click()");
         waitFor("document.querySelector('.ai-panel')?.textContent.includes('Android conserve')");
-        assertEquals("claude-sonnet-5-5", js("document.querySelector('.ai-panel select').value"));
-        assertEquals("2", js("String(document.querySelector('.ai-panel select').options.length)"));
+        assertEquals("\"claude-sonnet-5-5\"", js("document.querySelector('.ai-panel select').value"));
+        assertEquals("2", js("document.querySelector('.ai-panel select').options.length"));
         assertEquals("true", js("!Array.from(document.querySelectorAll('.ai-panel button')).some(b=>b.textContent.includes('Vérifier l’accès IA'))"));
         capture("native-ai-claude.png");
         js("document.querySelector('dialog [aria-label=Fermer]').click()");

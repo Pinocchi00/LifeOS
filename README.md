@@ -45,7 +45,7 @@ Ouvrir `http://127.0.0.1:4173`, puis choisir **Installer LifeOS** dans le menu d
 - Instructions copiables ; clôture d'une mission après compte-rendu et validation explicite. Aucun message n'est envoyé automatiquement.
 - Compteurs d'usage manuels pour les deux assistants : plafond facultatif, date de remise à zéro prévue, date du relevé et notes. Aucun accès aux abonnements ni remise à zéro automatique.
 - Missions recherchables et synthèse dans les briefings du matin et du soir.
-- Identité écobrutaliste : béton et jardin original, vert forêt, crème et typographie éditoriale. Tous les visuels sont locaux et disponibles hors ligne.
+- Identité écobrutaliste : jardin original d’accueil, atelier végétal dans Projets, jardin d’eau dans Vie et passage botanique dans Explorer, vert forêt, crème et typographie éditoriale. Tous les visuels sont locaux et disponibles hors ligne.
 - Jardin de travail illustré avec trois contextes : journée, projets et assistants. La 3D a été retirée ; les actions contextuelles et le visuel original sont conservés.
 - Prochaine action calculée sur les données locales, puis mode concentration pour terminer une priorité, passer à la suivante ou rouvrir la dernière tâche.
 - Compteurs cliquables, transitions de navigation, survols et confirmations animés. Mode calme persistant et respect prioritaire des animations réduites de l'appareil.

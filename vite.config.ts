@@ -29,7 +29,7 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
-        globPatterns: ["**/*.{js,css,html,svg,png,jpg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,jpg,webp,woff2}"],
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/api\//],
       },

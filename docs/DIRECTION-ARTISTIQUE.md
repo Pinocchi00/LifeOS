@@ -31,3 +31,5 @@ Direction demandée : une identité affirmée, calme et structurée. Après le l
 Implémentation : les feuilles de structure et d'écobrutalisme sont complétées par `src/living-garden.css`. `DailyGarden` porte la prochaine action et les commandes HTML ; `FocusSession` réduit l'interface à une tâche. Les futurs composants doivent reprendre ces tokens et ces principes.
 
 L’agenda utilise les mêmes couleurs et angles droits : sept jours alignés, programme chronologique distinct des échéances, conflits textuels et objectifs dont la progression est issue des tâches. Les états ne reposent jamais uniquement sur une couleur. Styles dédiés dans `src/planning.css`.
+
+Le lot 0.12 ajoute trois photographies conceptuelles originales : terrasses végétales pour Projets, bassin intérieur pour Vie, passage botanique pour Explorer. Les bandeaux restent courts sur mobile, sous le titre et la commande principale ; ni carrousel ni texte essentiel sur une photographie. Sources et prompts dans `ASSETS-ECO.md`. WebP adaptatifs embarqués et précachés, sans service d’images externe.

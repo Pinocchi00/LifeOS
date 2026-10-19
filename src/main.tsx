@@ -21,3 +21,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 import "./ai.css";
+import "./eco-scenes.css";

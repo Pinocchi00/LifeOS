@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { X } from "lucide-react";
 export function Modal({
   title,
@@ -13,14 +19,16 @@ export function Modal({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [dirty, setDirty] = useState(false);
+  const dirtyNow = useRef(false);
   const [discard, setDiscard] = useState(false);
   const backdropDown = useRef(false);
   const lastControl = useRef<HTMLElement | null>(null);
   function requestClose() {
-    if (dirty || pending) setDiscard(true);
+    if (dirtyNow.current || pending) setDiscard(true);
     else close();
   }
-  useEffect(() => {
+  useLayoutEffect(() => {
+    dirtyNow.current = false;
     setDirty(false);
     setDiscard(false);
   }, [title]);
@@ -51,11 +59,22 @@ export function Modal({
         requestClose();
       }}
       onClickCapture={(event) => {
-        if ((event.target as HTMLElement).closest("form [data-dirties]"))
+        if ((event.target as HTMLElement).closest("form [data-dirties]")) {
+          dirtyNow.current = true;
           setDirty(true);
+        }
       }}
       onChangeCapture={(event) => {
-        if ((event.target as HTMLElement).closest("form")) setDirty(true);
+        if ((event.target as HTMLElement).closest("form")) {
+          dirtyNow.current = true;
+          setDirty(true);
+        }
+      }}
+      onInputCapture={(event) => {
+        if ((event.target as HTMLElement).closest("form")) {
+          dirtyNow.current = true;
+          setDirty(true);
+        }
       }}
       onFocusCapture={(event) => {
         if ((event.target as HTMLElement).matches("input,textarea,select"))

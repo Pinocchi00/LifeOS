@@ -22,6 +22,7 @@ const types = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".webp": "image/webp",
   ".woff2": "font/woff2",
   ".webmanifest": "application/manifest+json",
 };
