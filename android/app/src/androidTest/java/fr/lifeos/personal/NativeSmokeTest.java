@@ -56,7 +56,7 @@ public class NativeSmokeTest {
         fail("Condition: " + predicate + "\nPage: " + js("document.body.innerText.slice(0,5000)"));
     }
     private void click(String text) throws Exception {
-        String selector = "Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===" + JSONObject.quote(text) + ")";
+        String selector = "Array.from(document.querySelectorAll('button')).find(b=>b.getClientRects().length && b.textContent.trim()===" + JSONObject.quote(text) + ")";
         waitFor(selector + " && !" + selector + ".disabled");
         js(selector + ".click()");
     }

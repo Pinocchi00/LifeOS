@@ -27,6 +27,8 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.tools/gradle
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
