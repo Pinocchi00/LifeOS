@@ -53,6 +53,8 @@ jobs:
             .tools/gradle/caches
             .tools/gradle/wrapper
           key: lifeos-gradle-${{ runner.os }}-${{ hashFiles('package-lock.json', 'android/**/*.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            lifeos-gradle-${{ runner.os }}-
       - name: APK, lint et compilation des essais natifs
         run: npm run android:verify
       - name: Conserver les dépendances Gradle vérifiées

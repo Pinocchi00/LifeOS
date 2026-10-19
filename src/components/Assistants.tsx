@@ -4,6 +4,7 @@ import {
   Check,
   ClipboardCopy,
   FileText,
+  GitPullRequest,
   Plus,
   Settings2,
   Trash2,
@@ -399,13 +400,21 @@ export function UsageForm({
 export function MissionInstructions({
   mission,
   project,
+  githubReferences = [],
 }: {
   mission: Mission;
   project?: Project;
+  githubReferences?: string[];
 }) {
   const [notice, setNotice] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
-  const prompt = missionPrompt(mission, project?.name);
+  const prompt =
+    missionPrompt(mission, project?.name) +
+    (githubReferences.length
+      ? "\n\nRÉFÉRENCES GITHUB À VÉRIFIER\n" +
+        githubReferences.join("\n") +
+        "\nCes liens ne constituent pas une validation ni une preuve d’exécution. Consulter les sources et vérifier les critères."
+      : "");
   return (
     <div className="form">
       <p className="muted">
@@ -447,12 +456,14 @@ export function AssistantsCenter({
   data,
   edit,
   instructions,
+  github,
   remove,
   editUsage,
 }: {
   data: Data;
   edit: (mission?: Mission) => void;
   instructions: (mission: Mission) => void;
+  github: (mission: Mission) => void;
   remove: (mission: Mission) => void;
   editUsage: (assistant: Assistant) => void;
 }) {
@@ -639,6 +650,21 @@ export function AssistantsCenter({
                     Validée
                   </span>
                 )}
+              </div>
+              <div className="mission-github">
+                <button
+                  className="text-button"
+                  aria-label={`GitHub pour ${mission.title}`}
+                  onClick={() => github(mission)}
+                >
+                  <GitPullRequest size={15} />
+                  Références GitHub ·{" "}
+                  {
+                    data.githubLinks.filter(
+                      (link) => link.missionId === mission.id,
+                    ).length
+                  }
+                </button>
               </div>
               <div className="between mission-actions">
                 <button

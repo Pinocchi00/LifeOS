@@ -1,5 +1,17 @@
 # Journal des modifications
 
+## 0.9.0 — 19 octobre 2026
+
+- Références GitHub publiques accessibles sur chaque mission : issues, pull requests et exécutions GitHub Actions, ajout local sans lecture réseau.
+- Lecture volontaire en GET sans cookie, jeton, corps de requête ou référent ; hôte et identité de la réponse contrôlés, redirections refusées, délai de 15 secondes et JSON borné à 1 Mio.
+- Relevés datés avec état, commit et tentative ; distinction PR fermée/fusionnée/brouillon et conclusion d’exécution. Aucun statut de mission modifié automatiquement.
+- Historique de 20 relevés par lien, effacement confirmé gardant le dernier ; retrait local et suppression de mission nettoyant les références sans action distante.
+- Erreurs réseau, 403/404/429, quota, annulation et réponses invalides visibles ; dernier relevé conservé, pas de réessai automatique, délai demandé par GitHub respecté dans la session.
+- Instructions copiables enrichies des seuls liens GitHub, sans copier le contenu distant dans les consignes.
+- Organisation v6, migrations locales/import v1 à v5 préservées, sauvegarde/restauration des liens et relevés sans réseau implicite ; Vie v1 indépendante.
+- Panneau chargé séparément et précaché, identité écobrutaliste conservée, contrôle visuel à quatre largeurs, tests métier/web et extension du scénario Android.
+- Réutilisation du cache Gradle de même système entre versions, avec résolution et contrôles habituels des dépendances.
+
 ## 0.8.0 — 19 octobre 2026
 
 - Réglages explicites accessibles depuis l’en-tête : une à cinq priorités et ordre par priorité ou échéance, appliqués au briefing, au jardin et à la concentration.

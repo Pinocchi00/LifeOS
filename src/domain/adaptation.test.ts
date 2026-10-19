@@ -246,11 +246,12 @@ describe("Conseils expliqués et retours sans apprentissage caché", () => {
 });
 describe("Intégrité et migration v5", () => {
   it("migre v4 en préservant les données, ajoute seulement l’adaptation vide", () => {
-    const { adaptation, ...v4 } = { ...emptyData(), tasks: [task()] };
+    const { githubLinks, adaptation, ...v4 } = { ...emptyData(), tasks: [task()] };
     expect(storedDataSchema.parse({ ...v4, version: 4 })).toEqual({
       ...v4,
       adaptation,
-      version: 5,
+      version: 6,
+      githubLinks,
     });
   });
   it("refuse les versions actives incohérentes, restaurations vers le futur, identifiants et retours dupliqués", () => {
@@ -311,7 +312,7 @@ describe("Intégrité et migration v5", () => {
     );
     const raw = serializeBackup(data);
     expect(parseBackup(raw)).toEqual(data);
-    expect(JSON.parse(raw).data.version).toBe(5);
+    expect(JSON.parse(raw).data.version).toBe(6);
     expect(JSON.parse(raw).data).not.toHaveProperty("personal");
     expect(
       decisionSchema.safeParse({

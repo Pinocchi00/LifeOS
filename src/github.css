@@ -1,0 +1,104 @@
+.github-panel {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+}
+.github-intro {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.github-intro > svg {
+  flex: 0 0 26px;
+  margin-top: 4px;
+}
+.github-panel p {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.github-network-note {
+  padding: 16px;
+  background: var(--paper);
+  border-left: 3px solid var(--ink);
+  font-size: 12px;
+}
+.github-link {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  min-width: 0;
+}
+.github-link > .eyebrow {
+  font-size: 10px;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.github-state {
+  display: block;
+  font: 26px/1.2 var(--serif);
+  margin: 14px 0;
+}
+.github-link > p {
+  margin: 12px 0;
+}
+.github-commit {
+  font-size: 12px;
+}
+.github-commit code,
+.github-url {
+  overflow-wrap: anywhere;
+}
+.github-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0;
+}
+.github-panel .text-button {
+  white-space: normal;
+  text-align: left;
+}
+.github-panel .danger {
+  color: #823d2b;
+}
+.github-panel .button.danger {
+  background: #823d2b;
+  border-color: #823d2b;
+  color: #fff9f0;
+}
+.github-history {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.github-history .github-state {
+  font-size: 20px;
+}
+.github-panel summary {
+  padding: 12px 0;
+  cursor: pointer;
+}
+.github-empty {
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+  font: 23px/1.5 var(--serif);
+}
+.mission-github {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.github-panel .button {
+  white-space: normal;
+}
+@media (max-width: 650px) {
+  .github-panel {
+    padding: 20px;
+  }
+  .github-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .github-actions .button {
+    width: 100%;
+  }
+}

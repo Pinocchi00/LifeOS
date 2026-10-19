@@ -4,7 +4,7 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
-Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Le lot 0.7 apporte l’APK de développement, les sauvegardes et rappels natifs ; la recette physique et la distribution de production restent ouvertes. Le lot 0.8 ajoute l’adaptation explicable et les sauvegardes v5.
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Le lot 0.7 apporte l’APK de développement, les sauvegardes et rappels natifs ; la recette physique et la distribution de production restent ouvertes. Le lot 0.8 ajoute l’adaptation explicable et les sauvegardes v5. Le lot 0.9 ouvre les références GitHub publiques des missions, avec lectures volontaires et relevés sauvegardés en v6.
 
 ## Phase 0 — Architecture et fondations
 
@@ -27,7 +27,7 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
 - État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
 
-Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6, l’APK de développement et les fonctions natives au lot 0.7. Le lot 0.8 livre l’adaptation explicable. Prochain lot de développement : connecteurs facultatifs, avec secrets hors client et accès explicitement configurés. La recette Android sur téléphone physique et la signature de production restent à valider. Chaque suite se traite en lot cohérent avec vérifications réelles.
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6, l’APK de développement et les fonctions natives au lot 0.7. Le lot 0.8 livre l’adaptation explicable. Premier lot de connecteur livré en 0.9 : GitHub public en lecture seule. La suite concerne les accès privés et les connecteurs IA avec secrets hors client et accès explicitement configurés. La recette Android sur téléphone physique et la signature de production restent à valider. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 
@@ -62,7 +62,7 @@ Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objec
 - Tâches : GitHub pour missions, connecteurs IA côté serveur sécurisé, catalogue sourcé des modèles, coûts, automatisations validées.
 - Dépendances : validation explicite, gestion de secrets hors client.
 - Acceptation : mode local indépendant, aucun secret client, dépenses et connexions sous contrôle.
-- État : prévu.
+- État : premier lot 0.9 livré pour GitHub public en lecture seule. Liens d’issues, PR et exécutions Actions par mission, consultation explicite sans jeton, relevés datés conservant état/commit/tentative, historique borné sans effacement implicite, annulation et erreurs conservant le dernier relevé. Aucun appel à l’ouverture, à la restauration ou en arrière-plan ; aucune écriture GitHub et aucun changement automatique de mission. Format général v6 et migration v5 préservant préférences/historiques, imports v1 à v4 conservés. Restent ouverts : dépôts privés/Enterprise avec authentification côté serveur, synchronisation distante des missions, connecteurs IA sécurisés, catalogue des modèles/coûts sourcé et automatisations à valider. Aucun compte externe, secret client ni dépense configuré par ce lot.
 
 ## Phase 8 — LifeOS 1.0
 

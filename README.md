@@ -1,4 +1,4 @@
-# LifeOS 0.8
+# LifeOS 0.9
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -100,7 +100,7 @@ Créer un parcours avec une intention, une date cible facultative et au moins un
 
 **Noter une séance** conserve le jour, 1 à 720 minutes réellement déclarées et vos observations. Les séances futures sont refusées dans le formulaire. Leurs titres de parcours et d’étape sont conservés au moment de la saisie : renommer, retirer une étape ou supprimer un parcours ne réécrit pas les séances passées. Les séances détachées restent modifiables et recherchables ; supprimer une séance ne modifie pas les cases des étapes.
 
-Les ressources, parcours et séances sont inclus dans la recherche générale et la sauvegarde d’organisation v5. Le stockage et la sauvegarde Vie restent indépendants. Hors ligne, vous retrouvez les fiches, annotations et parcours ; le contenu des sites externes n’est ni téléchargé ni garanti hors ligne. Les actualités sont des fiches saisies et datées par vous, sans flux automatique ni vérification de source en arrière-plan.
+Les ressources, parcours et séances sont inclus dans la recherche générale et la sauvegarde d’organisation v6. Le stockage et la sauvegarde Vie restent indépendants. Hors ligne, vous retrouvez les fiches, annotations et parcours ; le contenu des sites externes n’est ni téléchargé ni garanti hors ligne. Les actualités sont des fiches saisies et datées par vous, sans flux automatique ni vérification de source en arrière-plan.
 
 ## Utiliser Vie
 
@@ -117,7 +117,7 @@ Les dernières séances, comparaisons d’exercice, réalisations et nuits affic
 
 ### Sauvegarde personnelle séparée
 
-**Sauvegarder Vie** permet de sélectionner Sport, Cuisine, Habitudes et/ou Sommeil ; aucune rubrique n’est cochée par défaut. Le fichier **LifeOS-Vie v1** contient uniquement cette sélection. À l’import, sélectionner les rubriques à remplacer puis confirmer ; les autres suivis et toutes les données d’organisation sont conservés. Les fichiers incohérents, inconnus ou de plus de 10 Mo sont refusés avant l’écriture. Les exports généraux LifeOS v1 à v5 ne contiennent aucun suivi Vie et ne modifient pas Vie lors d’une restauration.
+**Sauvegarder Vie** permet de sélectionner Sport, Cuisine, Habitudes et/ou Sommeil ; aucune rubrique n’est cochée par défaut. Le fichier **LifeOS-Vie v1** contient uniquement cette sélection. À l’import, sélectionner les rubriques à remplacer puis confirmer ; les autres suivis et toutes les données d’organisation sont conservés. Les fichiers incohérents, inconnus ou de plus de 10 Mo sont refusés avant l’écriture. Les exports généraux LifeOS v1 à v6 ne contiennent aucun suivi Vie et ne modifient pas Vie lors d’une restauration.
 
 Vie est conservé dans une base IndexedDB distincte `lifeos-personal`, ouverte uniquement en entrant dans cet espace. Le verrou d’écriture de l’application s’applique aussi à Vie ; les mutations sont validées et sérialisées. La recherche générale, les briefings de l’accueil et les missions n’incluent pas ces informations. Les fichiers sont en clair et le stockage n’est pas chiffré : conserver une copie adaptée à leur caractère personnel. Il faut sauvegarder séparément l’organisation et les rubriques Vie souhaitées. Aucun suivi réel n’est livré dans le code ni envoyé à GitHub.
 
@@ -133,6 +133,16 @@ Les liens de preuve HTTP/HTTPS sont cliquables ; les chemins de fichiers et autr
 
 Les compteurs affichent uniquement votre dernier relevé. Si un plafond est inconnu, aucun nombre restant n'est inventé. Une date de remise à zéro passée invite à vérifier les chiffres ; elle ne déclenche aucune modification. Pour commencer une nouvelle période, modifier l'usage relevé et la date prévue.
 
+## Références GitHub des missions
+
+Dans **Projets → Missions IA**, ouvrir **Références GitHub** sur une mission. **Relier un lien GitHub** conserve localement l’adresse directe d’une issue, d’une pull request ou d’une exécution GitHub Actions. Ajouter le lien, ouvrir le panneau ou restaurer un JSON ne contacte pas GitHub.
+
+**Vérifier et garder un relevé** lance une lecture publique, sans compte ni jeton, et enregistre l’état reçu avec sa date, le commit et la tentative lorsque disponibles. La lecture transmet à GitHub votre adresse IP ainsi que le dépôt et le numéro de la référence ; aucun texte de mission ni suivi Vie n’est envoyé. Les instructions copiables reprennent uniquement les liens, avec un rappel de les vérifier. GitHub n’est jamais modifié par LifeOS.
+
+Un relevé reste un instantané consultable hors ligne. Une issue fermée n’équivaut pas à une PR fusionnée ; une exécution réussie ne prouve pas que tous les contrôles ou critères de mission sont remplis. Le statut local reste manuel. Les erreurs, quotas, délais ou annulations conservent les relevés antérieurs. Il n’y a ni actualisation périodique ni réessai automatique.
+
+Limites : 10 liens par mission, 2 000 au total, 20 relevés par lien. Exporter l’organisation puis **Effacer les anciens relevés** conserve le dernier et libère de la place, après confirmation. Retirer un lien efface ses relevés ; supprimer une mission retire aussi ses références locales, sans action sur GitHub. Les dépôts privés, GitHub Enterprise, écritures distantes et connecteurs IA sécurisés restent à configurer dans un prochain lot. Voir [docs/CONNEXIONS.md](docs/CONNEXIONS.md).
+
 ## Vos repères, vos choix
 
 Ouvrir la commande **Personnaliser LifeOS** (icône de réglages en haut) ou **Mes réglages et retours** sur un conseil. Vous choisissez entre une et cinq priorités, avec un ordre par priorité puis échéance ou échéance puis priorité. Le briefing, le jardin et la concentration suivent ce choix. Les tâches uniquement futures restent dans l’agenda ; les tâches et leurs dates ne sont jamais déplacées par ces réglages.
@@ -141,7 +151,7 @@ Chaque conseil expose sa règle locale, ses chiffres, sa source et la version de
 
 Chaque changement exige une raison. **Versions de vos réglages** permet de prévisualiser puis de restaurer une configuration ; ce retour crée une nouvelle version. Effacer l’historique conserve la configuration active comme nouveau point de départ. Le carnet de décisions garde un titre, votre choix, son contexte, sa raison, son état et une date de réexamen facultative. Cette date ne crée pas de notification. Modifier une décision remplace son texte ; créer une nouvelle décision permet de conserver deux choix successifs. La recherche propre au carnet ignore casse et accents.
 
-Réglages, retours et décisions sont inclus dans l’export général v5. Les limites sont de 500 versions, 5 000 retours et 2 000 décisions, avec refus d’écriture et possibilité d’exporter puis d’effacer explicitement. Aucun suivi Vie n’alimente les conseils. Les décisions ne sont pas indexées par la recherche générale. Le mode calme et les rappels Android restent propres à l’appareil, hors de cet historique.
+Réglages, retours et décisions sont inclus dans l’export général v6. Les limites sont de 500 versions, 5 000 retours et 2 000 décisions, avec refus d’écriture et possibilité d’exporter puis d’effacer explicitement. Aucun suivi Vie n’alimente les conseils. Les décisions ne sont pas indexées par la recherche générale. Le mode calme et les rappels Android restent propres à l’appareil, hors de cet historique.
 
 ## Sauvegarder et restaurer
 
@@ -149,7 +159,7 @@ Ouvrir l'avatar en haut à droite ou **Données & sauvegardes** sur ordinateur. 
 
 Pour restaurer : sélectionner un JSON LifeOS, vérifier le nombre d'éléments puis confirmer le remplacement. Exporter d'abord les données actuelles : la restauration remplace les données d’organisation, sans modifier Vie ; elle ne fusionne pas les appareils. Les fichiers inconnus, trop volumineux (10 Mo), incohérents ou de version non prise en charge sont refusés avant toute écriture. Un export dépassant cette même limite est refusé avec un message, pour ne pas produire un fichier non restaurable.
 
-Le format de données courant est **v5** : il ajoute les réglages explicites, leurs versions, les retours sur les conseils et le carnet de décisions. Les données locales et sauvegardes **v1, v2, v3 et v4** sont validées puis migrées en conservant leur contenu et en ajoutant les réglages de départ. Les anciennes versions de l’application ne savent pas lire un export v5 ; conserver les exports historiques si nécessaire. Pour charger une mise à jour PWA, fermer toutes les fenêtres LifeOS puis relancer l'application.
+Le format de données courant est **v6** : il ajoute les liens GitHub des missions et leurs relevés datés. Les données locales et sauvegardes **v1, v2, v3, v4 et v5** sont validées puis migrées en conservant leur contenu. Les réglages et historiques v5 sont préservés ; seuls les liens GitHub vides sont ajoutés. Les anciennes versions de l’application ne savent pas lire un export v6 ; conserver les exports historiques si nécessaire. Pour charger une mise à jour PWA, fermer toutes les fenêtres LifeOS puis relancer l'application.
 
 Le stockage n'est pas une sauvegarde garantie : le nettoyage des données du navigateur, la navigation privée, une désinstallation ou une réinitialisation peuvent l'effacer. Aucune synchronisation cloud ni chiffrement applicatif dans cette version. Les suivis Vie sont dans une base séparée et ont une sauvegarde distincte ; cette séparation ne constitue pas un chiffrement ni une frontière de sécurité contre un accès à votre session.
 
@@ -173,7 +183,7 @@ Le dossier `android/` contient l’application Capacitor. L’APK de développem
 npm.cmd run android:verify
 ```
 
-Le fichier apparaît dans `artifacts/LifeOS-0.8.0-debug.apk`, avec son empreinte SHA-256. Copier l’APK sur le téléphone et l’ouvrir pour l’installer ; autoriser cette source d’installation si Android le demande. C’est une version de développement, pas une publication Play Store. Le détail de l’installation, des essais et des limites figure dans [docs/ANDROID.md](docs/ANDROID.md).
+Le fichier apparaît dans `artifacts/LifeOS-0.9.0-debug.apk`, avec son empreinte SHA-256. Copier l’APK sur le téléphone et l’ouvrir pour l’installer ; autoriser cette source d’installation si Android le demande. C’est une version de développement, pas une publication Play Store. Le détail de l’installation, des essais et des limites figure dans [docs/ANDROID.md](docs/ANDROID.md).
 
 Dans **Données & sauvegardes**, l’export ouvre le partage Android : choisir une destination pour enregistrer le JSON. Fermer le partage ne prouve pas qu’une copie a été conservée. L’export Vie reste séparé et sélectif. Les fichiers à restaurer passent par le sélecteur Android puis la validation et la confirmation habituelles. Les données du navigateur Windows et celles de l’APK sont distinctes : utiliser un export/import explicite pour les transférer. Les sauvegardes cloud Android et transferts automatiques restent désactivés.
 
@@ -183,10 +193,11 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 ## Structure
 
-- `src/domain/` : modèles, règles, missions, validation des sauvegardes et migrations v1/v2/v3/v4 → v5.
+- `src/domain/` : modèles, règles, missions, validation des sauvegardes et migrations v1/v2/v3/v4/v5 → v6.
 - `src/components/Assistants.tsx` : centre de missions, formulaires, rapports et compteurs manuels.
 - `src/storage/` : IndexedDB d’organisation et base Vie distincte, coordination des mutations et fenêtres.
 - `src/components/personal/`, `src/domain/personal.ts`, `src/personal.css` : suivis Vie, formulaires, sauvegardes sélectives et règles métier.
+- `src/domain/github.ts`, `githubSchema.ts`, `src/platform/github.ts`, `src/components/GithubPanel.tsx` : références de missions, lecture publique explicite et relevés locaux.
 - `src/domain/adaptation.ts`, `adaptationSchema.ts`, `src/components/AdaptationPanel.tsx`, `AdaptationForms.tsx`, `AdviceCard.tsx` : réglages explicites, règles locales, retours, carnet et versions restaurables.
 - `src/components/Modal.tsx` : dialogue partagé et protection des saisies.
 - `src/App.tsx` et les feuilles CSS : écrans, structure responsive et identité écobrutaliste.
@@ -203,4 +214,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Prochain lot de développement : connecteurs facultatifs, puis stabilisation 1.0. La recette sur téléphone physique et la distribution Android de production restent à valider. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.
+Prochain lot : suite des connecteurs facultatifs (accès privés et IA avec serveur sécurisé), puis stabilisation 1.0. Le lot 0.9 fournit uniquement les lectures GitHub publiques explicitement demandées. La recette sur téléphone physique et la distribution Android de production restent à valider. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.

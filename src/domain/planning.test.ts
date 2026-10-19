@@ -250,6 +250,7 @@ describe("Objectifs et migration v3", () => {
   });
   it("migre v2 sans perdre les données existantes", () => {
     const {
+      githubLinks,
       adaptation,
       resources,
       learningPaths,
@@ -262,7 +263,8 @@ describe("Objectifs et migration v3", () => {
     const old = { ...data, version: 2, tasks: [task()] };
     expect(storedDataSchema.parse(old)).toEqual({
       ...old,
-      version: 5,
+      version: 6,
+      githubLinks,
       adaptation,
       resources,
       learningPaths,

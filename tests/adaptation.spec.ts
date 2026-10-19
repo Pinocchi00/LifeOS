@@ -177,7 +177,7 @@ test("preuve visible, retour temporaire annulable et masquage explicite", async 
     advice.getByRole("button", { name: "Utile", exact: true }),
   ).toHaveCount(0);
 });
-test("décision relue, modifiée, export v5, restauration v4 et fonctionnement hors ligne", async ({
+test("décision relue, modifiée, export v6, restauration v4 et fonctionnement hors ligne", async ({
   page,
   context,
 }) => {
@@ -215,12 +215,12 @@ test("décision relue, modifiée, export v5, restauration v4 et fonctionnement h
   const download = await downloaded;
   const path = (await download.path())!;
   const raw = JSON.parse(await readFile(path, "utf8"));
-  expect(raw.data.version).toBe(5);
+  expect(raw.data.version).toBe(6);
   expect(raw.data.adaptation.decisions[0].status).toBe("reconsidered");
   expect(raw.data.adaptation.preferences.priorityCount).toBe(1);
   expect(raw.data).not.toHaveProperty("personal");
   await close(page);
-  const { adaptation: _adaptation, ...v4 } = raw.data;
+  const { githubLinks: _links, adaptation: _adaptation, ...v4 } = raw.data;
   await restore(page, { ...v4, version: 4 });
   await openSettings(page);
   await expect(

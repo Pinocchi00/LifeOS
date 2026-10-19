@@ -169,7 +169,7 @@ export function PersonalBackupForm({
       <p className="muted small">
         Séparation des fichiers et du stockage, sans chiffrement applicatif.
         Effacer les données du navigateur peut effacer les deux espaces. Les
-        exports Vie sont indépendants des fichiers LifeOS v1 à v5.
+        exports Vie sont indépendants des fichiers LifeOS v1 à v6.
       </p>
     </div>
   );

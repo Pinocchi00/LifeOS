@@ -11,6 +11,7 @@ import "./personal.css";
 import "./explorer.css";
 import "./android.css";
 import "./adaptation.css";
+import "./github.css";
 
 startWorker();
 ReactDOM.createRoot(document.getElementById("root")!).render(

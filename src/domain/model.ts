@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { text, id, title, day } from "./validation";
+import { githubKey, githubLinkSchema } from "./githubSchema";
 import { adaptationSchema, emptyAdaptation } from "./adaptationSchema";
 import {
   resourceSchema,
@@ -244,10 +245,61 @@ const validateExplorer = (
     });
 };
 const v4Schema = v4Base.superRefine(validateExplorer);
-export const dataSchema = v4Base
-  .extend({ version: z.literal(5), adaptation: adaptationSchema })
+const v5Base = v4Base.extend({
+  version: z.literal(5),
+  adaptation: adaptationSchema,
+});
+const validateAdaptation = (
+  data: z.infer<typeof v5Base>,
+  context: z.RefinementCtx,
+) => {
+  validateExplorer({ ...data, version: 4 }, context);
+  const items = [
+    ...data.tasks,
+    ...data.projects,
+    ...data.notes,
+    ...data.missions,
+    ...data.missions.flatMap((item) => item.reports),
+    ...data.routines,
+    ...data.routineEntries,
+    ...data.goals,
+    ...data.resources,
+    ...data.learningPaths,
+    ...data.learningPaths.flatMap((item) => item.steps),
+    ...data.learningEntries,
+    ...data.adaptation.revisions,
+    ...data.adaptation.feedback,
+    ...data.adaptation.decisions,
+  ];
+  if (new Set(items.map((item) => item.id)).size !== items.length)
+    context.addIssue({
+      code: "custom",
+      message: "Identifiants d’organisation dupliqués.",
+    });
+};
+const v5Schema = v5Base.superRefine(validateAdaptation);
+export const dataSchema = v5Base
+  .extend({
+    version: z.literal(6),
+    githubLinks: z.array(githubLinkSchema).max(2000),
+  })
   .superRefine((data, context) => {
-    validateExplorer({ ...data, version: 4 }, context);
+    validateAdaptation({ ...data, version: 5 }, context);
+    const missions = new Set(data.missions.map((mission) => mission.id));
+    const keys = new Set<string>();
+    const counts = new Map<string, number>();
+    for (const link of data.githubLinks) {
+      const key = `${link.missionId}/${githubKey(link.target)}`;
+      const count = (counts.get(link.missionId) ?? 0) + 1;
+      counts.set(link.missionId, count);
+      if (!missions.has(link.missionId) || keys.has(key) || count > 10)
+        context.addIssue({
+          code: "custom",
+          message:
+            "Lien GitHub orphelin, dupliqué ou limite par mission dépassée.",
+        });
+      keys.add(key);
+    }
     const items = [
       ...data.tasks,
       ...data.projects,
@@ -264,20 +316,25 @@ export const dataSchema = v4Base
       ...data.adaptation.revisions,
       ...data.adaptation.feedback,
       ...data.adaptation.decisions,
+      ...data.githubLinks,
+      ...data.githubLinks.flatMap((link) => link.checks),
     ];
     if (new Set(items.map((item) => item.id)).size !== items.length)
       context.addIssue({
         code: "custom",
-        message: "Identifiants d’organisation dupliqués.",
+        message: "Identifiants GitHub ou d’organisation dupliqués.",
       });
   });
 export const storedDataSchema = z
-  .union([dataSchema, v4Schema, v3Schema, v2Schema, legacySchema])
+  .union([dataSchema, v5Schema, v4Schema, v3Schema, v2Schema, legacySchema])
   .transform((data) => {
-    if (data.version === 5) return data;
+    if (data.version === 6) return data;
+    if (data.version === 5)
+      return { ...data, version: 6 as const, githubLinks: [] };
     return {
       ...data,
-      version: 5 as const,
+      version: 6 as const,
+      githubLinks: [],
       adaptation: emptyAdaptation(),
       missions: data.version === 1 ? [] : data.missions,
       usage: data.version === 1 ? [] : data.usage,
@@ -302,7 +359,8 @@ export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Data = z.infer<typeof dataSchema>;
 export const emptyData = (): Data => ({
-  version: 5,
+  version: 6,
+  githubLinks: [],
   adaptation: emptyAdaptation(),
   resources: [],
   learningPaths: [],

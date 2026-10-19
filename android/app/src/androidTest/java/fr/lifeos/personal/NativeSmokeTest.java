@@ -117,6 +117,37 @@ public class NativeSmokeTest {
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
         waitFor("document.querySelector('h1')?.textContent.includes('Faites de la place')");
 
+        // GitHub uses an explicit synthetic HTTP response in this offline
+        // emulator. This verifies WebView integration, not live GitHub access.
+        js("Array.from(document.querySelectorAll('nav button')).find(b=>b.getClientRects().length && b.textContent.trim()==='Projets').click()");
+        waitFor("Array.from(document.querySelectorAll('button')).some(b=>b.getClientRects().length && b.textContent.includes('Missions IA'))");
+        js("Array.from(document.querySelectorAll('button')).find(b=>b.getClientRects().length && b.textContent.includes('Missions IA')).click()");
+        click("Nouvelle mission");
+        waitFor("document.querySelector('form input[name=title]')");
+        fill("form input[name=title]", "Mission GitHub Android");
+        fill("textarea[name=objective]", "Relire une preuve publique");
+        fill("textarea[name=criteria]", "Vérifier les critères manuellement");
+        click("Enregistrer la mission");
+        waitFor("!document.querySelector('dialog[open]')");
+        js("document.querySelector('[aria-label=\"GitHub pour Mission GitHub Android\"]').click()");
+        click("Relier un lien GitHub");
+        waitFor("document.querySelector('input[name=url]')");
+        fill("input[name=url]", "https://github.com/example/fixture/actions/runs/123");
+        click("Relier ce lien");
+        waitFor("document.querySelector('.github-link')");
+        js("window.smokeGithubCalls=0;window.smokeFetch=window.fetch.bind(window);window.fetch=(url,options)=>{if(String(url)==='https://api.github.com/repos/example/fixture/actions/runs/123'){window.smokeGithubCalls++;window.smokeGithubOptions=options;return Promise.resolve(new Response(JSON.stringify({id:123,html_url:'https://github.com/example/fixture/actions/runs/123',name:'Tests fictifs Android',display_title:'Tests',status:'completed',conclusion:'success',head_sha:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',run_attempt:2,updated_at:'2026-10-19T12:00:00.000Z'}),{headers:{'Content-Type':'application/json'}}))}return window.smokeFetch(url,options)}");
+        assertEquals("0", js("window.smokeGithubCalls"));
+        click("Vérifier et garder un relevé");
+        waitFor("document.querySelector('.github-link')?.textContent.includes('Réussite') && document.body.innerText.includes('Relevé conservé')");
+        assertEquals("1", js("window.smokeGithubCalls"));
+        assertEquals("true", js("window.smokeGithubOptions.credentials==='omit' && window.smokeGithubOptions.method==='GET' && !window.smokeGithubOptions.body"));
+        js("window.fetch=window.smokeFetch;document.querySelector('.github-link').scrollIntoView({block:'start'})");
+        capture("native-github.png");
+        js("document.querySelector('dialog [aria-label=Fermer]').click()");
+        waitFor("!document.querySelector('dialog[open]')");
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
+        waitFor("document.querySelector('h1')?.textContent.includes('Faites de la place')");
+
         js("document.querySelector('[aria-label=\"Ouvrir les sauvegardes\"]').click()");
         waitFor("document.body.innerText.includes('Votre rendez-vous quotidien')");
         click("Exporter mes données");
@@ -127,10 +158,13 @@ public class NativeSmokeTest {
         assertNotNull(files); assertTrue(files.length > 0);
         JSONObject backup = new JSONObject(new String(Files.readAllBytes(files[0].toPath()), StandardCharsets.UTF_8));
         assertEquals("LifeOS", backup.getString("application"));
-        assertEquals(5, backup.getJSONObject("data").getInt("version"));
+        assertEquals(6, backup.getJSONObject("data").getInt("version"));
         assertEquals(1, backup.getJSONObject("data").getJSONObject("adaptation").getJSONObject("preferences").getInt("priorityCount"));
         assertEquals(2, backup.getJSONObject("data").getJSONObject("adaptation").getJSONArray("revisions").length());
         assertEquals("Essai Android local", backup.getJSONObject("data").getJSONArray("tasks").getJSONObject(0).getString("title"));
+        assertEquals(1, backup.getJSONObject("data").getJSONArray("githubLinks").length());
+        assertEquals("success", backup.getJSONObject("data").getJSONArray("githubLinks").getJSONObject(0).getJSONArray("checks").getJSONObject(0).getString("conclusion"));
+        assertEquals("todo", backup.getJSONObject("data").getJSONArray("missions").getJSONObject(0).getString("status"));
         // Verify the real system chooser is present, then cancel without claiming
         // that a destination saved the file.
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());

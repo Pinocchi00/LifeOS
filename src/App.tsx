@@ -121,6 +121,19 @@ const AdaptationPanel = lazy(() =>
   })),
 );
 
+import { addGithubLink, removeMission } from "./domain/github";
+import { githubUrl } from "./domain/githubSchema";
+const GithubPanel = lazy(() =>
+  import("./components/GithubPanel").then((module) => ({
+    default: module.GithubPanel,
+  })),
+);
+const GithubLinkForm = lazy(() =>
+  import("./components/GithubPanel").then((module) => ({
+    default: module.GithubLinkForm,
+  })),
+);
+
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
   | {
@@ -155,6 +168,8 @@ type Editor =
   | { type: "mission"; value?: Mission }
   | { type: "usage"; assistant: Assistant }
   | { type: "instructions"; mission: Mission }
+  | { type: "github"; missionId: string }
+  | { type: "githubAdd"; missionId: string }
   | { type: "focus"; taskId?: string }
   | null;
 const navigation = [
@@ -542,6 +557,18 @@ function Backup({
           <b>{data.routineEntries.length}</b> réalisations de routines
         </span>
         <span>
+          <b>{data.githubLinks.length}</b> liens GitHub
+        </span>
+        <span>
+          <b>
+            {data.githubLinks.reduce(
+              (sum, link) => sum + link.checks.length,
+              0,
+            )}
+          </b>{" "}
+          relevés GitHub
+        </span>
+        <span>
           <b>{data.adaptation.decisions.length}</b> décisions
         </span>
         <span>
@@ -553,7 +580,7 @@ function Backup({
       </div>
       <p className="small muted">
         Les réglages, les décisions et leurs historiques font partie de cette
-        sauvegarde d’organisation v5.
+        sauvegarde d’organisation v6.
       </p>
       <button
         className="button primary"
@@ -586,7 +613,7 @@ function Backup({
               setPending(parseBackup(await file.text()));
             } catch {
               setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v5 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
+                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v6 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
               );
             }
             event.target.value = "";
@@ -608,8 +635,14 @@ function Backup({
             vos données actuelles avant de continuer. Vos réglages seront
             également remplacés, avec {pending.adaptation.decisions.length}{" "}
             décisions, {pending.adaptation.feedback.length} retours et{" "}
-            {pending.adaptation.revisions.length} versions de réglages. Les
-            suivis Vie ne seront pas modifiés.
+            {pending.adaptation.revisions.length} versions de réglages,{" "}
+            {pending.githubLinks.length} liens GitHub et{" "}
+            {pending.githubLinks.reduce(
+              (sum, link) => sum + link.checks.length,
+              0,
+            )}{" "}
+            relevés. L’import ne déclenche aucune lecture de GitHub. Les suivis
+            Vie ne seront pas modifiés.
           </p>
           <button
             disabled={busy || exporting}
@@ -1637,19 +1670,17 @@ export default function App() {
               instructions={(mission) =>
                 setEditor({ type: "instructions", mission })
               }
+              github={(mission) =>
+                setEditor({ type: "github", missionId: mission.id })
+              }
               editUsage={(assistant) => setEditor({ type: "usage", assistant })}
               remove={(mission) =>
                 setConfirm({
                   title: "Supprimer cette mission ?",
-                  message: `« ${mission.title} » et ses ${mission.reports.length} compte-rendu(s) seront supprimés.`,
+                  message: `« ${mission.title} », ses ${mission.reports.length} compte-rendu(s) et ses liens/relevés GitHub seront supprimés de LifeOS. Aucune modification sur GitHub.`,
                   action: () =>
                     change(
-                      (previous) => ({
-                        ...previous,
-                        missions: previous.missions.filter(
-                          (item) => item.id !== mission.id,
-                        ),
-                      }),
+                      (previous) => removeMission(previous, mission.id),
                       "Mission supprimée",
                     ),
                 })
@@ -1900,59 +1931,109 @@ export default function App() {
         <Modal
           close={close}
           title={
-            editor.type === "adaptation"
-              ? "Vos repères, vos choix"
-              : editor.type === "preferences"
-                ? "Ajuster mes réglages"
-                : editor.type === "decision"
-                  ? editor.value
-                    ? "Relire ma décision"
-                    : "Consigner une décision"
-                  : editor.type === "resource"
-                    ? editor.value
-                      ? "Modifier la ressource"
-                      : "Garder une ressource"
-                    : editor.type === "learningPath"
+            editor.type === "github"
+              ? "GitHub, les faits conservés"
+              : editor.type === "githubAdd"
+                ? "Relier une référence GitHub"
+                : editor.type === "adaptation"
+                  ? "Vos repères, vos choix"
+                  : editor.type === "preferences"
+                    ? "Ajuster mes réglages"
+                    : editor.type === "decision"
                       ? editor.value
-                        ? "Modifier le parcours"
-                        : "Un parcours d’apprentissage"
-                      : editor.type === "learningEntry"
-                        ? "Votre séance d’apprentissage"
-                        : editor.type === "routine"
+                        ? "Relire ma décision"
+                        : "Consigner une décision"
+                      : editor.type === "resource"
+                        ? editor.value
+                          ? "Modifier la ressource"
+                          : "Garder une ressource"
+                        : editor.type === "learningPath"
                           ? editor.value
-                            ? "Modifier la routine"
-                            : "Nouvelle routine"
-                          : editor.type === "goal"
-                            ? editor.value
-                              ? "Modifier l’objectif"
-                              : "Nouvel objectif"
-                            : editor.type === "task"
+                            ? "Modifier le parcours"
+                            : "Un parcours d’apprentissage"
+                          : editor.type === "learningEntry"
+                            ? "Votre séance d’apprentissage"
+                            : editor.type === "routine"
                               ? editor.value
-                                ? "Modifier la tâche"
-                                : "Un nouveau petit pas"
-                              : editor.type === "project"
+                                ? "Modifier la routine"
+                                : "Nouvelle routine"
+                              : editor.type === "goal"
                                 ? editor.value
-                                  ? "Modifier le projet"
-                                  : "Un nouveau projet"
-                                : editor.type === "note"
+                                  ? "Modifier l’objectif"
+                                  : "Nouvel objectif"
+                                : editor.type === "task"
                                   ? editor.value
-                                    ? "Modifier l’idée"
-                                    : "Capturer une idée"
-                                  : editor.type === "backup"
-                                    ? "Vos données, en sécurité"
-                                    : editor.type === "search"
-                                      ? "Retrouver l’essentiel"
-                                      : editor.type === "mission"
-                                        ? editor.value
-                                          ? "Modifier la mission"
-                                          : "Nouvelle mission"
-                                        : editor.type === "usage"
-                                          ? "Votre compteur personnel"
-                                          : editor.type === "focus"
-                                            ? "Une chose à la fois"
-                                            : "Instructions de mission"
+                                    ? "Modifier la tâche"
+                                    : "Un nouveau petit pas"
+                                  : editor.type === "project"
+                                    ? editor.value
+                                      ? "Modifier le projet"
+                                      : "Un nouveau projet"
+                                    : editor.type === "note"
+                                      ? editor.value
+                                        ? "Modifier l’idée"
+                                        : "Capturer une idée"
+                                      : editor.type === "backup"
+                                        ? "Vos données, en sécurité"
+                                        : editor.type === "search"
+                                          ? "Retrouver l’essentiel"
+                                          : editor.type === "mission"
+                                            ? editor.value
+                                              ? "Modifier la mission"
+                                              : "Nouvelle mission"
+                                            : editor.type === "usage"
+                                              ? "Votre compteur personnel"
+                                              : editor.type === "focus"
+                                                ? "Une chose à la fois"
+                                                : "Instructions de mission"
           }
         >
+          {editor.type === "github" && (
+            <Suspense
+              fallback={
+                <p className="form" role="status">
+                  Ouverture des références…
+                </p>
+              }
+            >
+              <GithubPanel
+                data={data}
+                missionId={editor.missionId}
+                add={() =>
+                  setEditor({ type: "githubAdd", missionId: editor.missionId })
+                }
+                change={(operation) =>
+                  change(operation, "Références GitHub mises à jour")
+                }
+              />
+            </Suspense>
+          )}
+          {editor.type === "githubAdd" && (
+            <Suspense
+              fallback={
+                <p className="form" role="status">
+                  Ouverture du formulaire…
+                </p>
+              }
+            >
+              <GithubLinkForm
+                save={(url) =>
+                  change(
+                    (previous) =>
+                      addGithubLink(previous, editor.missionId, url),
+                    "Lien relié sans lecture réseau",
+                  )
+                }
+                close={() =>
+                  setEditor((current) =>
+                    current === editor
+                      ? { type: "github", missionId: editor.missionId }
+                      : current,
+                  )
+                }
+              />
+            </Suspense>
+          )}
           {editor.type === "adaptation" && (
             <Suspense fallback={<p role="status">Ouverture de vos repères…</p>}>
               <AdaptationPanel
@@ -2218,6 +2299,9 @@ export default function App() {
           {editor.type === "instructions" && (
             <MissionInstructions
               mission={editor.mission}
+              githubReferences={data.githubLinks
+                .filter((link) => link.missionId === editor.mission.id)
+                .map((link) => githubUrl(link.target))}
               project={data.projects.find(
                 (project) => project.id === editor.mission.projectId,
               )}
