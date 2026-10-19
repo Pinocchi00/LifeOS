@@ -1,6 +1,6 @@
 {
   "name": "lifeos",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,10 @@
     "android:sync": "npm run build && cap sync android",
     "android:add": "cap add android",
     "android:build": "node scripts/android-build.mjs",
-    "android:verify": "node scripts/android-build.mjs --verify"
+    "android:verify": "node scripts/android-build.mjs --verify",
+    "connector:start": "node scripts/connector-start.mjs",
+    "test:server": "node --test server/*.test.mjs",
+    "connector:setup": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Start-Connector.ps1"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

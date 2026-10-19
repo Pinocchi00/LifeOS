@@ -12,6 +12,8 @@ import {
   type GithubCheck,
   type GithubLink,
 } from "../domain/githubSchema";
+import { GithubAccess, type GithubAccessMode } from "./GithubAccess";
+import { readPrivateGithub } from "../platform/connector";
 import { readGithub } from "../platform/github";
 import { appendGithubCheck } from "../domain/github";
 const date = (value: string) =>
@@ -59,7 +61,7 @@ export function GithubLinkForm({
         Ajouter ce lien le conserve sur cet appareil, sans contacter GitHub.
       </p>
       <label>
-        Lien GitHub public
+        Lien GitHub
         <input
           autoFocus
           type="url"
@@ -73,9 +75,9 @@ export function GithubLinkForm({
         />
       </label>
       <p className="small muted">
-        La lecture publique se lance ensuite sur demande. Aucun jeton ni compte
-        à saisir ici. Les dépôts privés et GitHub Enterprise nécessiteront un
-        connecteur sécurisé distinct.
+        La lecture se lance ensuite sur demande : accès public ou serveur local
+        configuré pour un dépôt privé GitHub.com. Aucun jeton GitHub à saisir
+        ici. GitHub Enterprise reste à développer.
       </p>
       {error && (
         <p className="error" role="alert">
@@ -135,6 +137,8 @@ export function GithubPanel({
   const mission = data.missions.find((item) => item.id === missionId);
   const links = data.githubLinks.filter((link) => link.missionId === missionId);
   const [busy, setBusy] = useState("");
+  const [access, setAccess] = useState<GithubAccessMode>("public");
+  const [paired, setPaired] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -161,7 +165,9 @@ export function GithubPanel({
     setError("");
     setMessage("");
     try {
-      const value = await readGithub(link.target, controller.signal);
+      const value = await (
+        access === "server" ? readPrivateGithub : readGithub
+      )(link.target, controller.signal);
       if (controller.signal.aborted) return;
       await change((previous) => appendGithubCheck(previous, link.id, value));
       setMessage("Relevé conservé. Le statut de votre mission n’a pas changé.");
@@ -207,11 +213,28 @@ export function GithubPanel({
           relevés restent consultables hors ligne.
         </p>
       </div>
+      <GithubAccess
+        mode={access}
+        ready={paired}
+        disabled={!!busy || saving}
+        select={(mode) => {
+          setAccess(mode);
+          setError("");
+          setMessage("");
+        }}
+        setReady={setPaired}
+      />
       <p className="github-network-note">
-        « Vérifier et garder un relevé » contacte uniquement l’API publique de
-        GitHub avec le dépôt et le numéro du lien. Votre adresse IP est
-        transmise ; aucun texte de mission, suivi Vie, cookie ou jeton n’est
-        envoyé. Aucun appel au démarrage ni en arrière-plan.
+        {access === "server" ? (
+          "« Vérifier et garder un relevé » transmet seulement le dépôt, le type et le numéro à votre serveur local. Il utilise son jeton pour contacter GitHub. Aucun texte de mission ni suivi Vie transmis. Aucun appel au démarrage ni en arrière-plan."
+        ) : (
+          <>
+            « Vérifier et garder un relevé » contacte uniquement l’API publique
+            de GitHub avec le dépôt et le numéro du lien. Votre adresse IP est
+            transmise ; aucun texte de mission, suivi Vie, cookie ou jeton n’est
+            envoyé. Aucun appel au démarrage ni en arrière-plan.
+          </>
+        )}
       </p>
       <button
         autoFocus
@@ -310,13 +333,21 @@ export function GithubPanel({
             </a>
             <div className="github-actions">
               <button
-                className="button secondary"
-                disabled={!!busy || saving || link.checks.length >= 20}
+                className={`button secondary ${access === "server" ? "github-private-read" : ""}`}
+                disabled={
+                  !!busy ||
+                  saving ||
+                  link.checks.length >= 20 ||
+                  (access === "server" && !paired)
+                }
                 onClick={() => void check(link)}
               >
                 {busy === link.id
                   ? "Lecture de GitHub…"
                   : "Vérifier et garder un relevé"}
+                {access === "server" && (
+                  <span className="github-via">Via mon serveur local</span>
+                )}
               </button>
               {busy === link.id && (
                 <button
@@ -373,9 +404,11 @@ export function GithubPanel({
       <p className="small muted">
         Un relevé est un instantané, pas un état en temps réel. Une issue
         fermée, une PR fusionnée ou une exécution réussie ne valide pas vos
-        critères : la validation de la mission reste manuelle. Le quota public
-        de GitHub est partagé par adresse IP ; une lecture peut être refusée ou
-        retardée.
+        critères : la validation de la mission reste manuelle. Une lecture peut
+        être refusée ou retardée par GitHub.
+        {access === "public"
+          ? " Le quota public est partagé par adresse IP."
+          : " Le serveur limite aussi les lectures et respecte les attentes de GitHub."}
       </p>
     </div>
   );

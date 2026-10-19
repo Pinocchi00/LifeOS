@@ -90,6 +90,59 @@
 .github-panel .button {
   white-space: normal;
 }
+.github-access {
+  padding: 20px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+.github-access-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.github-access-heading h3 {
+  margin: 0;
+  font: 22px/1.25 var(--serif);
+}
+.github-access-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+.github-pair {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.github-pair label {
+  display: grid;
+  gap: 8px;
+}
+.github-pair input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  padding: 12px;
+  font: inherit;
+  background: var(--paper);
+  color: var(--ink);
+}
+.github-via {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  margin-top: 5px;
+}
+.github-actions .github-private-read {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.github-session {
+  padding: 12px;
+  border-left: 3px solid var(--ink);
+}
 @media (max-width: 650px) {
   .github-panel {
     padding: 20px;

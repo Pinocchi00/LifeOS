@@ -1,6 +1,6 @@
 # Connexions facultatives — GitHub public, lot 0.9
 
-LifeOS reste utilisable hors ligne. Ce lot ajoute une lecture publique volontaire pour les références des missions ; il ne crée pas de compte, ne stocke aucun jeton et ne modifie rien sur GitHub.
+LifeOS reste utilisable hors ligne. L’accès public du lot 0.9 reste disponible. Le lot 0.10 ajoute un [serveur privé local facultatif](SERVEUR-LOCAL.md), distinct de ce parcours public : son jeton reste dans le processus Node, avec dépôts autorisés et appairage temporaire du navigateur. Aucune écriture sur GitHub. Les sections suivantes décrivent l’accès public.
 
 ## Utiliser une référence
 
@@ -39,6 +39,6 @@ Limites : dix liens par mission, deux mille au total, vingt relevés par lien. A
 
 ## Ce qui reste à développer
 
-Dépôts privés, GitHub Enterprise, authentification et synchronisation en écriture nécessitent un connecteur côté serveur et des droits configurés explicitement. Les connecteurs IA, budgets, catalogue de modèles et automatisations ne sont pas simulés par cette lecture publique. Aucun service payant ni secret n’a été configuré dans ce lot.
+Les dépôts privés GitHub.com sont lisibles depuis le navigateur du serveur local en 0.10, après configuration explicite et appairage. GitHub Enterprise, serveur distant authentifié, accès privé Android et synchronisation en écriture restent ouverts. Les connecteurs IA, budgets, catalogue de modèles et automatisations ne sont pas simulés par cette lecture publique. Aucun service payant ni secret n’a été configuré dans ce lot.
 
 Références officielles : [issues](https://docs.github.com/en/rest/issues/issues#get-an-issue), [pull requests](https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request), [exécutions Actions](https://docs.github.com/en/rest/actions/workflow-runs#get-a-workflow-run), [CORS](https://docs.github.com/en/rest/using-the-rest-api/using-cors-and-jsonp-to-make-cross-origin-requests), [limites de lecture publique](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api).

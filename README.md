@@ -1,4 +1,4 @@
-# LifeOS 0.9
+# LifeOS 0.10
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -141,7 +141,7 @@ Dans **Projets → Missions IA**, ouvrir **Références GitHub** sur une mission
 
 Un relevé reste un instantané consultable hors ligne. Une issue fermée n’équivaut pas à une PR fusionnée ; une exécution réussie ne prouve pas que tous les contrôles ou critères de mission sont remplis. Le statut local reste manuel. Les erreurs, quotas, délais ou annulations conservent les relevés antérieurs. Il n’y a ni actualisation périodique ni réessai automatique.
 
-Limites : 10 liens par mission, 2 000 au total, 20 relevés par lien. Exporter l’organisation puis **Effacer les anciens relevés** conserve le dernier et libère de la place, après confirmation. Retirer un lien efface ses relevés ; supprimer une mission retire aussi ses références locales, sans action sur GitHub. Les dépôts privés, GitHub Enterprise, écritures distantes et connecteurs IA sécurisés restent à configurer dans un prochain lot. Voir [docs/CONNEXIONS.md](docs/CONNEXIONS.md).
+Limites : 10 liens par mission, 2 000 au total, 20 relevés par lien. Exporter l’organisation puis **Effacer les anciens relevés** conserve le dernier et libère de la place, après confirmation. Retirer un lien efface ses relevés ; supprimer une mission retire aussi ses références locales, sans action sur GitHub. Le lot 0.10 ajoute un serveur privé facultatif pour le navigateur de cet ordinateur : jeton uniquement côté serveur, appairage temporaire et dépôts explicitement autorisés. L’APK conserve la lecture publique. GitHub Enterprise, accès distant, écritures et API IA restent à développer. Démarrage Windows : `npm.cmd run connector:setup` après compilation ; voir [docs/SERVEUR-LOCAL.md](docs/SERVEUR-LOCAL.md). Voir [docs/CONNEXIONS.md](docs/CONNEXIONS.md).
 
 ## Vos repères, vos choix
 
@@ -183,7 +183,7 @@ Le dossier `android/` contient l’application Capacitor. L’APK de développem
 npm.cmd run android:verify
 ```
 
-Le fichier apparaît dans `artifacts/LifeOS-0.9.0-debug.apk`, avec son empreinte SHA-256. Copier l’APK sur le téléphone et l’ouvrir pour l’installer ; autoriser cette source d’installation si Android le demande. C’est une version de développement, pas une publication Play Store. Le détail de l’installation, des essais et des limites figure dans [docs/ANDROID.md](docs/ANDROID.md).
+Le fichier apparaît dans `artifacts/LifeOS-0.10.0-debug.apk`, avec son empreinte SHA-256. Copier l’APK sur le téléphone et l’ouvrir pour l’installer ; autoriser cette source d’installation si Android le demande. C’est une version de développement, pas une publication Play Store. Le détail de l’installation, des essais et des limites figure dans [docs/ANDROID.md](docs/ANDROID.md).
 
 Dans **Données & sauvegardes**, l’export ouvre le partage Android : choisir une destination pour enregistrer le JSON. Fermer le partage ne prouve pas qu’une copie a été conservée. L’export Vie reste séparé et sélectif. Les fichiers à restaurer passent par le sélecteur Android puis la validation et la confirmation habituelles. Les données du navigateur Windows et celles de l’APK sont distinctes : utiliser un export/import explicite pour les transférer. Les sauvegardes cloud Android et transferts automatiques restent désactivés.
 
@@ -214,4 +214,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Prochain lot : suite des connecteurs facultatifs (accès privés et IA avec serveur sécurisé), puis stabilisation 1.0. Le lot 0.9 fournit uniquement les lectures GitHub publiques explicitement demandées. La recette sur téléphone physique et la distribution Android de production restent à valider. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.
+Prochain lot : connecteurs IA avec prévisualisation des envois, budgets et catalogue sourcé, puis accès distant authentifié et stabilisation 1.0. Le lot 0.10 fournit le serveur GitHub privé en boucle locale ; aucun compte, jeton réel ou service payant n’a été configuré. La recette sur téléphone physique et la distribution Android de production restent à valider. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.

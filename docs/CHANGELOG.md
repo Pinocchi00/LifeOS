@@ -1,5 +1,15 @@
 # Journal des modifications
 
+## 0.10.0 — 19 octobre 2026
+
+- Serveur Node facultatif pour la version web compilée, limité à 127.0.0.1 : lecture privée GitHub.com des seuls dépôts autorisés, jeton conservé uniquement côté serveur.
+- Saisie masquée du jeton sous Windows avec `connector:setup`, sans fichier de clés ou secret dans un argument de commande.
+- Appairage volontaire à code temporaire et usage unique, session HttpOnly d’une heure révocable, aucun appel GitHub pendant l’appairage ou à l’ouverture de l’application.
+- Choix public/serveur explicite dans les références des missions, erreurs sans basculement implicite, cache local des relevés et confidentialité des exports expliquée.
+- Origines/hôte stricts, aucun proxy/CORS ouvert, CSP, ressources compilées seules, API fixe en GET, projection partagée et quotas/délais/volumes bornés. Révocation et annulation vérifiées, y compris pendant la réception d’une requête.
+- Tests HTTP réels avec fournisseur remplacé, parcours navigateur d’appairage/lecture/export/déconnexion/hors ligne, contrôle du repli privé dans le scénario Android.
+- Format d’organisation v6 et Vie v1 inchangés, aucune clé réelle ni API IA configurée. Accès distant HTTPS, Enterprise, privé natif et budgets IA restent ouverts.
+
 ## 0.9.0 — 19 octobre 2026
 
 - Références GitHub publiques accessibles sur chaque mission : issues, pull requests et exécutions GitHub Actions, ajout local sans lecture réseau.

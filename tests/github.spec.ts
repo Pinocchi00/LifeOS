@@ -78,7 +78,7 @@ async function add(page: Page, url = pullUrl) {
   await page
     .getByRole("button", { name: "Relier un lien GitHub", exact: true })
     .click();
-  await page.getByLabel("Lien GitHub public").fill(url);
+  await page.getByLabel("Lien GitHub").fill(url);
   await page
     .getByRole("button", { name: "Relier ce lien", exact: true })
     .click();
@@ -268,13 +268,13 @@ test("doublons et hôtes refusés, historique effacé explicitement et mission s
     .getByRole("button", { name: "Relier un lien GitHub", exact: true })
     .click();
   await page
-    .getByLabel("Lien GitHub public")
+    .getByLabel("Lien GitHub")
     .fill("https://github.com/a/b/pull/1?token=secret");
   await page
     .getByRole("button", { name: "Relier ce lien", exact: true })
     .click();
   await expect(page.getByRole("alert")).toContainText("sans paramètre");
-  await page.getByLabel("Lien GitHub public").fill(pullUrl);
+  await page.getByLabel("Lien GitHub").fill(pullUrl);
   await page
     .getByRole("button", { name: "Relier ce lien", exact: true })
     .click();

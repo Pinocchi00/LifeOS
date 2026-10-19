@@ -31,6 +31,7 @@ export default defineConfig({
         clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,svg,png,jpg,woff2}"],
         navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],

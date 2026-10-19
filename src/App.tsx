@@ -580,7 +580,9 @@ function Backup({
       </div>
       <p className="small muted">
         Les réglages, les décisions et leurs historiques font partie de cette
-        sauvegarde d’organisation v6.
+        sauvegarde d’organisation v6. Les titres, adresses et états des
+        références GitHub privées y figurent aussi en clair. Les accès du
+        serveur n’y sont pas enregistrés.
       </p>
       <button
         className="button primary"

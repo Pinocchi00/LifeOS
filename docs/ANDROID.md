@@ -2,7 +2,7 @@
 
 ## Installer l’APK de développement
 
-Le lot 0.9 produit `artifacts/LifeOS-0.9.0-debug.apk` et son empreinte `.sha256`. Copier le fichier sur le téléphone, l’ouvrir et autoriser la source d’installation lorsque le système le demande. Android 7/API 24 est le minimum déclaré ; un Android System WebView récent reste nécessaire aux fonctions web de l’application. Cette version n’est pas une publication Play Store et n’a pas de clé de production.
+Le lot 0.10 produit `artifacts/LifeOS-0.10.0-debug.apk` et son empreinte `.sha256`. Copier le fichier sur le téléphone, l’ouvrir et autoriser la source d’installation lorsque le système le demande. Android 7/API 24 est le minimum déclaré ; un Android System WebView récent reste nécessaire aux fonctions web de l’application. Cette version n’est pas une publication Play Store et n’a pas de clé de production.
 
 L’installation Android possède son propre stockage. Pour transférer des informations depuis Windows : exporter l’organisation et, séparément, les rubriques Vie souhaitées ; copier les fichiers ; les restaurer dans l’APK après lecture du récapitulatif. Une restauration remplace les rubriques annoncées, sans fusion entre appareils. Exporter les données courantes avant tout remplacement.
 
@@ -42,3 +42,7 @@ Sources techniques : [environnement Capacitor 8](https://capacitorjs.com/docs/ge
 La compilation et le lint locaux sont décrits dans `VERIFICATION.md`. La CI ajoute un émulateur Android 15/API 35 isolé et publie l’APK de développement avec les rapports pendant 14 jours. Le scénario teste le stockage après rechargement hors réseau, Retour avec saisie, modification explicite d’une préférence avec historique, présence de ces réglages dans le JSON v6, partage réel du JSON, restauration par résultat du sélecteur Android, programmation et annulation de rappels, et réception d’une notification d’essai. Le scénario GitHub utilise une réponse HTTP fictive déclarée dans la WebView hors réseau : il vérifie la lecture volontaire, le relevé et l’export v6 sans valider l’accès réel à GitHub depuis un téléphone. La lecture publique réelle est vérifiée séparément dans Chromium. Le choix d’un fournisseur de fichiers est simulé ; la copie vers chaque application de destination n’est pas automatisée.
 
 La recette sur téléphone physique, les politiques de batterie propres aux fabricants, le redémarrage du téléphone, les changements de fuseau/heure d’été, les appareils anciens et lecteurs d’écran réels restent à vérifier. Les parcours Playwright Pixel 7 sont des tests web distincts, pas une validation native. La distribution avec signature de production et publication sur un store restent hors de ce lot.
+
+## Connecteur privé 0.10
+
+Le serveur privé de ce lot s’utilise dans le navigateur sur l’ordinateur qui l’exécute. Dans l’APK, le choix privé explique cette limite et ne contacte aucun serveur ; revenir à **Public, sans compte** pour une lecture publique. Aucun HTTP en clair ni clé fournisseur n’est ajouté à Android. Les relevés privés importés dans l’organisation restent consultables hors ligne et sont inclus en clair dans ses exports.

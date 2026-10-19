@@ -136,6 +136,11 @@ public class NativeSmokeTest {
         click("Relier ce lien");
         waitFor("document.querySelector('.github-link')");
         js("window.smokeGithubCalls=0;window.smokeFetch=window.fetch.bind(window);window.fetch=(url,options)=>{if(String(url)==='https://api.github.com/repos/example/fixture/actions/runs/123'){window.smokeGithubCalls++;window.smokeGithubOptions=options;return Promise.resolve(new Response(JSON.stringify({id:123,html_url:'https://github.com/example/fixture/actions/runs/123',name:'Tests fictifs Android',display_title:'Tests',status:'completed',conclusion:'success',head_sha:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',run_attempt:2,updated_at:'2026-10-19T12:00:00.000Z'}),{headers:{'Content-Type':'application/json'}}))}return window.smokeFetch(url,options)}");
+        click("Privé, par mon serveur");
+        waitFor("document.querySelector('.github-access')?.textContent.includes('Android et les sites')");
+        assertEquals("true", js("!Array.from(document.querySelectorAll('.github-access button')).some(b=>b.textContent.includes('Vérifier le serveur local'))"));
+        assertEquals("true", js("Array.from(document.querySelectorAll('.github-link button')).find(b=>b.textContent.includes('Vérifier et garder')).disabled"));
+        click("Public, sans compte");
         assertEquals("0", js("window.smokeGithubCalls"));
         click("Vérifier et garder un relevé");
         waitFor("document.querySelector('.github-link')?.textContent.includes('Réussite') && document.body.innerText.includes('Relevé conservé')");

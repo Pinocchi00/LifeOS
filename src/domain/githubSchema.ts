@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { id } from "./validation";
+import { id } from "./validation.ts";
 export const githubTargetSchema = z
   .object({
     owner: z
