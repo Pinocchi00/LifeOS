@@ -26,11 +26,11 @@ describe("IndexedDB", () => {
     await db.put("state", legacy, "current");
     db.close();
     const migrated = await readData();
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.notes).toEqual(legacy.notes);
     expect(migrated.missions).toEqual([]);
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(3);
+    expect((await check.get("state", "current")).version).toBe(4);
     check.close();
     await writeData(emptyData());
   });
@@ -53,7 +53,15 @@ describe("IndexedDB", () => {
     expect(await readData()).toEqual(emptyData());
   });
   it("migre aussi v2 en place et conserve les tâches existantes", async () => {
-    const { routines, routineEntries, goals, ...legacy } = emptyData();
+    const {
+      resources,
+      learningPaths,
+      learningEntries,
+      routines,
+      routineEntries,
+      goals,
+      ...legacy
+    } = emptyData();
     const note = {
       id: "v2-note",
       title: "Avant l’agenda",
@@ -65,14 +73,17 @@ describe("IndexedDB", () => {
     db.close();
     expect(await readData()).toEqual({
       ...legacy,
-      version: 3,
+      version: 4,
+      resources,
+      learningPaths,
+      learningEntries,
       notes: [note],
       routines,
       routineEntries,
       goals,
     });
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(3);
+    expect((await check.get("state", "current")).version).toBe(4);
     check.close();
     await writeData(emptyData());
   });
@@ -93,5 +104,35 @@ describe("IndexedDB", () => {
       writeData({ ...emptyData(), version: 77 } as unknown as Data),
     ).rejects.toThrow();
     expect(await readData()).toEqual(original);
+  });
+  it("migre une enveloppe v3 réelle et réécrit v4 sans effacer le planning", async () => {
+    const { resources, learningPaths, learningEntries, ...legacy } =
+      emptyData();
+    const task = {
+      id: "planned-v3",
+      title: "Créneau conservé",
+      description: "",
+      status: "todo",
+      priority: "medium",
+      due: "2026-10-22",
+      projectId: "",
+      createdAt: "2026-10-19T09:00:00.000Z",
+      completedAt: null,
+      schedule: { day: "2026-10-19", start: "10:00", duration: 45 },
+    };
+    const db = await openDB("lifeos-core", 1);
+    await db.put("state", { ...legacy, version: 3, tasks: [task] }, "current");
+    const migrated = await readData();
+    expect(migrated).toEqual({
+      ...legacy,
+      version: 4,
+      tasks: [task],
+      resources,
+      learningPaths,
+      learningEntries,
+    });
+    expect((await db.get("state", "current")).version).toBe(4);
+    db.close();
+    await writeData(emptyData());
   });
 });

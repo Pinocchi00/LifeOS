@@ -1,4 +1,4 @@
-# LifeOS 0.5
+# LifeOS 0.6
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -36,7 +36,9 @@ Ouvrir `http://127.0.0.1:4173`, puis choisir **Installer LifeOS** dans le menu d
 - Projets : création, modification, statut, couleur, progression calculée sur les tâches. Suppression confirmée en conservant les tâches.
 - Accueil calculé : trois priorités, tâches du jour, projets actifs, progression, idées et conseils locaux expliqués.
 - Briefings matin/soir à partir des tâches réelles ; le bilan utilise la date locale de réalisation.
-- Idées : capture, modification, suppression, carnet Explorer et recherche commune aux tâches/projets/idées (Ctrl+K).
+- Explorer : ressources sourcées, formats, annotations, thèmes, favoris, états de lecture et liens avec les idées/projets.
+- Apprentissage : parcours à étapes, progression explicitement cochée et séances datées avec temps déclaré.
+- Idées : capture, modification, suppression, carnet et création d’une idée à partir d’une source. Recherche générale incluant ressources, parcours et séances (Ctrl+K), hors suivis Vie.
 - Persistance IndexedDB, export JSON, contrôle des fichiers importés et restauration transactionnelle avec confirmation.
 - PWA et projet natif Android Capacitor généré et synchronisé.
 - Centre ChatGPT/Claude dans **Projets → Missions IA** et **Mes assistants** sur ordinateur : objectifs, critères, fichiers, échéance, cinq statuts, comptes-rendus et preuves conservés.
@@ -78,6 +80,28 @@ Modifier un rythme ou le mettre en pause conserve les réalisations, leur titre 
 
 Dans **Objectifs**, définir un résultat et lui associer des tâches existantes ou **Ajouter une étape**. Chaque tâche compte pour une étape de même poids. La progression suit les statuts réels et diminue si une étape est rouverte. Sans étape, aucun résultat accompli n’est annoncé. Une tâche supprimée est détachée des objectifs et le total est recalculé. Supprimer un objectif conserve ses tâches. Routines et objectifs sont aussi accessibles par la recherche universelle et inclus dans les sauvegardes.
 
+## Explorer et apprendre
+
+**Explorer** s’ouvre sur **Ressources**. **Apprendre** rassemble les parcours et leurs séances ; **Idées** garde le carnet existant. Le bouton de création en haut suit la rubrique choisie. Le compteur d’idées de l’accueil ouvre directement le carnet.
+
+### Garder une source
+
+Créer une fiche avec son titre, format et auteur/organisme. Fournir soit un lien HTTP/HTTPS sans identifiants, soit une référence hors ligne (édition, page, fichier…). Aucun lien n’est ouvert avant votre clic, aucune page n’est analysée automatiquement. Les liens externes s’ouvrent dans un nouvel onglet sans transmettre la référence de la page LifeOS.
+
+La date de publication et la date où vous avez consulté la source sont des métadonnées déclarées. Une fiche de format **Actualité** exige une date de publication. Le formulaire refuse les dates futures ; aucun horodatage de vérification ou fait d’actualité n’est inventé. Le statut **Consultée** est un choix de lecture, pas une validation de l’exactitude du contenu. Vous pouvez le changer depuis la carte ou le formulaire. Un lien déjà enregistré déclenche un avertissement, sans interdire une fiche distincte ; les fragments de page sont ignorés pour ce rapprochement, les paramètres conservés.
+
+Ajouter vos annotations, jusqu’à dix thèmes et un favori. La recherche locale couvre titres, sources, liens, références, thèmes et annotations en ignorant casse et accents. **Affiner la bibliothèque** filtre formats, thèmes, projets, favoris et dates de publication, et permet de choisir le tri. Un filtre de dates exclut les fiches sans date. Les grandes listes sont affichées par lots, sans tronquer les données conservées ou exportées.
+
+**Idées reliées → Capturer une idée depuis cette source** prépare un formulaire avec la référence et votre annotation. Rien n’est créé sans enregistrement ; l’idée est alors reliée à la fiche. Le formulaire de ressource permet aussi de relier des idées existantes. Supprimer une idée retire ses liens, sans supprimer la ressource. Supprimer une ressource conserve idées, étapes et séances ; les étapes sont seulement détachées de cette fiche.
+
+### Donner une suite à l’apprentissage
+
+Créer un parcours avec une intention, une date cible facultative et au moins une étape. Chaque étape peut être reliée à une ressource. Les cases marquent ce que vous avez explicitement terminé ; la progression diminue si une étape est rouverte. Terminer une lecture ou enregistrer une séance ne coche pas les étapes automatiquement. La prochaine étape affichée est la première non cochée dans l’ordre enregistré, sans estimation de priorité intelligente. La pause retire cette proposition et le parcours du compte des parcours en cours ; les saisies manuelles et l’historique restent accessibles.
+
+**Noter une séance** conserve le jour, 1 à 720 minutes réellement déclarées et vos observations. Les séances futures sont refusées dans le formulaire. Leurs titres de parcours et d’étape sont conservés au moment de la saisie : renommer, retirer une étape ou supprimer un parcours ne réécrit pas les séances passées. Les séances détachées restent modifiables et recherchables ; supprimer une séance ne modifie pas les cases des étapes.
+
+Les ressources, parcours et séances sont inclus dans la recherche générale et la sauvegarde d’organisation v4. Le stockage et la sauvegarde Vie restent indépendants. Hors ligne, vous retrouvez les fiches, annotations et parcours ; le contenu des sites externes n’est ni téléchargé ni garanti hors ligne. Les actualités sont des fiches saisies et datées par vous, sans flux automatique ni vérification de source en arrière-plan.
+
 ## Utiliser Vie
 
 Ouvrir **Vie**, puis choisir **Jour**, **Sport**, **Cuisine**, **Habitudes** ou **Sommeil**. La date au-dessus des rubriques sert à consulter et saisir les suivis datés. Les chiffres du jour sont calculés uniquement à partir des informations enregistrées.
@@ -93,7 +117,7 @@ Les dernières séances, comparaisons d’exercice, réalisations et nuits affic
 
 ### Sauvegarde personnelle séparée
 
-**Sauvegarder Vie** permet de sélectionner Sport, Cuisine, Habitudes et/ou Sommeil ; aucune rubrique n’est cochée par défaut. Le fichier **LifeOS-Vie v1** contient uniquement cette sélection. À l’import, sélectionner les rubriques à remplacer puis confirmer ; les autres suivis et toutes les données d’organisation sont conservés. Les fichiers incohérents, inconnus ou de plus de 10 Mo sont refusés avant l’écriture. Les exports généraux LifeOS v1/v2/v3 ne contiennent aucun suivi Vie et ne modifient pas Vie lors d’une restauration.
+**Sauvegarder Vie** permet de sélectionner Sport, Cuisine, Habitudes et/ou Sommeil ; aucune rubrique n’est cochée par défaut. Le fichier **LifeOS-Vie v1** contient uniquement cette sélection. À l’import, sélectionner les rubriques à remplacer puis confirmer ; les autres suivis et toutes les données d’organisation sont conservés. Les fichiers incohérents, inconnus ou de plus de 10 Mo sont refusés avant l’écriture. Les exports généraux LifeOS v1 à v4 ne contiennent aucun suivi Vie et ne modifient pas Vie lors d’une restauration.
 
 Vie est conservé dans une base IndexedDB distincte `lifeos-personal`, ouverte uniquement en entrant dans cet espace. Le verrou d’écriture de l’application s’applique aussi à Vie ; les mutations sont validées et sérialisées. La recherche générale, les briefings de l’accueil et les missions n’incluent pas ces informations. Les fichiers sont en clair et le stockage n’est pas chiffré : conserver une copie adaptée à leur caractère personnel. Il faut sauvegarder séparément l’organisation et les rubriques Vie souhaitées. Aucun suivi réel n’est livré dans le code ni envoyé à GitHub.
 
@@ -113,9 +137,9 @@ Les compteurs affichent uniquement votre dernier relevé. Si un plafond est inco
 
 Ouvrir l'avatar en haut à droite ou **Données & sauvegardes** sur ordinateur. Choisir **Exporter mes données**. Conserver le JSON dans un endroit sûr : il contient vos informations en clair, sans chiffrement.
 
-Pour restaurer : sélectionner un JSON LifeOS, vérifier le nombre d'éléments puis confirmer le remplacement. Exporter d'abord les données actuelles : la restauration remplace les données d’organisation, sans modifier Vie ; elle ne fusionne pas les appareils. Les fichiers inconnus, trop volumineux (10 Mo), incohérents ou de version non prise en charge sont refusés avant toute écriture.
+Pour restaurer : sélectionner un JSON LifeOS, vérifier le nombre d'éléments puis confirmer le remplacement. Exporter d'abord les données actuelles : la restauration remplace les données d’organisation, sans modifier Vie ; elle ne fusionne pas les appareils. Les fichiers inconnus, trop volumineux (10 Mo), incohérents ou de version non prise en charge sont refusés avant toute écriture. Un export dépassant cette même limite est refusé avec un message, pour ne pas produire un fichier non restaurable.
 
-Le format de données courant est **v3** : il ajoute les créneaux, routines, réalisations et objectifs. Les données locales et sauvegardes **v1 et v2** sont validées puis migrées sans perdre leur contenu. Les anciennes versions de l’application ne savent pas lire un export v3 ; conserver les exports historiques si nécessaire. Pour charger une mise à jour PWA, fermer toutes les fenêtres LifeOS puis relancer l'application.
+Le format de données courant est **v4** : il ajoute les ressources, parcours et séances d’apprentissage. Les données locales et sauvegardes **v1, v2 et v3** sont validées puis migrées en conservant leur contenu. Les anciennes versions de l’application ne savent pas lire un export v4 ; conserver les exports historiques si nécessaire. Pour charger une mise à jour PWA, fermer toutes les fenêtres LifeOS puis relancer l'application.
 
 Le stockage n'est pas une sauvegarde garantie : le nettoyage des données du navigateur, la navigation privée, une désinstallation ou une réinitialisation peuvent l'effacer. Aucune synchronisation cloud ni chiffrement applicatif dans cette version. Les suivis Vie sont dans une base séparée et ont une sauvegarde distincte ; cette séparation ne constitue pas un chiffrement ni une frontière de sécurité contre un accès à votre session.
 
@@ -146,7 +170,7 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 ## Structure
 
-- `src/domain/` : modèles, règles, missions, validation des sauvegardes et migrations v1/v2 → v3.
+- `src/domain/` : modèles, règles, missions, validation des sauvegardes et migrations v1/v2/v3 → v4.
 - `src/components/Assistants.tsx` : centre de missions, formulaires, rapports et compteurs manuels.
 - `src/storage/` : IndexedDB d’organisation et base Vie distincte, coordination des mutations et fenêtres.
 - `src/components/personal/`, `src/domain/personal.ts`, `src/personal.css` : suivis Vie, formulaires, sauvegardes sélectives et règles métier.
@@ -154,6 +178,7 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 - `src/App.tsx` et les feuilles CSS : écrans, structure responsive et identité écobrutaliste.
 - `src/components/DailyGarden.tsx`, `FocusSession.tsx`, `UpdateNotice.tsx` : jardin, concentration et mise à jour explicite.
 - `src/components/Planning.tsx`, `PlanningForms.tsx` : semaine, mois, routines, objectifs et formulaires.
+- `src/components/Explorer.tsx`, `ExplorerForms.tsx`, `src/domain/explore.ts`, `exploreSchema.ts`, `src/explorer.css` : bibliothèque sourcée et apprentissage.
 - `src/domain/planning.ts`, `planningSchema.ts` : calculs calendaires, créneaux, réalisations et validation.
 - `src/experience/` : préférences de mouvement et cycle PWA.
 - `public/` : icônes locales ; aucune police ni image distante.
@@ -163,4 +188,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Prochain lot dans l’ordre convenu : Explorer (ressources structurées, sources et apprentissage). Ensuite : Android, adaptation et connecteurs facultatifs. Les flux d’actualités resteront sourcés et explicitement datés.
+Prochain lot dans l’ordre convenu : Android et fiabilité native (outillage, APK et essais sur appareil), puis adaptation et connecteurs facultatifs. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.

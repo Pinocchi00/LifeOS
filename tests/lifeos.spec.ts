@@ -119,6 +119,10 @@ test("capture, export, restauration et refus d’un fichier dangereux", async ({
   await page.getByRole("button", { name: "Fermer", exact: true }).click();
   await navigate(page, "Explorer");
   await page
+    .getByRole("group", { name: "Rubriques Explorer" })
+    .getByRole("button", { name: "Idées", exact: true })
+    .click();
+  await page
     .getByRole("button", {
       name: "Supprimer l’idée <img src=x onerror=alert(1)>",
     })
@@ -140,6 +144,10 @@ test("capture, export, restauration et refus d’un fichier dangereux", async ({
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.reload();
   await navigate(page, "Explorer");
+  await page
+    .getByRole("group", { name: "Rubriques Explorer" })
+    .getByRole("button", { name: "Idées", exact: true })
+    .click();
   await expect(
     page.getByRole("button", {
       name: "<img src=x onerror=alert(1)>",

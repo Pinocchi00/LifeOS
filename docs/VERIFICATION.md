@@ -1,5 +1,20 @@
 # Vérifications LifeOS
 
+## Lot 0.6 — 19 octobre 2026
+
+- **69 tests Vitest réussis**, huit fichiers. Les nouveaux tests couvrent la validation des sources et URL, les liens entre ressources/idées/projets, la recherche insensible aux accents, les doublons de source, la progression explicite et réversible, les séances datées et la conservation des instantanés après retrait d’une étape ou d’un parcours. Migration réelle d’une base IndexedDB v3 vers le modèle v4 ; les migrations v1/v2 restent couvertes.
+- **40 parcours Playwright réussis**, sur ordinateur et format Pixel 7. Les six nouveaux parcours vérifient les fiches sourcées, favoris, filtres, actualités datées, capture d’idée reliée, suppression sans lien orphelin, parcours et séances indépendants de la lecture, réouverture d’étape, historique conservé, refus d’une séance future, persistance, export/restauration v4, refus d’une URL JavaScript, import v3 et usage hors ligne. Aucun appel au site de démonstration lors de ces opérations.
+- Les tests de carnet existants ouvrent désormais l’onglet Idées. Le premier passage de la suite complète a révélé deux attentes de restauration v1 encore placées sur l’ancien écran ; elles ont été adaptées à cette navigation, puis les 40 parcours ont été rejoués avec succès.
+- Compilation TypeScript/Vite/PWA réussie : JavaScript principal environ **131,8 Ko gzip**, module Explorer environ **4,7 Ko gzip**, module Vie environ **10,4 Ko gzip**, CSS environ **21,5 Ko gzip** ; 14 ressources précachées. Aucun chunk au-delà de 500 Ko, aucun moteur 3D ajouté. Le module Explorer est chargé à son ouverture et précaché pour le hors ligne.
+- Contrôle visuel avec données fictives isolées : Ressources, Apprendre et Idées à 1440, 768, 393 et 320 pixels, filtres et formulaire de ressource étroit, sans débordement horizontal ni erreur JavaScript de page. Captures Ressources ordinateur/mobile, Apprendre ordinateur/mobile et formulaire à 320 pixels inspectées. Les captures attendent le chargement du module ; elles restent hors du dépôt avec les données d’essai.
+- Format général v4 validé, imports v1/v2/v3 conservés ; format et base Vie v1 indépendants. L’export général refuse un fichier dépassant la limite de restauration de 10 Mio. Les suppressions gardent les idées et les séances, détachent leurs références, et affichent une erreur sans fermer la confirmation si la mutation échoue.
+- Projet Capacitor resynchronisé avec les ressources compilées. Aucun APK construit ni essai Android physique. Pas de test Safari/Firefox ou lecteur d’écran réel ; les parcours Pixel 7 utilisent une émulation Chromium.
+- Limites explicites : sources, dates et annotations saisies par l’utilisateur, sans collecte ni vérification automatique et sans flux d’actualités en temps réel. Les fiches et annotations sont disponibles hors ligne ; les pages externes ne sont pas téléchargées. Les minutes sont déclarées et seule une étape cochée fait progresser un parcours. Pas de recommandation automatique ni de synchronisation cloud.
+
+Créations principales : `src/domain/exploreSchema.ts`, `explore.ts`, `explore.test.ts`, `src/components/Explorer.tsx`, `ExplorerForms.tsx`, `src/explorer.css`, `tests/explore.spec.ts`. Adaptations : modèle général, recherche, capture et sauvegardes dans `src/App.tsx`, migrations et tests existants, versions et documentation. La direction écobrutaliste sans 3D est conservée. Aucun jeu de données personnel publié.
+
+Prochain lot : Android et fiabilité native — outillage JDK/SDK, APK, essais sur appareil et notifications avec consentement.
+
 ## Lot 0.5 — 19 octobre 2026
 
 - **57 tests Vitest réussis**, sept fichiers. Les 15 nouveaux tests couvrent portions et instantanés de repas, conversions et rapprochement des noms, déduction du stock et des courses, rangement explicite et idempotence, refus des quantités impossibles, habitudes datées, sommeil traversant minuit/changement d’heure, synthèse des seules saisies, exports sélectifs et restauration partielle.

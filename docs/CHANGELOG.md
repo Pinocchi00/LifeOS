@@ -1,5 +1,17 @@
 # Journal des modifications
 
+## 0.6.0 — 19 octobre 2026
+
+- Explorer réorganisé en Ressources, Apprendre et Idées, avec une création adaptée à la rubrique et accès direct au carnet depuis l’accueil.
+- Bibliothèque locale : formats, auteur/organisme, lien HTTP/HTTPS ou référence hors ligne, dates déclarées, annotations, thèmes, favoris et états de lecture.
+- Recherche et filtres par source, thème, format, projet, favori et publication ; avertissement de lien déjà conservé, sans téléchargement automatique.
+- Actualités manuelles exigeant une date de publication ; aucune collecte temps réel ou vérification de source simulée.
+- Idées reliées aux ressources, capture préremplie à confirmer, suppression conservant les autres éléments.
+- Parcours d’apprentissage, étapes liées aux ressources, progression cochée et réversible, pause et séances datées avec temps déclaré.
+- Historique conservé après renommage/retrait d’étapes ou suppression d’un parcours ; recherche générale des ressources, parcours et séances.
+- Enveloppe d’organisation v4 et migrations locales/import v1, v2 et v3 ; sauvegardes Vie indépendantes et inchangées. Export général refusé au-delà de la limite restaurable de 10 Mo.
+- Module d’interface Explorer séparé et précaché ; contrôles métier, stockage, parcours navigateur et petits écrans. Erreurs de suppression affichées dans le dialogue.
+
 ## 0.5.0 — 19 octobre 2026
 
 - Espace Vie fonctionnel : synthèse du jour, sport, cuisine, habitudes et sommeil, avec date de consultation.

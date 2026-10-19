@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { text, id, title, day } from "./validation";
+import {
+  resourceSchema,
+  learningPathSchema,
+  learningEntrySchema,
+} from "./exploreSchema";
 import { missionSchema, usageSchema } from "./assistants";
 import {
   scheduleSchema,
@@ -112,68 +117,145 @@ const validateMissions = (
     });
 };
 const v2Schema = v2Base.superRefine(validateMissions);
+const v3Base = coreSchema.extend({
+  missions: z.array(missionSchema).max(5000),
+  usage: z.array(usageSchema).max(2),
+  version: z.literal(3),
+  routines: z.array(routineSchema).max(2000),
+  routineEntries: z.array(routineEntrySchema).max(50000),
+  goals: z.array(goalSchema).max(2000),
+});
+const validatePlanning = (
+  data: z.infer<typeof v3Base>,
+  context: z.RefinementCtx,
+) => {
+  validateMissions({ ...data, version: 2 }, context);
+  const items = [
+    ...data.tasks,
+    ...data.projects,
+    ...data.notes,
+    ...data.missions,
+    ...data.missions.flatMap((m) => m.reports),
+    ...data.routines,
+    ...data.routineEntries,
+    ...data.goals,
+  ];
+  if (new Set(items.map((item) => item.id)).size !== items.length)
+    context.addIssue({
+      code: "custom",
+      message: "Identifiants de planification dupliqués.",
+    });
+  const routines = new Map(
+    data.routines.map((routine) => [routine.id, routine]),
+  );
+  const tasks = new Set(data.tasks.map((task) => task.id));
+  const occurrences = new Set<string>();
+  for (const entry of data.routineEntries) {
+    const key = `${entry.routineId}/${entry.day}`;
+    if (!routines.has(entry.routineId) || occurrences.has(key))
+      context.addIssue({
+        code: "custom",
+        message: "Réalisation de routine orpheline ou dupliquée.",
+      });
+    occurrences.add(key);
+  }
+  if (
+    data.goals.some((goal) => goal.taskIds.some((taskId) => !tasks.has(taskId)))
+  )
+    context.addIssue({
+      code: "custom",
+      message: "Un objectif référence une tâche inexistante.",
+    });
+};
+const v3Schema = v3Base.superRefine(validatePlanning);
 export const dataSchema = coreSchema
   .extend({
-    missions: z.array(missionSchema).max(5000),
-    usage: z.array(usageSchema).max(2),
-    version: z.literal(3),
-    routines: z.array(routineSchema).max(2000),
-    routineEntries: z.array(routineEntrySchema).max(50000),
-    goals: z.array(goalSchema).max(2000),
+    ...v3Base.shape,
+    version: z.literal(4),
+    resources: z.array(resourceSchema).max(10000),
+    learningPaths: z.array(learningPathSchema).max(2000),
+    learningEntries: z.array(learningEntrySchema).max(20000),
   })
   .superRefine((data, context) => {
-    validateMissions({ ...data, version: 2 }, context);
+    validatePlanning({ ...data, version: 3 }, context);
     const items = [
       ...data.tasks,
       ...data.projects,
       ...data.notes,
       ...data.missions,
-      ...data.missions.flatMap((m) => m.reports),
+      ...data.missions.flatMap((item) => item.reports),
       ...data.routines,
       ...data.routineEntries,
       ...data.goals,
+      ...data.resources,
+      ...data.learningPaths,
+      ...data.learningPaths.flatMap((path) => path.steps),
+      ...data.learningEntries,
     ];
     if (new Set(items.map((item) => item.id)).size !== items.length)
       context.addIssue({
         code: "custom",
-        message: "Identifiants de planification dupliqués.",
+        message: "Identifiants Explorer dupliqués.",
       });
-    const routines = new Map(
-      data.routines.map((routine) => [routine.id, routine]),
-    );
-    const tasks = new Set(data.tasks.map((task) => task.id));
-    const occurrences = new Set<string>();
-    for (const entry of data.routineEntries) {
-      const key = `${entry.routineId}/${entry.day}`;
-      if (!routines.has(entry.routineId) || occurrences.has(key))
-        context.addIssue({
-          code: "custom",
-          message: "Réalisation de routine orpheline ou dupliquée.",
-        });
-      occurrences.add(key);
-    }
+    const projects = new Set(data.projects.map((project) => project.id));
+    const notes = new Set(data.notes.map((note) => note.id));
+    const resources = new Set(data.resources.map((resource) => resource.id));
     if (
-      data.goals.some((goal) =>
-        goal.taskIds.some((taskId) => !tasks.has(taskId)),
+      data.resources.some(
+        (resource) =>
+          (resource.projectId && !projects.has(resource.projectId)) ||
+          resource.noteIds.some((noteId) => !notes.has(noteId)),
       )
     )
       context.addIssue({
         code: "custom",
-        message: "Un objectif référence une tâche inexistante.",
+        message: "Une ressource référence un projet ou une idée inexistants.",
+      });
+    if (
+      data.learningPaths.some(
+        (path) =>
+          (path.projectId && !projects.has(path.projectId)) ||
+          path.steps.some(
+            (step) => step.resourceId && !resources.has(step.resourceId),
+          ),
+      )
+    )
+      context.addIssue({
+        code: "custom",
+        message:
+          "Un parcours référence un projet ou une ressource inexistants.",
+      });
+    const paths = new Map(
+      data.learningPaths.map((path) => [
+        path.id,
+        new Set(path.steps.map((step) => step.id)),
+      ]),
+    );
+    if (
+      data.learningEntries.some(
+        (entry) => entry.pathId && !paths.get(entry.pathId)?.has(entry.stepId),
+      )
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Une séance référence une étape inexistante.",
       });
   });
 export const storedDataSchema = z
-  .union([dataSchema, v2Schema, legacySchema])
+  .union([dataSchema, v3Schema, v2Schema, legacySchema])
   .transform((data) => {
-    if (data.version === 3) return data;
+    if (data.version === 4) return data;
     return {
       ...data,
-      version: 3 as const,
+      version: 4 as const,
       missions: data.version === 1 ? [] : data.missions,
       usage: data.version === 1 ? [] : data.usage,
-      routines: [],
-      routineEntries: [],
-      goals: [],
+      routines: data.version === 3 ? data.routines : [],
+      routineEntries: data.version === 3 ? data.routineEntries : [],
+      goals: data.version === 3 ? data.goals : [],
+      resources: [],
+      learningPaths: [],
+      learningEntries: [],
     };
   });
 export const backupSchema = z
@@ -188,7 +270,10 @@ export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Data = z.infer<typeof dataSchema>;
 export const emptyData = (): Data => ({
-  version: 3,
+  version: 4,
+  resources: [],
+  learningPaths: [],
+  learningEntries: [],
   routines: [],
   routineEntries: [],
   goals: [],
@@ -243,6 +328,14 @@ export function removeProject(data: Data, projectId: string): Data {
   return {
     ...data,
     projects: data.projects.filter((project) => project.id !== projectId),
+    resources: data.resources.map((resource) =>
+      resource.projectId === projectId
+        ? { ...resource, projectId: "" }
+        : resource,
+    ),
+    learningPaths: data.learningPaths.map((path) =>
+      path.projectId === projectId ? { ...path, projectId: "" } : path,
+    ),
     tasks: data.tasks.map((task) =>
       task.projectId === projectId ? { ...task, projectId: "" } : task,
     ),
@@ -252,7 +345,7 @@ export function removeProject(data: Data, projectId: string): Data {
   };
 }
 export function serializeBackup(data: Data) {
-  return JSON.stringify(
+  const raw = JSON.stringify(
     backupSchema.parse({
       application: "LifeOS",
       exportedAt: new Date().toISOString(),
@@ -261,6 +354,11 @@ export function serializeBackup(data: Data) {
     null,
     2,
   );
+  if (new TextEncoder().encode(raw).length > 10 * 1024 * 1024)
+    throw new Error(
+      "La sauvegarde dépasse 10 Mo. Réduisez les données avant d’exporter ; le fichier ne serait pas restaurable.",
+    );
+  return raw;
 }
 export function parseBackup(raw: string): Data {
   if (new TextEncoder().encode(raw).length > 10 * 1024 * 1024)

@@ -8,6 +8,7 @@ import "./ecobrutalism.css";
 import "./living-garden.css";
 import "./planning.css";
 import "./personal.css";
+import "./explorer.css";
 
 startWorker();
 ReactDOM.createRoot(document.getElementById("root")!).render(

@@ -107,3 +107,22 @@ Les lignes existantes ne sont pas diminuées lorsqu’un repas change : leur mod
 Les séances, réalisations et nuits sont saisies explicitement. Une séance peut être décrite par sa durée seule ou détaillée en séries/répétitions/charges ; les comparaisons rapprochent les exercices de même nom. Reprendre comme modèle préremplit un nouveau formulaire et exige un enregistrement. Les habitudes personnelles sont indépendantes des routines d’organisation. Leur historique garde le titre au moment de la réalisation ; une pause conserve les faits, une suppression confirmée les retire. Les anciens rythmes non réalisés ne sont pas versionnés.
 
 Le sommeil stocke des instants UTC et une date locale de réveil, avec une entrée par nuit et une durée technique maximale de 24 h. Les saisies locales sont contrôlées par aller-retour pour refuser une heure inexistante ; une heure répétée suit le choix de décalage du navigateur. Les heures affichées suivent le fuseau courant. La moyenne ne remplit pas les jours absents avec des zéros. Le lot ne mesure rien en arrière-plan et ne produit ni diagnostic ni recommandation médicale.
+
+
+## 021 — Explorer dans l’organisation v4
+
+Ressources, parcours et séances d’apprentissage appartiennent à l’organisation, dans la base existante `lifeos-core`. L’enveloppe v4 ajoute `resources`, `learningPaths` et `learningEntries`. Les schémas stricts v1/v2/v3 sont conservés et transformés sans perte ; une enveloppe invalide n’est pas remplacée par du vide. Le magasin IndexedDB reste identique. Les sauvegardes Vie v1 restent indépendantes et ne sont jamais lues par Explorer ou la recherche générale. La limite d’export général correspond désormais à celle de restauration, pour éviter un fichier impossible à réimporter.
+
+Les identifiants globaux incluent les étapes de parcours et les séances. Les liens vers projets, idées, ressources et étapes sont validés avant écriture. Supprimer un projet détache aussi les ressources et parcours, sans les supprimer. L’interface Explorer est chargée séparément et précachée avec les fiches locales, sans mise en cache du contenu externe.
+
+## 022 — Une source retrouvable et des métadonnées déclarées
+
+Une fiche exige un auteur/organisme et soit un lien HTTP/HTTPS sans identifiants, soit une référence hors ligne. Aucun fetch, prévisualisation ou vérification automatique. Les liens sont ouverts uniquement sur action explicite, avec `noopener noreferrer` et une politique sans référent. Les autres protocoles et les identifiants dans les URLs sont refusés.
+
+Les dates sont saisies, et la publication est obligatoire pour le format Actualité. Le statut de lecture n’est pas une preuve d’exactitude. La date de consultation n’est pas déduite d’un clic. La bibliothèque n’est donc pas un flux d’actualité temps réel et ne fabrique aucun fait récent. Le rapprochement de liens ignore uniquement les fragments ; des doublons restent permis pour des usages distincts, avec avertissement. La recherche ignore casse/accents. Les grands résultats sont présentés par lots.
+
+## 023 — Des apprentissages déclarés, un historique conservé
+
+Les étapes sont cochées explicitement et leur progression est réversible. Une lecture terminée et une séance enregistrée ne prouvent pas à elles seules la maîtrise d’une étape. Les minutes sont déclarées, sans chronomètre automatique. La prochaine étape est la première non cochée dans l’ordre défini, pas une recommandation IA.
+
+Les séances conservent un instantané des titres. Renommer un parcours ou retirer une étape ne réécrit pas ces faits. Retirer une étape ou supprimer un parcours détache les séances en conservant leurs annotations et durées. Supprimer une ressource détache les étapes mais garde idées et séances ; supprimer une idée retire son rattachement à la fiche. Créer une idée depuis une ressource prépare un formulaire ; seul l’enregistrement confirme sa création.

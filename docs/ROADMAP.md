@@ -4,7 +4,7 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
-Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; Explorer est le prochain lot.
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Android et fiabilité native sont le prochain lot.
 
 ## Phase 0 — Architecture et fondations
 
@@ -27,7 +27,7 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
 - État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
 
-Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Prochain lot : Explorer. Chaque suite se traite en lot cohérent avec vérifications réelles.
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6 pour les ressources et apprentissages locaux. Prochain lot : Android et fiabilité native. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 
@@ -41,7 +41,7 @@ Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objec
 - Tâches : notes, inspirations, ressources avec sources, apprentissage, flux d'actualités explicitement datés.
 - Dépendances : capture/recherche ; connecteurs facultatifs pour les actualités.
 - Acceptation : ressources recherchables, sources consultables, aucune fausse actualité temps réel.
-- État : partiellement livré. Carnet d'idées et recherche locale testés. Flux d'actualités, ressources structurées et apprentissage restent prévus ; aucune veille en temps réel annoncée.
+- État : lot local 0.6 livré et testé. Ressources avec auteur/organisme, lien HTTP/HTTPS ou référence hors ligne, dates déclarées, annotations, thèmes, favoris, lecture et liens aux idées/projets. Parcours à étapes, progression explicite et séances datées conservant leurs titres historiques. Recherche, sauvegarde v4 et migrations v1/v2/v3 vérifiées. Les actualités peuvent être enregistrées comme fiches datées et sourcées ; aucune collecte ou vérification automatique, aucun flux temps réel annoncé. Les connecteurs de veille restent prévus en phase 7.
 
 ## Phase 5 — Android et fiabilité
 

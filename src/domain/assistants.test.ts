@@ -131,7 +131,7 @@ describe("Migration et sauvegarde v2", () => {
       ],
     };
     const migrated = storedDataSchema.parse(legacy);
-    expect(migrated.version).toBe(3);
+    expect(migrated.version).toBe(4);
     expect(migrated.notes).toEqual(legacy.notes);
     expect(migrated.missions).toEqual([]);
     expect(migrated.usage).toEqual([]);

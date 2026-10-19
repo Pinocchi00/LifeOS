@@ -17,7 +17,6 @@ import {
   CalendarDays,
   Check,
   ChevronRight,
-  CircleHelp,
   ClipboardList,
   FolderKanban,
   Heart,
@@ -80,6 +79,32 @@ const PersonalSpace = lazy(() =>
     default: module.PersonalSpace,
   })),
 );
+import {
+  ResourceForm,
+  LearningPathForm,
+  LearningEntryForm,
+} from "./components/ExplorerForms";
+import type { ExplorerView } from "./components/Explorer";
+import type {
+  Resource,
+  LearningPath,
+  LearningEntry,
+} from "./domain/exploreSchema";
+import {
+  ideaFromResource,
+  normalizeSearch,
+  resourceText,
+  removeResource,
+  removeLearningPath,
+  removeNote,
+  saveLearningPath,
+  toggleLearningStep,
+} from "./domain/explore";
+const Explorer = lazy(() =>
+  import("./components/Explorer").then((module) => ({
+    default: module.Explorer,
+  })),
+);
 import { version } from "../package.json";
 
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
@@ -94,7 +119,20 @@ type Editor =
   | { type: "routine"; value?: Routine }
   | { type: "goal"; value?: Goal }
   | { type: "project"; value?: Project }
-  | { type: "note"; value?: Note }
+  | {
+      type: "note";
+      value?: Note;
+      draft?: { title: string; body: string };
+      resourceId?: string;
+    }
+  | { type: "resource"; value?: Resource }
+  | { type: "learningPath"; value?: LearningPath }
+  | {
+      type: "learningEntry";
+      value?: LearningEntry;
+      pathId?: string;
+      stepId?: string;
+    }
   | { type: "backup" }
   | { type: "search" }
   | { type: "mission"; value?: Mission }
@@ -343,10 +381,12 @@ function ProjectForm({
 
 function NoteForm({
   note,
+  draft,
   save,
   close,
 }: {
   note?: Note;
+  draft?: { title: string; body: string };
   save: (note: Note) => Promise<void>;
   close: () => void;
 }) {
@@ -384,7 +424,7 @@ function NoteForm({
           required
           name="title"
           maxLength={180}
-          defaultValue={note?.title}
+          defaultValue={note?.title ?? draft?.title}
           placeholder="Ne laissez pas cette idée s’envoler…"
         />
       </label>
@@ -394,7 +434,7 @@ function NoteForm({
           name="body"
           rows={6}
           maxLength={10000}
-          defaultValue={note?.body}
+          defaultValue={note?.body ?? draft?.body}
           placeholder="Une inspiration, une ressource, une décision…"
         />
       </label>
@@ -428,14 +468,23 @@ function Backup({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   function download() {
-    const url = URL.createObjectURL(
-      new Blob([serializeBackup(data)], { type: "application/json" }),
-    );
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `lifeos-${localDay()}-${Date.now()}.json`;
-    anchor.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setError("");
+    try {
+      const url = URL.createObjectURL(
+        new Blob([serializeBackup(data)], { type: "application/json" }),
+      );
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `lifeos-${localDay()}-${Date.now()}.json`;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Export impossible. Réessayez.",
+      );
+    }
   }
   return (
     <div className="form">
@@ -454,6 +503,15 @@ function Backup({
         </span>
         <span>
           <b>{data.notes.length}</b> idées
+        </span>
+        <span>
+          <b>{data.resources.length}</b> ressources
+        </span>
+        <span>
+          <b>{data.learningPaths.length}</b> parcours
+        </span>
+        <span>
+          <b>{data.learningEntries.length}</b> séances d’apprentissage
         </span>
         <span>
           <b>{data.missions.length}</b> missions
@@ -487,7 +545,7 @@ function Backup({
               setPending(parseBackup(await file.text()));
             } catch {
               setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1, v2 ou v3 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
+                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v4 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
               );
             }
             event.target.value = "";
@@ -503,8 +561,11 @@ function Backup({
             {pending.missions.length} missions et {pending.usage.length}{" "}
             compteurs, {pending.routines.length} routines,{" "}
             {pending.routineEntries.length} réalisations et{" "}
-            {pending.goals.length} objectifs. Exportez vos données actuelles
-            avant de continuer. Les suivis Vie ne seront pas modifiés.
+            {pending.goals.length} objectifs, {pending.resources.length}{" "}
+            ressources, {pending.learningPaths.length} parcours et{" "}
+            {pending.learningEntries.length} séances d’apprentissage. Exportez
+            vos données actuelles avant de continuer. Les suivis Vie ne seront
+            pas modifiés.
           </p>
           <button
             disabled={busy}
@@ -571,6 +632,7 @@ export default function App() {
     headingRef.current?.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   }, [space]);
+  const [exploreView, setExploreView] = useState<ExplorerView>("resources");
   const [projectView, setProjectView] = useState<"projects" | "missions">(
     "projects",
   );
@@ -581,6 +643,9 @@ export default function App() {
     action: () => Promise<void>;
   } | null>(null);
   const [message, setMessage] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  useEffect(() => setConfirmError(""), [confirm]);
   const [undo, setUndo] = useState<Task | null>(null);
   const [noticePause, setNoticePause] = useState({
     hover: false,
@@ -877,7 +942,7 @@ export default function App() {
               onClick={() =>
                 setConfirm({
                   title: "Supprimer ce projet ?",
-                  message: `« ${project.name} » sera supprimé. Ses tâches et missions seront conservées, sans projet associé.`,
+                  message: `« ${project.name} » sera supprimé. Ses tâches, missions, ressources et parcours seront conservés, sans projet associé.`,
                   action: () =>
                     change(
                       (previous) => removeProject(previous, project.id),
@@ -914,7 +979,7 @@ export default function App() {
   const deferredQuery = useDeferredValue(query);
   const resultQuery = deferredQuery.trim().toLocaleLowerCase("fr");
   const matches = (text: string) =>
-    text.toLocaleLowerCase("fr").includes(resultQuery);
+    normalizeSearch(text).includes(normalizeSearch(resultQuery));
 
   if (!ready)
     return (
@@ -1110,7 +1175,7 @@ export default function App() {
                         : "Reliez vos projets à leurs tâches et à leurs missions."
                       : space === "life"
                         ? "Votre mouvement, vos repas et vos repères, réunis dans un espace personnel."
-                        : "Conservez une idée, une ressource ou une décision pour la retrouver."}
+                        : "Conservez vos sources, reliez vos idées et donnez une suite à votre curiosité."}
               </p>
             </div>
             {space !== "life" && (
@@ -1123,7 +1188,11 @@ export default function App() {
                         ? { type: "mission" }
                         : { type: "project" }
                       : space === "explore"
-                        ? { type: "note" }
+                        ? exploreView === "resources"
+                          ? { type: "resource" }
+                          : exploreView === "learning"
+                            ? { type: "learningPath" }
+                            : { type: "note" }
                         : {
                             type: "task",
                             due: space === "agenda" ? selectedDay : today,
@@ -1137,7 +1206,11 @@ export default function App() {
                     ? "Nouvelle mission"
                     : "Nouveau projet"
                   : space === "explore"
-                    ? "Nouvelle idée"
+                    ? exploreView === "resources"
+                      ? "Nouvelle ressource"
+                      : exploreView === "learning"
+                        ? "Nouveau parcours"
+                        : "Nouvelle idée"
                     : "Nouvelle tâche"}
               </button>
             )}
@@ -1225,7 +1298,10 @@ export default function App() {
                 <button
                   className="stat"
                   aria-label="Retrouver les idées capturées"
-                  onClick={() => setSpace("explore")}
+                  onClick={() => {
+                    setExploreView("ideas");
+                    setSpace("explore");
+                  }}
                 >
                   <span className="stat-icon rose">
                     <Lightbulb size={19} />
@@ -1546,77 +1622,155 @@ export default function App() {
           )}
 
           {space === "explore" && (
-            <>
-              <div className="section-heading">
-                <h2>Votre carnet d’idées</h2>
-                <span className="muted small">
-                  Local, personnel, à votre rythme.
-                </span>
-              </div>
-              {data.notes.length ? (
-                <div className="notes-grid">
-                  {[...data.notes]
-                    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-                    .map((note) => (
-                      <article className="note-card" key={note.id}>
-                        <div className="between">
-                          <Lightbulb size={20} />
-                          <button
-                            className="icon-button"
-                            aria-label={`Supprimer l’idée ${note.title}`}
-                            onClick={() =>
-                              setConfirm({
-                                title: "Supprimer cette idée ?",
-                                message: note.title,
-                                action: () =>
-                                  change(
-                                    (previous) => ({
-                                      ...previous,
-                                      notes: previous.notes.filter(
-                                        (item) => item.id !== note.id,
-                                      ),
-                                    }),
-                                    "Idée supprimée",
-                                  ),
-                              })
-                            }
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                        <button
-                          className="note-title"
-                          onClick={() =>
-                            setEditor({ type: "note", value: note })
-                          }
-                        >
-                          {note.title}
-                        </button>
-                        <p>{note.body || "Une idée à développer…"}</p>
-                        <span className="small muted">
-                          {new Date(note.createdAt).toLocaleDateString("fr-FR")}
-                        </span>
-                      </article>
-                    ))}
-                </div>
-              ) : (
-                <section className="panel">
-                  {empty(
-                    "Un endroit pour les étincelles.",
-                    "Idées, ressources, inspirations ou décisions : gardez ce que vous souhaitez retrouver.",
-                    () => setEditor({ type: "note" }),
-                    "Capturer ma première idée",
-                  )}
-                </section>
-              )}
-              <div className="source-notice">
-                <CircleHelp size={18} />
-                <p>
-                  Les actualités et la veille IA ne sont pas encore connectées.
-                  Aucune information en temps réel n’est présentée ici.
-                </p>
-              </div>
-            </>
+            <Suspense fallback={<p role="status">Ouverture d’Explorer…</p>}>
+              <Explorer
+                data={data}
+                today={today}
+                busy={busy}
+                view={exploreView}
+                setView={setExploreView}
+                editResource={(value) => setEditor({ type: "resource", value })}
+                saveResource={(resource) =>
+                  change(
+                    (previous) => ({
+                      ...previous,
+                      resources: [
+                        ...previous.resources.filter(
+                          (item) => item.id !== resource.id,
+                        ),
+                        resource,
+                      ],
+                    }),
+                    "Ressource enregistrée",
+                  )
+                }
+                deleteResource={(resource) =>
+                  setConfirm({
+                    title: "Supprimer cette ressource ?",
+                    message: `« ${resource.title} » sera supprimée. Les idées, étapes et séances seront conservées ; les étapes ne seront plus liées à cette fiche.`,
+                    action: () =>
+                      change(
+                        (previous) => removeResource(previous, resource.id),
+                        "Ressource supprimée ; étapes et idées conservées",
+                      ),
+                  })
+                }
+                captureIdea={(resource) =>
+                  setEditor({
+                    type: "note",
+                    draft: ideaFromResource(resource),
+                    resourceId: resource.id,
+                  })
+                }
+                editNote={(value) => setEditor({ type: "note", value })}
+                editPath={(value) => setEditor({ type: "learningPath", value })}
+                deletePath={(path) =>
+                  setConfirm({
+                    title: "Supprimer ce parcours ?",
+                    message: `« ${path.title} » et ses étapes seront supprimés. Les séances garderont leurs titres et leurs notes dans l’historique.`,
+                    action: () =>
+                      change(
+                        (previous) => removeLearningPath(previous, path.id),
+                        "Parcours supprimé ; historique conservé",
+                      ),
+                  })
+                }
+                toggleStep={(pathId, stepId) =>
+                  change(
+                    (previous) => toggleLearningStep(previous, pathId, stepId),
+                    "État de l’étape mis à jour",
+                  )
+                }
+                log={(pathId, stepId) =>
+                  setEditor({ type: "learningEntry", pathId, stepId })
+                }
+                editEntry={(value) =>
+                  setEditor({ type: "learningEntry", value })
+                }
+                deleteEntry={(entry) =>
+                  setConfirm({
+                    title: "Supprimer cette séance d’apprentissage ?",
+                    message: `${entry.stepTitle} · ${dateLabel(entry.day)}. L’état des étapes restera inchangé.`,
+                    action: () =>
+                      change(
+                        (previous) => ({
+                          ...previous,
+                          learningEntries: previous.learningEntries.filter(
+                            (item) => item.id !== entry.id,
+                          ),
+                        }),
+                        "Séance d’apprentissage supprimée",
+                      ),
+                  })
+                }
+                notes={
+                  <>
+                    <div className="section-heading">
+                      <h2>Votre carnet d’idées</h2>
+                      <span className="muted small">
+                        Local, personnel, à votre rythme.
+                      </span>
+                    </div>
+                    {data.notes.length ? (
+                      <div className="notes-grid">
+                        {[...data.notes]
+                          .sort((a, b) =>
+                            b.createdAt.localeCompare(a.createdAt),
+                          )
+                          .map((note) => (
+                            <article className="note-card" key={note.id}>
+                              <div className="between">
+                                <Lightbulb size={20} />
+                                <button
+                                  className="icon-button"
+                                  aria-label={`Supprimer l’idée ${note.title}`}
+                                  onClick={() =>
+                                    setConfirm({
+                                      title: "Supprimer cette idée ?",
+                                      message: note.title,
+                                      action: () =>
+                                        change(
+                                          (previous) =>
+                                            removeNote(previous, note.id),
+                                          "Idée supprimée",
+                                        ),
+                                    })
+                                  }
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                              <button
+                                className="note-title"
+                                onClick={() =>
+                                  setEditor({ type: "note", value: note })
+                                }
+                              >
+                                {note.title}
+                              </button>
+                              <p>{note.body || "Une idée à développer…"}</p>
+                              <span className="small muted">
+                                {new Date(note.createdAt).toLocaleDateString(
+                                  "fr-FR",
+                                )}
+                              </span>
+                            </article>
+                          ))}
+                      </div>
+                    ) : (
+                      <section className="panel">
+                        {empty(
+                          "Un endroit pour les étincelles.",
+                          "Idées, ressources, inspirations ou décisions : gardez ce que vous souhaitez retrouver.",
+                          () => setEditor({ type: "note" }),
+                          "Capturer ma première idée",
+                        )}
+                      </section>
+                    )}
+                  </>
+                }
+              />
+            </Suspense>
           )}
           <footer>
             <span>
@@ -1682,39 +1836,49 @@ export default function App() {
         <Modal
           close={close}
           title={
-            editor.type === "routine"
+            editor.type === "resource"
               ? editor.value
-                ? "Modifier la routine"
-                : "Nouvelle routine"
-              : editor.type === "goal"
+                ? "Modifier la ressource"
+                : "Garder une ressource"
+              : editor.type === "learningPath"
                 ? editor.value
-                  ? "Modifier l’objectif"
-                  : "Nouvel objectif"
-                : editor.type === "task"
-                  ? editor.value
-                    ? "Modifier la tâche"
-                    : "Un nouveau petit pas"
-                  : editor.type === "project"
+                  ? "Modifier le parcours"
+                  : "Un parcours d’apprentissage"
+                : editor.type === "learningEntry"
+                  ? "Votre séance d’apprentissage"
+                  : editor.type === "routine"
                     ? editor.value
-                      ? "Modifier le projet"
-                      : "Un nouveau projet"
-                    : editor.type === "note"
+                      ? "Modifier la routine"
+                      : "Nouvelle routine"
+                    : editor.type === "goal"
                       ? editor.value
-                        ? "Modifier l’idée"
-                        : "Capturer une idée"
-                      : editor.type === "backup"
-                        ? "Vos données, en sécurité"
-                        : editor.type === "search"
-                          ? "Retrouver l’essentiel"
-                          : editor.type === "mission"
+                        ? "Modifier l’objectif"
+                        : "Nouvel objectif"
+                      : editor.type === "task"
+                        ? editor.value
+                          ? "Modifier la tâche"
+                          : "Un nouveau petit pas"
+                        : editor.type === "project"
+                          ? editor.value
+                            ? "Modifier le projet"
+                            : "Un nouveau projet"
+                          : editor.type === "note"
                             ? editor.value
-                              ? "Modifier la mission"
-                              : "Nouvelle mission"
-                            : editor.type === "usage"
-                              ? "Votre compteur personnel"
-                              : editor.type === "focus"
-                                ? "Une chose à la fois"
-                                : "Instructions de mission"
+                              ? "Modifier l’idée"
+                              : "Capturer une idée"
+                            : editor.type === "backup"
+                              ? "Vos données, en sécurité"
+                              : editor.type === "search"
+                                ? "Retrouver l’essentiel"
+                                : editor.type === "mission"
+                                  ? editor.value
+                                    ? "Modifier la mission"
+                                    : "Nouvelle mission"
+                                  : editor.type === "usage"
+                                    ? "Votre compteur personnel"
+                                    : editor.type === "focus"
+                                      ? "Une chose à la fois"
+                                      : "Instructions de mission"
           }
         >
           {editor.type === "focus" && (
@@ -1811,8 +1975,95 @@ export default function App() {
             />
           )}
           {editor.type === "note" && (
-            <NoteForm note={editor.value} save={saveNote} close={close} />
+            <NoteForm
+              note={editor.value}
+              draft={editor.draft}
+              save={async (note) => {
+                if (!editor.resourceId) return saveNote(note);
+                await change(
+                  (previous) => ({
+                    ...previous,
+                    notes: [
+                      ...previous.notes.filter((item) => item.id !== note.id),
+                      note,
+                    ],
+                    resources: previous.resources.map((resource) =>
+                      resource.id === editor.resourceId
+                        ? {
+                            ...resource,
+                            noteIds: [
+                              ...new Set([...resource.noteIds, note.id]),
+                            ],
+                          }
+                        : resource,
+                    ),
+                  }),
+                  "Idée enregistrée et reliée à sa source",
+                );
+              }}
+              close={close}
+            />
           )}
+          {editor.type === "resource" && (
+            <ResourceForm
+              resource={editor.value}
+              data={data}
+              today={today}
+              close={close}
+              save={(resource) =>
+                change(
+                  (previous) => ({
+                    ...previous,
+                    resources: [
+                      ...previous.resources.filter(
+                        (item) => item.id !== resource.id,
+                      ),
+                      resource,
+                    ],
+                  }),
+                  "Ressource enregistrée",
+                )
+              }
+            />
+          )}
+          {editor.type === "learningPath" && (
+            <LearningPathForm
+              path={editor.value}
+              data={data}
+              close={close}
+              save={(path) =>
+                change(
+                  (previous) => saveLearningPath(previous, path),
+                  "Parcours enregistré",
+                )
+              }
+            />
+          )}
+          {editor.type === "learningEntry" && (
+            <LearningEntryForm
+              entry={editor.value}
+              pathId={editor.pathId}
+              stepId={editor.stepId}
+              data={data}
+              today={today}
+              close={close}
+              save={(entry) =>
+                change(
+                  (previous) => ({
+                    ...previous,
+                    learningEntries: [
+                      ...previous.learningEntries.filter(
+                        (item) => item.id !== entry.id,
+                      ),
+                      entry,
+                    ],
+                  }),
+                  "Séance d’apprentissage enregistrée",
+                )
+              }
+            />
+          )}
+
           {editor.type === "backup" && (
             <Backup
               data={data}
@@ -1852,7 +2103,7 @@ export default function App() {
                 <Search size={19} />
                 <input
                   autoFocus
-                  placeholder="Tâches, projets, idées, missions, routines, objectifs…"
+                  placeholder="Tâches, projets, idées, ressources, parcours…"
                   aria-label="Rechercher"
                   value={query}
                   maxLength={180}
@@ -1882,6 +2133,76 @@ export default function App() {
                           <span>
                             {task.title}
                             <small>Tâche</small>
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </button>
+                      ))}
+                    {data.resources
+                      .filter((resource) => matches(resourceText(resource)))
+                      .slice(0, 50)
+                      .map((resource) => (
+                        <button
+                          key={resource.id}
+                          onClick={() =>
+                            setEditor({ type: "resource", value: resource })
+                          }
+                        >
+                          <BookOpen size={18} />
+                          <span>
+                            {resource.title}
+                            <small>Ressource</small>
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </button>
+                      ))}
+                    {data.learningPaths
+                      .filter((path) =>
+                        matches(
+                          path.title +
+                            " " +
+                            path.intention +
+                            " " +
+                            path.steps.map((step) => step.title).join(" "),
+                        ),
+                      )
+                      .slice(0, 50)
+                      .map((path) => (
+                        <button
+                          key={path.id}
+                          onClick={() =>
+                            setEditor({ type: "learningPath", value: path })
+                          }
+                        >
+                          <BookOpen size={18} />
+                          <span>
+                            {path.title}
+                            <small>Parcours</small>
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </button>
+                      ))}
+                    {data.learningEntries
+                      .filter((entry) =>
+                        matches(
+                          entry.pathTitle +
+                            " " +
+                            entry.stepTitle +
+                            " " +
+                            entry.notes,
+                        ),
+                      )
+                      .slice(0, 50)
+                      .map((entry) => (
+                        <button
+                          key={entry.id}
+                          onClick={() =>
+                            setEditor({ type: "learningEntry", value: entry })
+                          }
+                        >
+                          <BookOpen size={18} />
+                          <span>
+                            {entry.stepTitle}
+                            <small>Séance d’apprentissage</small>
                           </span>
                           <ArrowUpRight size={16} />
                         </button>
@@ -1985,9 +2306,30 @@ export default function App() {
                           <ArrowUpRight size={16} />
                         </button>
                       ))}
-                    {!data.routines.some((item) =>
-                      matches(item.title + " " + item.description),
+                    {!data.resources.some((resource) =>
+                      matches(resourceText(resource)),
                     ) &&
+                      !data.learningPaths.some((path) =>
+                        matches(
+                          path.title +
+                            " " +
+                            path.intention +
+                            " " +
+                            path.steps.map((step) => step.title).join(" "),
+                        ),
+                      ) &&
+                      !data.learningEntries.some((entry) =>
+                        matches(
+                          entry.pathTitle +
+                            " " +
+                            entry.stepTitle +
+                            " " +
+                            entry.notes,
+                        ),
+                      ) &&
+                      !data.routines.some((item) =>
+                        matches(item.title + " " + item.description),
+                      ) &&
                       !data.goals.some((item) =>
                         matches(item.title + " " + item.description),
                       ) &&
@@ -2021,9 +2363,19 @@ export default function App() {
         </Modal>
       )}
       {confirm && (
-        <Modal title={confirm.title} close={() => setConfirm(null)}>
+        <Modal
+          title={confirm.title}
+          close={() => {
+            if (!confirmBusy) setConfirm(null);
+          }}
+        >
           <div className="form">
             <p>{confirm.message}</p>
+            {confirmError && (
+              <p className="error" role="alert">
+                {confirmError}
+              </p>
+            )}
             <p className="muted small">
               Cette suppression ne pourra pas être annulée dans l’application.
               Vous pouvez exporter une sauvegarde avant de continuer.
@@ -2031,19 +2383,25 @@ export default function App() {
             <div className="form-actions">
               <button
                 className="button secondary"
+                disabled={confirmBusy}
                 onClick={() => setConfirm(null)}
               >
                 Annuler
               </button>
               <button
-                disabled={busy}
+                disabled={busy || confirmBusy}
                 className="button danger"
                 onClick={async () => {
+                  setConfirmBusy(true);
                   try {
                     await confirm.action();
                     setConfirm(null);
                   } catch {
-                    /* Main error banner retains failure. */
+                    setConfirmError(
+                      "La suppression a échoué. Les données précédentes sont conservées. Réessayez.",
+                    );
+                  } finally {
+                    setConfirmBusy(false);
                   }
                 }}
               >

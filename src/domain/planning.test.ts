@@ -249,11 +249,22 @@ describe("Objectifs et migration v3", () => {
     expect(dataSchema.safeParse(removed).success).toBe(true);
   });
   it("migre v2 sans perdre les données existantes", () => {
-    const { routines, routineEntries, goals, ...data } = emptyData();
+    const {
+      resources,
+      learningPaths,
+      learningEntries,
+      routines,
+      routineEntries,
+      goals,
+      ...data
+    } = emptyData();
     const old = { ...data, version: 2, tasks: [task()] };
     expect(storedDataSchema.parse(old)).toEqual({
       ...old,
-      version: 3,
+      version: 4,
+      resources,
+      learningPaths,
+      learningEntries,
       routines,
       routineEntries,
       goals,
