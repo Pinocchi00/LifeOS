@@ -106,6 +106,10 @@ const Explorer = lazy(() =>
   })),
 );
 import { version } from "../package.json";
+import { exportJson } from "./platform/backup";
+import { isAndroid } from "./platform/runtime";
+import { useAndroid } from "./platform/useAndroid";
+import { AndroidReminders } from "./components/AndroidReminders";
 
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
@@ -467,32 +471,31 @@ function Backup({
   const [pending, setPending] = useState<Data | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  function download() {
+  const [exporting, setExporting] = useState(false);
+  async function download() {
     setError("");
+    setExporting(true);
     try {
-      const url = URL.createObjectURL(
-        new Blob([serializeBackup(data)], { type: "application/json" }),
+      await exportJson(
+        serializeBackup(data),
+        `lifeos-${localDay()}-${Date.now()}.json`,
       );
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `lifeos-${localDay()}-${Date.now()}.json`;
-      anchor.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
           : "Export impossible. Réessayez.",
       );
+    } finally {
+      setExporting(false);
     }
   }
   return (
     <div className="form">
       <p className="muted">
-        Vos données d’organisation restent sur cet appareil, dans ce navigateur.
-        Les suivis Vie ont leur propre sauvegarde. Exportez régulièrement une
-        copie dans un endroit sûr. Le fichier JSON est lisible et n’est pas
-        chiffré.
+        Vos données d’organisation restent sur cet appareil. Les suivis Vie ont
+        leur propre sauvegarde. Exportez régulièrement une copie dans un endroit
+        sûr. Le fichier JSON est lisible et n’est pas chiffré.
       </p>
       <div className="backup-counts">
         <span>
@@ -526,15 +529,27 @@ function Backup({
           <b>{data.routineEntries.length}</b> réalisations de routines
         </span>
       </div>
-      <button className="button primary" onClick={download}>
+      <button
+        className="button primary"
+        onClick={() => void download()}
+        disabled={busy || exporting}
+      >
         <ArrowDownToLine size={17} /> Exporter mes données
       </button>
+      {isAndroid() && (
+        <p className="small muted">
+          Le partage Android permet de choisir une application ou un emplacement
+          pour conserver le JSON. Fermer ce partage ne garantit pas qu’une copie
+          a été enregistrée.
+        </p>
+      )}
       <hr />
       <label>
         Restaurer une sauvegarde JSON
         <input
           type="file"
           accept=".json,application/json"
+          disabled={busy || exporting}
           onChange={async (event) => {
             setError("");
             setPending(null);
@@ -568,7 +583,7 @@ function Backup({
             pas modifiés.
           </p>
           <button
-            disabled={busy}
+            disabled={busy || exporting}
             className="button danger"
             onClick={async () => {
               setBusy(true);
@@ -594,10 +609,11 @@ function Backup({
         </p>
       )}
       <p className="small muted">
-        <ShieldCheck size={15} /> Aucun fichier n’est envoyé à un serveur. Une
+        <ShieldCheck size={15} /> Aucun export n’est envoyé automatiquement. Une
         autre fenêtre de LifeOS est bloquée pour éviter les écritures
         concurrentes.
       </p>
+      <AndroidReminders />
     </div>
   );
 }
@@ -627,6 +643,14 @@ export default function App() {
         });
     } else commit();
   }
+  useAndroid(
+    () => {
+      if (space === "home") return false;
+      setSpace("home");
+      return true;
+    },
+    () => setSpace("home"),
+  );
   useEffect(() => {
     document.title = `LifeOS — ${navigation.find((item) => item.id === space)?.label}`;
     headingRef.current?.focus({ preventScroll: true });

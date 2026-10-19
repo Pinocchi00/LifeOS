@@ -2,6 +2,7 @@ name: Vérifier LifeOS
 on:
   push:
     branches: [main]
+    paths-ignore: ["docs/**", "README.md"]
   pull_request:
 permissions:
   contents: read
@@ -20,3 +21,51 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm audit --omit=dev
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: SDK de compilation
+        run: |
+          if [ ! -d "$ANDROID_HOME/platforms/android-36" ]; then
+            sdkmanager "platforms;android-36"
+          fi
+      - run: npm ci
+      - name: APK, lint et compilation des essais natifs
+        run: npm run android:verify
+      - name: Autoriser KVM sur le runner isolé
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Démarrage, stockage et plugins sur Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            adb shell svc wifi disable
+            adb shell svc data disable
+            cd android && ./gradlew --no-daemon --console=plain :app:connectedDebugAndroidTest
+      - name: APK de développement et rapports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: LifeOS-Android-debug
+          retention-days: 14
+          path: |
+            artifacts/*.apk
+            artifacts/*.sha256
+            android/app/build/reports/
+            android/app/build/outputs/androidTest-results/

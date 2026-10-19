@@ -1,0 +1,31 @@
+.android-reminders {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.android-reminders h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.android-reminders input[type="time"] {
+  max-width: 200px;
+}
+.android-reminders .form-actions {
+  flex-wrap: wrap;
+}
+@media (max-width: 650px) {
+  .topbar {
+    height: calc(65px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  #main-content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  }
+  .modal {
+    max-height: calc(
+      100dvh - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 24px
+    );
+  }
+}

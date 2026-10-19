@@ -126,3 +126,15 @@ Les dates sont saisies, et la publication est obligatoire pour le format Actuali
 Les étapes sont cochées explicitement et leur progression est réversible. Une lecture terminée et une séance enregistrée ne prouvent pas à elles seules la maîtrise d’une étape. Les minutes sont déclarées, sans chronomètre automatique. La prochaine étape est la première non cochée dans l’ordre défini, pas une recommandation IA.
 
 Les séances conservent un instantané des titres. Renommer un parcours ou retirer une étape ne réécrit pas ces faits. Retirer une étape ou supprimer un parcours détache les séances en conservant leurs annotations et durées. Supprimer une ressource détache les étapes mais garde idées et séances ; supprimer une idée retire son rattachement à la fiche. Créer une idée depuis une ressource prépare un formulaire ; seul l’enregistrement confirme sa création.
+
+## 024 — Android embarqué et sauvegardes choisies
+
+L’APK embarque le résultat compilé ; le service worker ne démarre que sur le web afin d’éviter des ressources anciennes après mise à jour native. IndexedDB et les formats existants sont conservés, dans une origine Android distincte du navigateur. Le bouton Retour passe par l’événement d’annulation du dialogue partagé pour conserver l’avertissement de saisie ; hors dialogue, il revient à l’accueil puis minimise l’application.
+
+Les téléchargements Blob restent adaptés au navigateur. Android écrit un JSON UTF-8 dans un sous-dossier du cache privé, puis ouvre le partage natif avec l’URI de ce fichier. Aucune destination automatique et aucune annonce de sauvegarde réussie après fermeture du partage. Les exports temporaires de plus de 24 h sont nettoyés au prochain export ; le cache n’est pas une sauvegarde durable. Le FileProvider ne donne accès qu’à ce sous-dossier. Vie reste sélectionné et exporté séparément. L’import utilise le sélecteur natif WebView, suivi de la validation et de la confirmation existantes.
+
+## 025 — Des rappels locaux, facultatifs et généraux
+
+Le premier rappel demande un geste explicite ; consulter son état ne demande jamais la permission. L’heure est choisie pour un seul rendez-vous quotidien, avec un essai distinct. La programmation du système est la source de l’état affiché ; elle n’est pas incluse dans les sauvegardes et ne contient aucun suivi Vie ni intitulé de tâche. L’arrêt annule uniquement les deux identifiants réservés à LifeOS et retire leurs notifications livrées.
+
+Le plugin utilise explicitement des alarmes non exactes ; la permission d’alarme exacte apportée par sa dépendance est retirée du manifeste fusionné. Aucun contournement de veille ni serveur de notification. Le système peut retarder la livraison, ce que l’interface annonce. Une défaillance native reste visible, sans prétendre que le rappel fonctionne. Les préférences explicables plus avancées restent en phase 6.

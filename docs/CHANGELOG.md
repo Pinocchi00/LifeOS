@@ -1,5 +1,14 @@
 # Journal des modifications
 
+## 0.7.0 — 19 octobre 2026
+
+- Construction reproductible de l’APK de développement, version Android issue du package, empreinte SHA-256 et clé locale hors Git.
+- Plugins officiels pour Retour Android, fichiers, partage et notifications locales. Sauvegardes générales et Vie exportées par le partage Android, sans permission globale de stockage.
+- Rappel quotidien facultatif : choix de l’heure, permission après action, essai ponctuel et arrêt explicite. Texte général, programmation approximative, aucune alarme exacte ni envoi distant.
+- Retour Android passant par la protection des formulaires, accueil puis arrière-plan ; marges système et icônes natives LifeOS.
+- Service worker réservé à la PWA ; ressources natives embarquées et synchronisées avec l’APK. Formats d’organisation v4 et Vie v1 inchangés.
+- Tests des adaptateurs natifs, parcours web et scénario instrumenté Android avec CI et artefacts APK/rapports.
+
 ## 0.6.0 — 19 octobre 2026
 
 - Explorer réorganisé en Ressources, Apprendre et Idées, avec une création adaptée à la rubrique et accès direct au carnet depuis l’accueil.

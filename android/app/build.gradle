@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+def lifeosPackage = new groovy.json.JsonSlurper().parse(rootProject.file('../package.json'))
+def lifeosVersion = lifeosPackage.version.tokenize('.').collect { it.toInteger() }
 
 android {
     namespace = "fr.lifeos.personal"
@@ -7,13 +9,21 @@ android {
         applicationId "fr.lifeos.personal"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode lifeosVersion[0] * 10000 + lifeosVersion[1] * 100 + lifeosVersion[2]
+        versionName lifeosPackage.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        debug {
+            storeFile rootProject.file('../.tools/keys/lifeos-debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
         }
     }
     buildTypes {
@@ -39,6 +49,9 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    androidTestImplementation 'androidx.test:rules:1.7.0'
+    androidTestImplementation "androidx.test.espresso:espresso-intents:$androidxEspressoCoreVersion"
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
     implementation project(':capacitor-cordova-android-plugins')
 }
 

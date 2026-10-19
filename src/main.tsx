@@ -9,6 +9,7 @@ import "./living-garden.css";
 import "./planning.css";
 import "./personal.css";
 import "./explorer.css";
+import "./android.css";
 
 startWorker();
 ReactDOM.createRoot(document.getElementById("root")!).render(

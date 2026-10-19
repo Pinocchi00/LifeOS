@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { localDay } from "../../domain/model";
+import { exportJson } from "../../platform/backup";
+import { isAndroid } from "../../platform/runtime";
 import {
   parsePersonal,
   restorePersonal,
@@ -24,20 +26,17 @@ export function PersonalBackupForm({
   const [pending, setPending] = useState<PersonalBackup | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  function download() {
+  const [exporting, setExporting] = useState(false);
+  async function download() {
     setError("");
+    setExporting(true);
     try {
       const raw = serializePersonal(data, included);
-      const url = URL.createObjectURL(
-        new Blob([raw], { type: "application/json" }),
-      );
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `lifeos-vie-${localDay()}-${Date.now()}.json`;
-      anchor.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      await exportJson(raw, `lifeos-vie-${localDay()}-${Date.now()}.json`);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Export impossible.");
+    } finally {
+      setExporting(false);
     }
   }
   return (
@@ -69,17 +68,24 @@ export function PersonalBackupForm({
       </fieldset>
       <button
         className="button primary"
-        onClick={download}
-        disabled={!included.length}
+        onClick={() => void download()}
+        disabled={!included.length || exporting || saving}
       >
         Exporter la sélection Vie
       </button>
+      {isAndroid() && (
+        <p className="small muted">
+          Choisissez où conserver le JSON dans le partage Android. Fermer le
+          partage ne garantit pas qu’une copie a été enregistrée.
+        </p>
+      )}
       <hr />
       <label>
         Restaurer une sauvegarde Vie
         <input
           type="file"
           accept=".json,application/json"
+          disabled={saving || exporting}
           onChange={async (event) => {
             setError("");
             setPending(null);
@@ -133,7 +139,7 @@ export function PersonalBackupForm({
           )}
           <button
             className="button danger"
-            disabled={saving || !selected.length}
+            disabled={saving || exporting || !selected.length}
             onClick={async () => {
               setSaving(true);
               setError("");
@@ -163,7 +169,7 @@ export function PersonalBackupForm({
       <p className="muted small">
         Séparation des fichiers et du stockage, sans chiffrement applicatif.
         Effacer les données du navigateur peut effacer les deux espaces. Les
-        exports Vie sont indépendants des fichiers LifeOS v1/v2/v3.
+        exports Vie sont indépendants des fichiers LifeOS v1 à v4.
       </p>
     </div>
   );

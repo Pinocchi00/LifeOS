@@ -1,5 +1,12 @@
 {
   "appId": "fr.lifeos.personal",
   "appName": "LifeOS",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "SystemBars": { "style": "DARK" },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_lifeos",
+      "iconColor": "#20372a"
+    }
+  }
 }

@@ -1,4 +1,4 @@
-# LifeOS 0.6
+# LifeOS 0.7
 
 Votre organisation personnelle, privée et locale. Premier lot fonctionnel en français : React, TypeScript, Vite et IndexedDB. Aucun compte, abonnement ou service IA nécessaire.
 
@@ -40,7 +40,7 @@ Ouvrir `http://127.0.0.1:4173`, puis choisir **Installer LifeOS** dans le menu d
 - Apprentissage : parcours à étapes, progression explicitement cochée et séances datées avec temps déclaré.
 - Idées : capture, modification, suppression, carnet et création d’une idée à partir d’une source. Recherche générale incluant ressources, parcours et séances (Ctrl+K), hors suivis Vie.
 - Persistance IndexedDB, export JSON, contrôle des fichiers importés et restauration transactionnelle avec confirmation.
-- PWA et projet natif Android Capacitor généré et synchronisé.
+- PWA et APK Android de développement ; export JSON par le partage natif, retour protégé et rappel quotidien facultatif.
 - Centre ChatGPT/Claude dans **Projets → Missions IA** et **Mes assistants** sur ordinateur : objectifs, critères, fichiers, échéance, cinq statuts, comptes-rendus et preuves conservés.
 - Instructions copiables ; clôture d'une mission après compte-rendu et validation explicite. Aucun message n'est envoyé automatiquement.
 - Compteurs d'usage manuels pour les deux assistants : plafond facultatif, date de remise à zéro prévue, date du relevé et notes. Aucun accès aux abonnements ni remise à zéro automatique.
@@ -157,14 +157,17 @@ Playwright lance le serveur compilé sur le port 4173 : laisser ce port libre po
 
 ## Android
 
-Le dossier `android/` est prêt pour Android Studio. Installer Android Studio, son SDK et un JDK compatible avec la version Gradle du projet, puis :
+Le dossier `android/` contient l’application Capacitor. L’APK de développement se construit avec un JDK 21 et le SDK API 36. Sur cette machine, ils sont installés dans `.tools/`, hors Git. Pour reconstruire :
 
 ```powershell
-npm.cmd run android:sync
-npx.cmd cap open android
+npm.cmd run android:verify
 ```
 
-Construire et essayer l'application sur un appareil ou un émulateur depuis Android Studio. Aucun APK validé n'est livré dans ce lot : JDK/SDK Android absents de l'environnement de développement. Les téléchargements de sauvegardes et sélecteurs de fichiers doivent encore être vérifiés dans la WebView native. Les sauvegardes cloud Android et transferts automatiques sont désactivés dans le manifeste ; utiliser l'export explicite.
+Le fichier apparaît dans `artifacts/LifeOS-0.7.0-debug.apk`, avec son empreinte SHA-256. Copier l’APK sur le téléphone et l’ouvrir pour l’installer ; autoriser cette source d’installation si Android le demande. C’est une version de développement, pas une publication Play Store. Le détail de l’installation, des essais et des limites figure dans [docs/ANDROID.md](docs/ANDROID.md).
+
+Dans **Données & sauvegardes**, l’export ouvre le partage Android : choisir une destination pour enregistrer le JSON. Fermer le partage ne prouve pas qu’une copie a été conservée. L’export Vie reste séparé et sélectif. Les fichiers à restaurer passent par le sélecteur Android puis la validation et la confirmation habituelles. Les données du navigateur Windows et celles de l’APK sont distinctes : utiliser un export/import explicite pour les transférer. Les sauvegardes cloud Android et transferts automatiques restent désactivés.
+
+Le panneau de sauvegarde propose aussi **Votre rendez-vous quotidien**. Choisir une heure puis **Activer le rappel** ; Android demande la permission si nécessaire. **Tester dans une minute** programme un essai, **Désactiver les rappels** retire le quotidien et l’essai. Aucun rappel n’est activé à l’installation. Le texte est général, sans tâche ni suivi Vie. L’heure est approximative selon Android et la batterie ; la programmation reste sur cet appareil et n’est pas incluse dans les sauvegardes. Aucun rappel navigateur dans ce lot.
 
 Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour installer la PWA sur Android, il faudra une origine HTTPS accessible au téléphone ; aucun hébergement n'est configuré ici. Préférer le projet Capacitor pour poursuivre les essais locaux natifs.
 
@@ -181,6 +184,7 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 - `src/components/Explorer.tsx`, `ExplorerForms.tsx`, `src/domain/explore.ts`, `exploreSchema.ts`, `src/explorer.css` : bibliothèque sourcée et apprentissage.
 - `src/domain/planning.ts`, `planningSchema.ts` : calculs calendaires, créneaux, réalisations et validation.
 - `src/experience/` : préférences de mouvement et cycle PWA.
+- `src/platform/` et `src/components/AndroidReminders.tsx` : export natif, retour Android et rappels avec permission explicite.
 - `public/` : icônes locales ; aucune police ni image distante.
 - `tests/` : parcours Playwright et régressions.
 - `android/` : enveloppe Android native générée par Capacitor.
@@ -188,4 +192,4 @@ Sur un téléphone, `127.0.0.1` désigne le téléphone, pas le PC. Pour install
 
 Ne jamais ajouter de sauvegardes personnelles, clés, fichiers de santé ou secrets au dépôt. Le code seul est versionné.
 
-Prochain lot dans l’ordre convenu : Android et fiabilité native (outillage, APK et essais sur appareil), puis adaptation et connecteurs facultatifs. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.
+Suite de la roadmap : terminer la recette sur téléphone physique et la distribution Android, puis adaptation et connecteurs facultatifs. La veille automatique nécessitera un connecteur configuré ; aucun flux temps réel n’est annoncé.

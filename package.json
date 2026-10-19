@@ -1,6 +1,6 @@
 {
   "name": "lifeos",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,10 +10,16 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "android:sync": "npm run build && cap sync android",
-    "android:add": "cap add android"
+    "android:add": "cap add android",
+    "android:build": "node scripts/android-build.mjs",
+    "android:verify": "node scripts/android-build.mjs --verify"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "8.4.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
     "idb": "^8.0.4",
     "lucide-react": "^1.59.0",
     "react": "^19.3.1",

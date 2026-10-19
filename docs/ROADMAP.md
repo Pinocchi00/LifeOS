@@ -4,7 +4,7 @@
 
 Direction artistique : le lot 0.2 poursuit le brutalisme zen avec les références écobrutalistes et botaniques fournies : béton, végétation, vert forêt et typographie éditoriale. Voir `DIRECTION-ARTISTIQUE.md` pour les choix visuels.
 
-Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Android et fiabilité native sont le prochain lot.
+Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à chargement différé, navigation animée, actions contextuelles, concentration et protection des saisies. Les règles métier restent locales. Au lot 0.4, la 3D est retirée à la demande de l’utilisateur et le jardin illustré conservé. L’agenda avancé est livré. Le lot 0.5 ajoute les suivis personnels locaux ; le lot 0.6 livre la bibliothèque sourcée et l’apprentissage local. Le lot 0.7 apporte l’APK de développement, les sauvegardes et rappels natifs ; la recette physique et la distribution de production restent ouvertes.
 
 ## Phase 0 — Architecture et fondations
 
@@ -27,7 +27,7 @@ Lot 0.3 livré à la demande de reprise visuelle : jardin 3D interactif à charg
 - Acceptation : cycle de mission complet, rapports saisis explicitement, aucune connexion simulée.
 - État : livré pour la gestion locale. Missions ChatGPT/Claude, cinq statuts, projet/fichiers, objectifs/critères, historique des comptes-rendus et preuves, instructions copiables, validation explicite et compteurs manuels implémentés. Inclusion dans les briefings, recherche et sauvegardes v2 ; migration des données v1. La connexion GitHub et les APIs restent en phase 7.
 
-Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6 pour les ressources et apprentissages locaux. Prochain lot : Android et fiabilité native. Chaque suite se traite en lot cohérent avec vérifications réelles.
+Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objectifs), Vie, Explorer, Android, adaptation, connecteurs puis stabilisation 1.0. L’agenda avancé est livré au lot 0.4, Vie au lot 0.5 pour les suivis locaux. Explorer est livré au lot 0.6, l’APK de développement et les fonctions natives au lot 0.7. Prochain lot de développement : adaptation explicable. La recette Android sur téléphone physique et la signature de production restent à valider. Chaque suite se traite en lot cohérent avec vérifications réelles.
 
 ## Phase 3 — Vie personnelle
 
@@ -48,7 +48,7 @@ Ordre de poursuite demandé : agenda avancé (semaine, horaires, routines, objec
 - Tâches : configuration Capacitor, génération du projet Android, APK, tests sur appareil, notifications avec consentement, sauvegardes/restaurations JSON.
 - Dépendances : phase 0, Android Studio/JDK/SDK pour l'APK.
 - Acceptation : installation et usage hors ligne sur appareil ; restauration atomique validée ; refus des fichiers invalides.
-- État : partiellement livré. Sauvegarde/restauration testée, PWA hors ligne testée, projet Android généré et synchronisé. APK, notifications et tests natifs en attente de Java/SDK Android et d'un appareil.
+- État : lot de développement 0.7 livré. JDK/SDK locaux, APK debug construit et lint réussi, script de reconstruction et versions cohérentes, export natif par partage pour organisation et Vie, retour Android protégé, marges système, icônes et rappel quotidien avec consentement explicite. Ressources embarquées sans service worker natif ; aucun serveur requis. Scénario instrumenté et CI Android ajoutés ; résultats consignés dans `VERIFICATION.md`. Restent ouverts : téléphone physique, comportement des fabricants/redémarrage/changements d’heure, signature de production et distribution store. Les tests web Pixel 7 ne sont pas présentés comme des tests natifs.
 
 ## Phase 6 — Adaptation
 
