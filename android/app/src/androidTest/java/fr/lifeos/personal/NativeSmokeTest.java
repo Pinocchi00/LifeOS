@@ -89,8 +89,9 @@ public class NativeSmokeTest {
         waitFor("document.body.innerText.includes('Essai Android local')");
         // Network is disabled by the workflow before launch. Reload really uses
         // bundled assets and IndexedDB; there is no Vite server or service worker.
+        js("window.smokeBeforeReload=true");
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> activity.getActivity().getBridge().getWebView().reload());
-        waitFor("document.body.innerText.includes('Essai Android local')");
+        waitFor("window.smokeBeforeReload===undefined && document.body.innerText.includes('Essai Android local')");
         click("Explorer");
         waitFor("document.querySelector('[aria-label=\"Rubriques Explorer\"]')");
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
