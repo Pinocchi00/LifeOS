@@ -33,6 +33,7 @@ final class NativeConnector {
     private String token;
     private long until;
     private long generation;
+    private boolean closed;
 
     static OkHttpClient client() {
         return new OkHttpClient.Builder()
@@ -97,7 +98,7 @@ final class NativeConnector {
         boolean get = "status".equals(path) || "ai/status".equals(path);
         boolean post = "pair".equals(path) || "logout".equals(path) || "github/read".equals(path) ||
             "ai/prepare".equals(path) || "ai/execute".equals(path);
-        if (origin.isEmpty() || id == null || !id.matches("[a-zA-Z0-9-]{1,80}") || jobs.containsKey(id) ||
+        if (closed || origin.isEmpty() || id == null || !id.matches("[a-zA-Z0-9-]{1,80}") || jobs.containsKey(id) ||
             jobs.size() >= 2 || (!get && !post) || get != (body == null) ||
             duration < 1000 || duration > 65000 || (body != null && body.getBytes(StandardCharsets.UTF_8).length > 32000))
             throw new IllegalArgumentException("Adresse HTTPS et opération autorisée requises.");
@@ -156,8 +157,9 @@ final class NativeConnector {
         }
     }
     synchronized void cancel(String id) { Job job=jobs.get(id); if (job != null) job.call.cancel(); }
+    synchronized void invalidate() { generation++; token=null; closed=true; }
     synchronized void close() {
-        generation++; token=null;
+        invalidate();
         for (Job job : jobs.values()) job.call.cancel();
         client.connectionPool().evictAll();
     }

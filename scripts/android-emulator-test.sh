@@ -21,7 +21,7 @@ adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-android
 adb shell am instrument -w -r -e class fr.lifeos.personal.NativeSmokeTest \
   fr.lifeos.personal.test/androidx.test.runner.AndroidJUnitRunner \
   | tee artifacts/android-instrumentation.txt
-grep -Eq 'OK \([1-9][0-9]* tests?\)' artifacts/android-instrumentation.txt
+bash scripts/assert-android-runner.sh artifacts/android-instrumentation.txt
 
 # A second clean synthetic profile exercises real native HTTPS via ADB loopback.
 # Only the instrumentation APK supplies fixture trust; the installed app rejects it first.
@@ -38,4 +38,4 @@ adb reverse tcp:4182 tcp:4182
 adb shell am instrument -w -r -e class 'fr.lifeos.personal.NativeConnectorTest#nativeHttpsConnector' \
   fr.lifeos.personal.test/androidx.test.runner.AndroidJUnitRunner \
   | tee artifacts/native-connector-instrumentation.txt
-grep -Eq 'OK \([1-9][0-9]* tests?\)' artifacts/native-connector-instrumentation.txt
+bash scripts/assert-android-runner.sh artifacts/native-connector-instrumentation.txt

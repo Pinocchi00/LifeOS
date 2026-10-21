@@ -40,5 +40,13 @@ public class LifeosConnectorPlugin extends Plugin {
         } catch (Exception ignored) { call.reject("Configurez une origine HTTPS et terminez l’opération en cours avant de réessayer."); }
     }
     @PluginMethod public void cancel(PluginCall call) { connector.cancel(call.getString("id")); call.resolve(); }
-    @Override protected void handleOnDestroy() { connector.close(); executor.shutdownNow(); }
+    @Override protected void handleOnDestroy() {
+        NativeConnector current=connector;
+        current.invalidate();
+        // TLS socket closure can write a close_notify record; never do it on the UI thread.
+        Thread cleanup=new Thread(() -> {
+            try { current.close(); } finally { executor.shutdownNow(); }
+        }, "LifeOS-connector-close");
+        cleanup.start();
+    }
 }

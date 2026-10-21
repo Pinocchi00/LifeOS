@@ -58,6 +58,7 @@ public class NativeConnectorTest extends NativeSmokeTest {
         waitFor("document.body.innerText.includes('Adresse enregistrée')");
         click("Vérifier ce serveur HTTPS");
         waitFor("document.querySelector('.github-access [role=alert]')?.textContent.includes('certificat refusé')");
+        js("document.querySelector('.github-access [role=alert]').scrollIntoView({block:'center'})");
         capture("native-https-cert-refused.png");
 
         KeyStore trust=KeyStore.getInstance(KeyStore.getDefaultType());trust.load(null);
@@ -87,6 +88,7 @@ public class NativeConnectorTest extends NativeSmokeTest {
         js("Array.from(document.querySelectorAll('.github-link button')).find(b=>b.textContent.includes('Vérifier et garder')).click()");
         waitFor("document.querySelector('.github-link')?.textContent.includes('Référence privée HTTPS fictive')");
         assertEquals(3,requests.get());
+        js("document.querySelector('.github-link').scrollIntoView({block:'center'})");
         capture("native-https-github.png");closeDialog();
         js("document.querySelector('[aria-label=\"API OpenAI pour Mission HTTPS Android\"]').click()");
         waitFor("document.querySelector('.ai-panel') && document.querySelector('.native-connector-settings input')?.value==='https://127.0.0.1:4182'");
@@ -99,7 +101,7 @@ public class NativeConnectorTest extends NativeSmokeTest {
         waitFor("document.querySelector('.ai-approval')");
         assertEquals(0,executions.get());
         assertEquals("true",js("Array.from(document.querySelectorAll('.ai-approval button')).find(b=>b.textContent.includes('Autoriser et envoyer')).disabled"));
-        js("document.querySelector('.ai-approval').scrollIntoView({block:'start'})");capture("native-https-consent.png");
+        js("document.querySelector('.ai-approval input[type=checkbox]').scrollIntoView({block:'center'})");capture("native-https-consent.png");
         js("document.querySelector('.ai-approval input[type=checkbox]').click()");
         click("Autoriser et envoyer à OpenAI");
         waitFor("document.querySelector('.ai-draft pre')?.textContent.includes('Proposition HTTPS fictive')");
@@ -136,6 +138,7 @@ public class NativeConnectorTest extends NativeSmokeTest {
         waitFor("document.querySelector('.github-link')?.textContent.includes('Référence privée HTTPS fictive')");
         assertEquals(before,requests.get());
         assertEquals("true",js("document.documentElement.scrollWidth<=innerWidth"));
+        js("document.querySelector('.github-link').scrollIntoView({block:'center'})");
         capture("native-https-offline.png");
     }
 }
