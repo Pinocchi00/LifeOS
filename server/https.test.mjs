@@ -109,15 +109,17 @@ async function start(extra = {}) {
           ca: cert,
           servername: "localhost",
           ...options,
-          headers: {
-            Host: "localhost:8443",
-            "X-LifeOS-Request": "1",
-            ...(cookie ? { Cookie: cookie } : {}),
-            ...(body === undefined
-              ? {}
-              : { Origin: origin, "Content-Type": "application/json" }),
-            ...headers,
-          },
+          headers: Object.fromEntries(
+            Object.entries({
+              Host: "localhost:8443",
+              "X-LifeOS-Request": "1",
+              ...(cookie ? { Cookie: cookie } : {}),
+              ...(body === undefined
+                ? {}
+                : { Origin: origin, "Content-Type": "application/json" }),
+              ...headers,
+            }).filter(([, value]) => value !== undefined),
+          ),
         },
         (res) => {
           const chunks = [];
@@ -327,4 +329,124 @@ test("TLS invalide : arrêt avant ouverture ou réinitialisation du registre IA"
     }),
   );
   await assert.rejects(access(path));
+});
+
+const nativeHeaders = { "X-LifeOS-Client": "android", Origin: undefined };
+async function nativePair(f) {
+  const r = await f.api("pair", { code }, { headers: nativeHeaders });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers["set-cookie"], undefined);
+  assert.equal(r.headers["x-lifeos-transport"], "android-v1");
+  const { nativeSession, ...status } = r.json();
+  assert.match(nativeSession, /^[a-f0-9]{64}$/);
+  assert.equal(status.paired, true);
+  return { ...nativeHeaders, Authorization: `Bearer ${nativeSession}` };
+}
+test("Android TLS : appairage sans cookie, bearer isolé du navigateur et lecture volontaire", async () => {
+  const f = await start();
+  const h = await nativePair(f);
+  assert.equal(f.calls.length, 0);
+  assert.equal(
+    (await f.api("status", undefined, { headers: h })).json().paired,
+    true,
+  );
+  assert.equal(
+    (await f.api("github/read", target, { headers: h })).status,
+    200,
+  );
+  assert.equal(f.calls.length, 1);
+  assert.equal(
+    (
+      await f.api("github/read", target, {
+        headers: {
+          Cookie: `__Secure-lifeos_connector=${h.Authorization.slice(7)}`,
+        },
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await f.api("github/read", target, {
+        headers: { Authorization: h.Authorization },
+      })
+    ).status,
+    403,
+  );
+  for (const patch of [
+    { Origin: origin },
+    { "Sec-Fetch-Site": "same-origin" },
+    { Cookie: "anything=x" },
+    { "X-LifeOS-Client": "other" },
+  ])
+    assert.equal(
+      (await f.api("github/read", target, { headers: { ...h, ...patch } }))
+        .status,
+      403,
+    );
+  assert.equal(f.calls.length, 1);
+});
+test("Android TLS : aperçu sans fournisseur, accord unique, révocation et budget conservé", async () => {
+  const f = await start();
+  const h = await nativePair(f);
+  const quote = await f.api(
+    "ai/prepare",
+    { text: "Android explicite", model: "gpt-5.6-terra", maxOutputTokens: 512 },
+    { headers: h },
+  );
+  assert.equal(quote.status, 200);
+  assert.equal(f.calls.length, 0);
+  const body = { quoteId: quote.json().id, confirmed: true };
+  assert.equal((await f.api("ai/execute", body, { headers: h })).status, 200);
+  assert.equal((await f.api("ai/execute", body, { headers: h })).status, 409);
+  assert.equal(f.calls.length, 2);
+  const logout = await f.api("logout", {}, { headers: h });
+  assert.equal(logout.status, 200);
+  assert.equal(logout.headers["set-cookie"], undefined);
+  assert.equal(
+    (await f.api("github/read", target, { headers: h })).status,
+    401,
+  );
+  assert.equal(
+    (await f.api("ai/status", undefined, { headers: h })).json().paired,
+    false,
+  );
+  assert.equal(
+    (await f.api("pair", { code }, { headers: nativeHeaders })).status,
+    429,
+  );
+});
+test("Android TLS : expiration stricte, code non réutilisable et aucune session dans les réponses suivantes", async () => {
+  const f = await start();
+  const h = await nativePair(f);
+  const status = await f.api("status", undefined, { headers: h });
+  assert.doesNotMatch(status.text, /nativeSession|Bearer/);
+  f.advance(3600001);
+  assert.equal(
+    (await f.api("github/read", target, { headers: h })).status,
+    401,
+  );
+  assert.equal(
+    (await f.api("status", undefined, { headers: h })).json().paired,
+    false,
+  );
+  assert.equal(f.calls.length, 0);
+});
+test("Android TLS : une session navigateur ne devient pas un bearer natif", async () => {
+  const f = await start();
+  const r = await f.pair();
+  const token = r.headers["set-cookie"][0].split(";")[0].split("=")[1];
+  assert.equal(
+    (
+      await f.api("github/read", target, {
+        headers: {
+          ...nativeHeaders,
+          Cookie: undefined,
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    ).status,
+    401,
+  );
+  assert.equal(f.calls.length, 0);
 });

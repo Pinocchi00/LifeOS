@@ -2,7 +2,7 @@
 
 ## Installer l’APK de développement
 
-Le lot 0.13 produit `artifacts/LifeOS-0.13.0-debug.apk` et son empreinte `.sha256`. Copier le fichier sur le téléphone, l’ouvrir et autoriser la source d’installation lorsque le système le demande. Android 7/API 24 est le minimum déclaré ; un Android System WebView récent reste nécessaire aux fonctions web de l’application. Cette version n’est pas une publication Play Store et n’a pas de clé de production.
+Le lot 0.14 produit `artifacts/LifeOS-0.14.0-debug.apk` et son empreinte `.sha256`. Copier le fichier sur le téléphone, l’ouvrir et autoriser la source d’installation lorsque le système le demande. Android 7/API 24 est le minimum déclaré ; un Android System WebView récent reste nécessaire aux fonctions web de l’application. Cette version n’est pas une publication Play Store et n’a pas de clé de production.
 
 L’installation Android possède son propre stockage. Pour transférer des informations depuis Windows : exporter l’organisation et, séparément, les rubriques Vie souhaitées ; copier les fichiers ; les restaurer dans l’APK après lecture du récapitulatif. Une restauration remplace les rubriques annoncées, sans fusion entre appareils. Exporter les données courantes avant tout remplacement.
 
@@ -43,12 +43,10 @@ La compilation et le lint locaux sont décrits dans `VERIFICATION.md`. La CI ajo
 
 La recette sur téléphone physique, les politiques de batterie propres aux fabricants, le redémarrage du téléphone, les changements de fuseau/heure d’été, les appareils anciens et lecteurs d’écran réels restent à vérifier. Les parcours Playwright Pixel 7 sont des tests web distincts, pas une validation native. La distribution avec signature de production et publication sur un store restent hors de ce lot.
 
-## Connecteur privé 0.10
+## Connecteurs privés 0.14
 
-Le mode HTTP privé s’utilise dans le navigateur de l’ordinateur qui l’exécute. Depuis le lot 0.13, le [serveur HTTPS personnel](SERVEUR-HTTPS.md) permet aussi un accès par navigateur à une origine correctement hébergée ; il ne raccorde pas l’APK. Dans l’APK, le choix privé explique cette limite et ne contacte aucun serveur ; revenir à **Public, sans compte** pour une lecture publique. Aucun HTTP en clair ni clé fournisseur n’est ajouté à Android. Les relevés privés importés dans l’organisation restent consultables hors ligne et sont inclus en clair dans ses exports.
+L’APK peut désormais enregistrer une origine HTTPS et appairer un accès personnel à GitHub privé, OpenAI et Anthropic. La session reste en mémoire Java, sans cookie, clé fournisseur ou secret dans le JavaScript. Le serveur doit être en version 0.14 ou plus récente ; son certificat doit être reconnu normalement par Android. Aucun HTTP local ou contournement TLS n’est activé. Suivre [ANDROID-HTTPS.md](ANDROID-HTTPS.md) pour le parcours et les limites.
 
-## API IA 0.12
+Les instructions manuelles et la lecture publique restent disponibles sans serveur. L’adresse du serveur est propre à cet appareil, hors des JSON. Les relevés privés et comptes-rendus adoptés restent consultables hors ligne et sont exportés en clair dans l’organisation v6, séparément de Vie. Aucune synchronisation automatique.
 
-L’APK affiche la limite des connecteurs OpenAI et Anthropic, disponibles dans le navigateur du serveur local ou HTTPS configuré. Il n’offre aucune saisie de clé ou envoi IA natif. Les instructions manuelles restent disponibles. Les brouillons adoptés comme comptes-rendus peuvent être transférés par export/restauration de l’organisation v6 et relus hors ligne, en clair. Aucun secret ou registre de dépenses serveur n’est embarqué.
-
-Le parcours natif 0.12 ouvre aussi une mission Claude, vérifie les deux modèles du catalogue et l’absence de commande d’accès serveur dans l’APK. Il ne simule pas une génération native.
+La recette native historique est conservée. Un second profil d’essai vérifie le raccordement HTTPS réel avec des fournisseurs fictifs ; la confiance de fixture est injectée par le seul APK de test après avoir observé le refus du client normal. Aucun domaine, hébergement ou appel fournisseur réel n’est configuré par le dépôt.

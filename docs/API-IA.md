@@ -1,6 +1,6 @@
-# API IA facultative — LifeOS 0.13
+# API IA facultative — LifeOS 0.14
 
-Les missions ChatGPT peuvent demander un brouillon à **OpenAI**, les missions Claude à **Anthropic**, depuis le navigateur à l’adresse du serveur LifeOS, en boucle locale ou en [HTTPS personnel configuré](SERVEUR-HTTPS.md). Le lot 0.12 ajoute Claude et son choix de modèle. Il produit un brouillon textuel ; il ne dispose d’aucun outil pour agir, lire un fichier ou consulter GitHub. L’IA native Android reste à développer. Le lot 0.13 fournit le transport HTTPS et l’appairage personnel, sans déployer d’hébergement réel. Aucun compte, clé réelle ou appel payant n’est configuré par le dépôt.
+Les missions ChatGPT peuvent demander un brouillon à **OpenAI**, les missions Claude à **Anthropic**, depuis le navigateur à l’adresse du serveur LifeOS, en boucle locale ou en [HTTPS personnel configuré](SERVEUR-HTTPS.md). Le lot 0.12 ajoute Claude et son choix de modèle. Il produit un brouillon textuel ; il ne dispose d’aucun outil pour agir, lire un fichier ou consulter GitHub. Le lot 0.14 raccorde aussi l’[APK Android au serveur HTTPS](ANDROID-HTTPS.md), avec session native temporaire et les mêmes consentements. Le lot 0.13 fournit le transport HTTPS et l’appairage personnel, sans déployer d’hébergement réel. Aucun compte, clé réelle ou appel payant n’est configuré par le dépôt.
 
 ## Démarrer sur Windows
 
@@ -79,6 +79,6 @@ Ne pas supprimer, déplacer ou remplacer ce dossier pour remettre les compteurs 
 
 Les tests utilisent de vraies connexions HTTP locales et des réponses OpenAI et Anthropic **explicitement fictives**. Ils vérifient consentement, limites, registres durables, doublons, erreurs et adoption. Aucun appel API réel ni dépense n’est nécessaire pour les lancer. Le script de saisie masquée n’a pas reçu de clé réelle pendant le développement.
 
-L’APK présente la limite du connecteur et conserve les instructions manuelles. API privée native, mise en service d’un hébergement réel, modèles supplémentaires, outils, automatisations validées, historique complet des échanges et rapprochement automatique de facturation restent ouverts. Les données locales existantes restent utilisables sans aucune API.
+L’APK conserve les instructions manuelles et peut utiliser l’API privée HTTPS depuis le lot 0.14. Mise en service d’un hébergement réel, modèles supplémentaires, outils, automatisations validées, historique complet des échanges et rapprochement automatique de facturation restent ouverts. Les données locales existantes restent utilisables sans aucune API.
 
 La commande « Déconnecter le serveur » révoque la session commune aux accès IA et GitHub. Un brouillon déjà reçu reste affiché et peut encore être adopté ; une nouvelle préparation est bloquée tant que ce brouillon n’a pas été conservé. La fermeture protège les modifications non enregistrées.

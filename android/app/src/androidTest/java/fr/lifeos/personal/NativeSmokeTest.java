@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 public class NativeSmokeTest {
     @Rule public ActivityTestRule<MainActivity> activity = new ActivityTestRule<>(MainActivity.class);
 
-    private String js(String code) throws Exception {
+    protected String js(String code) throws Exception {
         AtomicReference<String> value = new AtomicReference<>();
         CountDownLatch done = new CountDownLatch(1);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
@@ -47,13 +47,13 @@ public class NativeSmokeTest {
         assertTrue("JavaScript callback timed out", done.await(10, TimeUnit.SECONDS));
         return value.get();
     }
-    private void capture(String name) {
+    protected void capture(String name) {
         // DOM readiness can precede the WebView compositor's next drawn frame.
         SystemClock.sleep(500);
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).takeScreenshot(
             new File(activity.getActivity().getExternalFilesDir(null), name));
     }
-    private void waitFor(String predicate) throws Exception {
+    protected void waitFor(String predicate) throws Exception {
         long end = SystemClock.elapsedRealtime() + 20000;
         while (SystemClock.elapsedRealtime() < end) {
             if ("true".equals(js("(()=>{try{return !!(" + predicate + ")}catch(e){return false}})()"))) return;
@@ -62,12 +62,12 @@ public class NativeSmokeTest {
         capture("native-failure.png");
         fail("Condition: " + predicate + "\nPage: " + js("document.body.innerText.slice(0,5000)"));
     }
-    private void click(String text) throws Exception {
+    protected void click(String text) throws Exception {
         String selector = "Array.from(document.querySelectorAll('button')).find(b=>b.getClientRects().length && b.textContent.trim()===" + JSONObject.quote(text) + ")";
         waitFor(selector + " && !" + selector + ".disabled");
         js(selector + ".click()");
     }
-    private void fill(String selector, String value) throws Exception {
+    protected void fill(String selector, String value) throws Exception {
         js("(()=>{const el=document.querySelector(" + JSONObject.quote(selector) + ");"
             + "const proto=el instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:el instanceof HTMLSelectElement?HTMLSelectElement.prototype:HTMLInputElement.prototype;"
             + "Object.getOwnPropertyDescriptor(proto,'value').set.call(el," + JSONObject.quote(value) + ");"
@@ -134,8 +134,8 @@ public class NativeSmokeTest {
         click("Enregistrer la mission");
         waitFor("!document.querySelector('dialog[open]')");
         js("document.querySelector('[aria-label=\"API OpenAI pour Mission GitHub Android\"]').click()");
-        waitFor("document.querySelector('.ai-panel')?.textContent.includes('Android conserve')");
-        assertEquals("true", js("!Array.from(document.querySelectorAll('.ai-panel button')).some(b=>b.textContent.includes('Vérifier l’accès IA'))"));
+        waitFor("document.querySelector('.native-connector-settings')");
+        assertEquals("true", js("Array.from(document.querySelectorAll('.ai-panel button')).find(b=>b.textContent.includes('Vérifier l’accès IA'))?.disabled"));
         js("document.querySelector('dialog [aria-label=Fermer]').click()");
         click("Nouvelle mission");
         waitFor("document.querySelector('form select[name=assistant]')");
@@ -146,10 +146,10 @@ public class NativeSmokeTest {
         click("Enregistrer la mission");
         waitFor("!document.querySelector('dialog[open]')");
         js("document.querySelector('[aria-label=\"API Anthropic pour Mission Claude Android\"]').click()");
-        waitFor("document.querySelector('.ai-panel')?.textContent.includes('Android conserve')");
+        waitFor("document.querySelector('.native-connector-settings')");
         assertEquals("\"claude-sonnet-5-5\"", js("document.querySelector('.ai-panel select').value"));
         assertEquals("2", js("document.querySelector('.ai-panel select').options.length"));
-        assertEquals("true", js("!Array.from(document.querySelectorAll('.ai-panel button')).some(b=>b.textContent.includes('Vérifier l’accès IA'))"));
+        assertEquals("true", js("Array.from(document.querySelectorAll('.ai-panel button')).find(b=>b.textContent.includes('Vérifier l’accès IA'))?.disabled"));
         capture("native-ai-claude.png");
         js("document.querySelector('dialog [aria-label=Fermer]').click()");
         js("document.querySelector('[aria-label=\"GitHub pour Mission GitHub Android\"]').click()");
@@ -160,8 +160,8 @@ public class NativeSmokeTest {
         waitFor("document.querySelector('.github-link')");
         js("window.smokeGithubCalls=0;window.smokeFetch=window.fetch.bind(window);window.fetch=(url,options)=>{if(String(url)==='https://api.github.com/repos/example/fixture/actions/runs/123'){window.smokeGithubCalls++;window.smokeGithubOptions=options;return Promise.resolve(new Response(JSON.stringify({id:123,html_url:'https://github.com/example/fixture/actions/runs/123',name:'Tests fictifs Android',display_title:'Tests',status:'completed',conclusion:'success',head_sha:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',run_attempt:2,updated_at:'2026-10-19T12:00:00.000Z'}),{headers:{'Content-Type':'application/json'}}))}return window.smokeFetch(url,options)}");
         click("Privé, par mon serveur");
-        waitFor("document.querySelector('.github-access')?.textContent.includes('Android conserve')");
-        assertEquals("true", js("!Array.from(document.querySelectorAll('.github-access button')).some(b=>b.textContent.includes('Vérifier le serveur local'))"));
+        waitFor("document.querySelector('.native-connector-settings')");
+        assertEquals("true", js("Array.from(document.querySelectorAll('.github-access button')).find(b=>b.textContent.includes('Vérifier ce serveur HTTPS'))?.disabled"));
         assertEquals("true", js("Array.from(document.querySelectorAll('.github-link button')).find(b=>b.textContent.includes('Vérifier et garder')).disabled"));
         click("Public, sans compte");
         assertEquals("0", js("window.smokeGithubCalls"));

@@ -98,5 +98,7 @@ jobs:
             artifacts/*.png
             artifacts/android-logcat.txt
             artifacts/android-instrumentation.txt
+            artifacts/native-connector-instrumentation.txt
+            artifacts/native-fixture.txt
             android/app/build/reports/
             android/app/build/outputs/androidTest-results/

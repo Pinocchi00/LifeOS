@@ -1,5 +1,13 @@
 # Journal des modifications
 
+## 0.14.0 — 21 octobre 2026
+
+- Connecteurs GitHub privés, OpenAI et Anthropic depuis Android, avec origine HTTPS enregistrée explicitement et aucun réseau à l’ouverture du panneau ou à l’enregistrement du réglage.
+- Session temporaire en mémoire Java, reçue par appairage et retirée des résultats du pont ; aucun cookie, secret dans le JavaScript, fichier ou sauvegarde. Déconnexion commune et oubli local distincts.
+- Transport natif dédié avec confiance TLS de la plateforme, opérations bornées, annulation, absence de cache/cookie/redirection/réessai et marqueur de compatibilité serveur. Protocole natif refusé en HTTP et isolé des sessions navigateur, sans CORS.
+- Consentement IA, aperçu exact, budget durable et adoption non vérifiée inchangés ; format v6 et Vie conservés. Journalisation du pont désactivée. OkHttp 5.4.0 épinglé pour SDK 36.
+- Tests du pont et serveur TLS, test Java d’adresse et seconde recette instrumentée avec serveur réel/fournisseurs fictifs. Aucun hébergement public ou appel payant configuré.
+
 ## 0.13.0 — 19 octobre 2026
 
 - Serveur HTTPS personnel facultatif : origine canonique, certificat/clé privés, nom SAN, dates et correspondance vérifiés avant ouverture du budget ; configuration partielle refusée et HTTP conservé en boucle locale.

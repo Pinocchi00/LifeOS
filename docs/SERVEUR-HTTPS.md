@@ -2,7 +2,7 @@
 
 Le serveur peut servir LifeOS et ses connecteurs GitHub/IA à une **origine HTTPS unique**, avec un certificat et une clé fournis par son propriétaire. Le navigateur utilise cette même origine pour l’application et les API ; aucun secret fournisseur n’est intégré au web ou à l’APK. Le mode HTTP reste limité à `127.0.0.1`.
 
-Ce lot fournit le logiciel et une recette locale avec fournisseurs fictifs. **Aucun domaine, hébergement, certificat de production ou service public n’est configuré sur ce poste.** L’accès natif privé dans l’APK reste une prochaine étape. Un navigateur mobile peut utiliser le site HTTPS une fois réellement hébergé ; son stockage reste distinct de celui de l’APK.
+Ce lot fournit le logiciel et une recette locale avec fournisseurs fictifs. **Aucun domaine, hébergement, certificat de production ou service public n’est configuré sur ce poste.** Depuis 0.14, l’[accès natif privé dans l’APK](ANDROID-HTTPS.md) utilise ce serveur HTTPS, avec une session distincte du cookie web. Un navigateur mobile peut utiliser le site HTTPS une fois réellement hébergé ; son stockage reste distinct de celui de l’APK.
 
 ## Préparer une installation réelle
 
@@ -54,3 +54,7 @@ Les contrôles d’hôte/origine, absence de CORS, limites de corps/délais, lis
 ## Recette reproductible, sans hébergement
 
 `npm run test:server` exécute de vraies connexions TLS avec la paire artificielle publique de test, une confiance explicitement limitée et des fournisseurs fictifs. Les erreurs de confiance/nom, HTTP clair, fichiers TLS, cookies, origines, expiration, révocation et aperçu/budget sont vérifiés. `npm run build` puis `npm run test:e2e -- tests/https.spec.ts` lancent le même parcours HTTPS dans Chromium ordinateur et Pixel 7, puis export et rechargement hors ligne. Les serveurs de test écoutent uniquement en boucle locale ; l’exemption SPKI du navigateur de test ne concerne que leur clé artificielle. Aucun contournement TLS n’est ajouté à l’application, au serveur de production ou à l’APK. Voir les résultats effectivement obtenus dans [VERIFICATION.md](VERIFICATION.md).
+
+## Client Android 0.14
+
+Le serveur accepte aussi une session personnelle de type Android, obtenue par le même code à usage unique, exclusivement sur HTTPS. Une session autorise soit le navigateur soit le client natif ; son secret ne peut pas être réutilisé dans l’autre transport. Le client natif ne reçoit aucun cookie et son jeton de session reste en mémoire Java. Aucun CORS ni origine WebView n’est ajouté aux accès web. La révocation, les délais, les budgets et les consentements restent communs ; le client exige le marqueur de protocole du serveur 0.14. Voir [ANDROID-HTTPS.md](ANDROID-HTTPS.md).

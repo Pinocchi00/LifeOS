@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   aiModel,
   aiModels,
@@ -16,6 +16,8 @@ import {
   disconnectConnector,
   supportsConnector,
 } from "../platform/connector";
+import { isAndroid } from "../platform/runtime";
+import { NativeConnectorSettings } from "./NativeConnectorSettings";
 export function AiPanel({
   data,
   missionId,
@@ -35,6 +37,14 @@ export function AiPanel({
   const provider = model.provider;
   const [text, setText] = useState(mission ? missionAiText(mission) : "");
   const [maxOutputTokens, setMax] = useState<256 | 512 | 1024>(512);
+  const [nativeServer, setNativeServer] = useState("");
+  const nativeServerRef = useRef("");
+  const nativeChanged = useCallback((origin: string) => {
+    if (nativeServerRef.current === origin) return;
+    nativeServerRef.current = origin;
+    setNativeServer(origin);
+    setStatus(null);
+  }, []);
   const [status, setStatus] = useState<Awaited<
     ReturnType<typeof readAiStatus>
   > | null>(null);
@@ -194,10 +204,15 @@ export function AiPanel({
           Politique de données {provider}
         </a>
       </details>
+      <NativeConnectorSettings
+        disabled={!!busy || !!quote || Boolean(draft && !saved)}
+        paired={Boolean(status?.paired)}
+        changed={nativeChanged}
+      />
       {!supportsConnector() ? (
         <p className="ai-notice">
           L’API IA s’utilise dans LifeOS ouvert à l’adresse du serveur, en HTTPS
-          ou sur son ordinateur en boucle locale. Android conserve la
+          ou sur son ordinateur en boucle locale. Cette installation conserve la
           préparation manuelle des instructions. Aucune clé à saisir dans
           l’application.
         </p>
@@ -205,13 +220,18 @@ export function AiPanel({
         <>
           <section className="ai-access" aria-label="Accès IA">
             <p className="small muted">
-              Serveur contacté : <strong>{window.location.origin}</strong>.
-              Ouvrir cette adresse ne transfère pas les données d’un autre
+              Serveur contacté :{" "}
+              <strong>
+                {isAndroid()
+                  ? nativeServer || "aucune adresse enregistrée"
+                  : window.location.origin}
+              </strong>
+              . Ouvrir cette adresse ne transfère pas les données d’un autre
               appareil.
             </p>
             <button
               className="button secondary"
-              disabled={!!busy}
+              disabled={!!busy || (isAndroid() && !nativeServer)}
               onClick={() => void action("status")}
             >
               Vérifier l’accès IA du serveur

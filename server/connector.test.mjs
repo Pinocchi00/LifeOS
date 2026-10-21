@@ -484,3 +484,16 @@ test("sans configuration, aucun code ne peut ouvrir l’accès privé", async ()
   assert.equal((await f.api("github/read", target)).status, 401);
   assert.equal(f.calls.length, 0);
 });
+
+test("Android : HTTP clair refusé avant appairage, code conservé pour le navigateur local", async () => {
+  const f = await start();
+  for (const path of ["status", "pair"]) {
+    const r = await f.api(path, path === "pair" ? { code: CODE } : undefined, {
+      headers: { "X-LifeOS-Client": "android" },
+    });
+    assert.equal(r.status, 403);
+    assert.equal(r.headers.get("x-lifeos-transport"), null);
+  }
+  assert.equal(f.calls.length, 0);
+  assert.equal((await f.pair()).status, 200);
+});

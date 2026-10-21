@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { LockKeyhole } from "lucide-react";
 import {
   connectorStatus,
@@ -7,6 +7,8 @@ import {
   supportsConnector,
   type ConnectorStatus,
 } from "../platform/connector";
+import { isAndroid } from "../platform/runtime";
+import { NativeConnectorSettings } from "./NativeConnectorSettings";
 export type GithubAccessMode = "public" | "server";
 export function GithubAccess({
   mode,
@@ -21,6 +23,18 @@ export function GithubAccess({
   select: (value: GithubAccessMode) => void;
   setReady: (value: boolean) => void;
 }) {
+  const [nativeServer, setNativeServer] = useState("");
+  const nativeServerRef = useRef("");
+  const nativeChanged = useCallback(
+    (origin: string) => {
+      if (nativeServerRef.current === origin) return;
+      nativeServerRef.current = origin;
+      setNativeServer(origin);
+      setStatus(null);
+      setReady(false);
+    },
+    [setReady],
+  );
   const [status, setStatus] = useState<ConnectorStatus | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -104,34 +118,44 @@ export function GithubAccess({
         <>
           <p>
             Lisez les dépôts autorisés de votre serveur LifeOS. Votre jeton
-            GitHub reste côté serveur ; LifeOS ne le conserve pas.
+            GitHub reste côté serveur ; l’application ne le reçoit pas.
           </p>
           <p className="small">
             Les titres et liens privés rejoindront votre sauvegarde
             d’organisation en clair. La déconnexion conservera ces relevés hors
             ligne.
           </p>
+          <NativeConnectorSettings
+            disabled={disabled || busy}
+            paired={Boolean(status?.paired)}
+            changed={nativeChanged}
+          />
           {!supportsConnector() ? (
             <p className="github-network-note">
               Accès privé disponible dans LifeOS ouvert à l’adresse du serveur,
-              en HTTPS ou en boucle locale sur son ordinateur. Android conserve
-              l’accès public dans ce lot.
+              en HTTPS ou en boucle locale sur son ordinateur. Cette
+              installation conserve l’accès public.
             </p>
           ) : (
             <>
               <p className="small muted">
-                Serveur contacté : <strong>{window.location.origin}</strong>.
-                L’appairage ne transfère pas vos données locales.
+                Serveur contacté :{" "}
+                <strong>
+                  {isAndroid()
+                    ? nativeServer || "aucune adresse enregistrée"
+                    : window.location.origin}
+                </strong>
+                . L’appairage ne transfère pas vos données locales.
               </p>
               <div className="github-actions">
                 <button
                   className="button secondary"
-                  disabled={disabled || busy}
+                  disabled={disabled || busy || (isAndroid() && !nativeServer)}
                   onClick={() => void act("status")}
                 >
                   {busy
                     ? "Contact du serveur…"
-                    : window.location.protocol === "https:"
+                    : isAndroid() || window.location.protocol === "https:"
                       ? "Vérifier ce serveur HTTPS"
                       : "Vérifier le serveur local"}
                 </button>
@@ -181,7 +205,9 @@ export function GithubAccess({
                     disabled={disabled || busy || !code.trim()}
                     onClick={() => void act("pair")}
                   >
-                    Appairer ce navigateur au serveur
+                    {isAndroid()
+                      ? "Appairer cet appareil au serveur"
+                      : "Appairer ce navigateur au serveur"}
                   </button>
                   <p className="small muted">
                     Le code du terminal est à usage unique et valable dix

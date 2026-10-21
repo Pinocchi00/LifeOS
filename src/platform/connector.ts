@@ -1,3 +1,5 @@
+import { isAndroid } from "./runtime";
+import { nativeConnectorRequest } from "./nativeConnector";
 import { Capacitor } from "@capacitor/core";
 import { z } from "zod";
 import {
@@ -27,10 +29,11 @@ function compatible<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 export function supportsConnector(): boolean {
   return (
-    !Capacitor.isNativePlatform() &&
-    ((window.location.protocol === "http:" &&
-      window.location.hostname === "127.0.0.1") ||
-      window.location.protocol === "https:")
+    isAndroid() ||
+    (!Capacitor.isNativePlatform() &&
+      ((window.location.protocol === "http:" &&
+        window.location.hostname === "127.0.0.1") ||
+        window.location.protocol === "https:"))
   );
 }
 export async function connectorRequest(
@@ -44,6 +47,8 @@ export async function connectorRequest(
       "Ouvrez LifeOS à l’adresse du serveur : HTTPS distant ou http://127.0.0.1 sur cet ordinateur. L’application Android conserve l’accès public.",
     );
   if (signal?.aborted) throw new Error("Opération annulée.");
+  if (isAndroid())
+    return nativeConnectorRequest(path, body, signal, durationMs);
   const controller = new AbortController();
   const cancel = () => controller.abort();
   signal?.addEventListener("abort", cancel, { once: true });

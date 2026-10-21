@@ -1,5 +1,16 @@
 # Vérifications LifeOS
 
+## Lot 0.14 — 21 octobre 2026
+
+- **148 tests Vitest réussis**, dix-sept fichiers. Six nouveaux cas du pont natif : origines HTTPS canoniques et refus des chemins/identifiants/HTTP, réglages purement locaux, appels du pont sans fetch/cookie/bearer JS, annulation avant/pendant appel, erreurs TLS/serveur/réponses incompatibles sans repli et contrôle d’identité du relevé.
+- **78 tests serveur Node réussis**, dont cinq nouveaux cas : protocole Android refusé en HTTP sans consommation du code, appairage natif sur TLS réel sans cookie, marqueur android-v1, séparation des sessions web/native, refus des origines/cookies/métadonnées web, expiration stricte, aperçu sans appel fournisseur, consentement unique et révocation commune. Fournisseurs explicitement fictifs ; aucune dépense réelle.
+- **76 parcours Playwright réussis**, régression complète ordinateur et format Pixel 7, y compris HTTPS navigateur, consentements et hors ligne. Le raccordement Android n’est pas présenté comme un parcours navigateur.
+- Compilation TypeScript/Vite/PWA, construction APK, lint, test unitaire Gradle et compilation des deux scénarios instrumentés réussis. Le test Java `NativeOriginTest` passe : adresses canoniques seules et refus avant réseau. Aucune exemption TLS ajoutée à l’APK principal ; la fixture est dans le seul APK de test.
+- `npm audit --omit=dev` : **zéro vulnérabilité connue** signalée. Requêtes OSV datées du 21 octobre pour OkHttp 5.4.0, Okio JVM 3.17.0 et Kotlin stdlib 2.1.21 : aucun avis retourné pour ces trois coordonnées/version. Ce contrôle n’est pas une garantie d’absence de vulnérabilité ni un audit exhaustif de toutes les dépendances Android. OkHttp 5.5.0 a été refusé par la vérification AAR car il exige compileSdk 37 ; 5.4.0 est épinglé, compatible avec le SDK 36 actuel. Le choix et sa limite sont documentés dans [ANDROID-HTTPS.md](ANDROID-HTTPS.md).
+- APK local de développement reconstruit après contrôle de l’en-tête JSON natif : **`artifacts/LifeOS-0.14.0-debug.apk`**, SHA-256 **`b85bf58e0e9718a441db5b12fe54adad2af9fcc14730a367530f1018c36f2d97`**. Le client encode le JSON en octets UTF-8 pour conserver exactement le type `application/json` attendu, sans ajout implicite de charset par le constructeur de corps texte.
+- Deux scénarios Android instrumentés sont compilés pour la CI : recette historique et nouveau profil HTTPS avec serveur Node/fournisseurs fictifs, refus du certificat par défaut puis confiance limitée injectée dans le seul code instrumenté. Le résultat effectivement exécuté sera consigné après la CI. Aucun téléphone physique ou émulateur accéléré local utilisé.
+- Aucun domaine, hébergement public, clé fournisseur réelle ou compte multiutilisateur configuré. Les données v6 et Vie, images écobrutalistes et absence de moteur 3D sont conservées. Le guide distingue déconnexion distante et oubli local, et explique la perte normale d’une session native non persistée.
+
 ## Lot 0.13 — 19 octobre 2026
 
 - **142 tests Vitest réussis**, seize fichiers. Disponibilité du connecteur sur une origine HTTPS, refus du HTTP distant et du client natif ; régression du catalogue, des consentements et des formats inchangés.

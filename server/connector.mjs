@@ -164,6 +164,17 @@ export async function createConnector({
   const cookie = (value, age) =>
     `${cookieName}=${value}; HttpOnly; SameSite=Strict; Path=${PREFIX}; Max-Age=${age}${config.remote ? "; Secure" : ""}`;
   function validSession(req) {
+    const native = req.headers["x-lifeos-client"] === "android";
+    if (native)
+      return Boolean(
+        session &&
+        session.client === "android" &&
+        session.expiresAt > now() &&
+        typeof req.headers.authorization === "string" &&
+        /^Bearer [a-f0-9]{64}$/.test(req.headers.authorization) &&
+        equal(req.headers.authorization.slice(7), session.token),
+      );
+    if (session?.client === "android") return false;
     const parts = (req.headers.cookie || "")
       .split(";")
       .map((item) => item.trim())
@@ -182,11 +193,13 @@ export async function createConnector({
   const server = (config.remote ? createHttpsServer : createServer)(
     { ...tls, maxHeaderSize: 8192, requestTimeout: 5000, headersTimeout: 5000 },
     async (req, res) => {
+      let nativeAccepted = false;
       const send = (status, value, extra = {}) => {
         if (!res.destroyed) {
           res.writeHead(status, {
             ...responseHeaders,
             "Content-Type": "application/json; charset=utf-8",
+            ...(nativeAccepted ? { "X-LifeOS-Transport": "android-v1" } : {}),
             ...extra,
           });
           res.end(JSON.stringify(value));
@@ -234,13 +247,31 @@ export async function createConnector({
           res.end(req.method === "HEAD" ? undefined : data);
           return;
         }
+        const native = req.headers["x-lifeos-client"] === "android";
+        if (req.headers["x-lifeos-client"] !== undefined && !native)
+          throw new Refusal(403, "Client incompatible.");
+        if (
+          native &&
+          (!config.remote ||
+            !req.socket.encrypted ||
+            req.headers.origin !== undefined ||
+            req.headers["sec-fetch-site"] !== undefined ||
+            req.headers.cookie !== undefined)
+        )
+          throw new Refusal(
+            403,
+            "Le client Android exige HTTPS direct, sans origine web ni cookie.",
+          );
+        nativeAccepted = native;
+        if (!native && req.headers.authorization !== undefined)
+          throw new Refusal(403, "Session navigateur par cookie uniquement.");
         if (
           req.url !== path ||
           req.headers["x-lifeos-request"] !== "1" ||
           (req.headers.origin && req.headers.origin !== origin) ||
           (req.headers["sec-fetch-site"] &&
             !["same-origin", "none"].includes(req.headers["sec-fetch-site"])) ||
-          (req.method === "POST" && req.headers.origin !== origin)
+          (!native && req.method === "POST" && req.headers.origin !== origin)
         )
           throw new Refusal(403, "Requête directe de même origine requise.");
         if (path === `${PREFIX}/status` && req.method === "GET") {
@@ -282,6 +313,7 @@ export async function createConnector({
           usedCode = true;
           session = {
             token: randomBytes(32).toString("hex"),
+            client: native ? "android" : "browser",
             expiresAt: now() + 3600000,
           };
           send(
@@ -291,8 +323,9 @@ export async function createConnector({
               githubConfigured,
               paired: true,
               expiresAt: new Date(session.expiresAt).toISOString(),
+              ...(native ? { nativeSession: session.token } : {}),
             },
-            { "Set-Cookie": cookie(session.token, 3600) },
+            native ? {} : { "Set-Cookie": cookie(session.token, 3600) },
           );
           return;
         }
@@ -302,7 +335,11 @@ export async function createConnector({
           session = null;
           active?.abort();
           ai.revoke();
-          send(200, { disconnected: true }, { "Set-Cookie": cookie("", 0) });
+          send(
+            200,
+            { disconnected: true },
+            native ? {} : { "Set-Cookie": cookie("", 0) },
+          );
           return;
         }
         if (path === `${PREFIX}/ai/status` && req.method === "GET") {

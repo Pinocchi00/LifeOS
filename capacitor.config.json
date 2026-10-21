@@ -3,10 +3,13 @@
   "appName": "LifeOS",
   "webDir": "dist",
   "plugins": {
-    "SystemBars": { "style": "LIGHT" },
+    "SystemBars": {
+      "style": "LIGHT"
+    },
     "LocalNotifications": {
       "smallIcon": "ic_stat_lifeos",
       "iconColor": "#20372a"
     }
-  }
+  },
+  "loggingBehavior": "none"
 }

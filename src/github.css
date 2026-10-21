@@ -155,3 +155,27 @@
     width: 100%;
   }
 }
+
+.native-connector-settings {
+  display: grid;
+  gap: 14px;
+  border-block: 1px solid var(--line);
+  padding-block: 20px;
+  min-width: 0;
+}
+.native-connector-settings label {
+  display: grid;
+  gap: 8px;
+}
+.native-connector-settings input {
+  width: 100%;
+  min-width: 0;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 12px;
+  font: inherit;
+}
+.native-connector-settings p {
+  overflow-wrap: anywhere;
+}
