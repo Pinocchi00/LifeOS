@@ -18,6 +18,13 @@ const dayLabel = (value: string) =>
   });
 const slotLabel = (slot: { day: string; start: string; duration: number }) =>
   `${dayLabel(slot.day)} à ${slot.start} · ${slot.duration} min`;
+function focusSection(node: HTMLElement | null) {
+  if (!node) return;
+  const header = node.closest("dialog")?.querySelector(".modal-head");
+  node.style.scrollMarginTop = `${(header?.getBoundingClientRect().height ?? 0) + 16}px`;
+  node.scrollIntoView({ block: "start", behavior: "instant" });
+  node.focus({ preventScroll: true });
+}
 export function AutomationsPanel({
   data,
   today,
@@ -51,13 +58,13 @@ export function AutomationsPanel({
   }, [selected.length, preview, confirmation, busy, dirty]);
   useEffect(() => () => dirty(false), [dirty]);
   useEffect(() => {
-    if (preview) previewRef.current?.focus();
+    if (preview) focusSection(previewRef.current);
   }, [preview]);
   useEffect(() => {
-    if (error) errorRef.current?.focus();
+    if (error) focusSection(errorRef.current);
   }, [error]);
   useEffect(() => {
-    if (confirmation) confirmationRef.current?.focus();
+    if (confirmation) focusSection(confirmationRef.current);
   }, [confirmation]);
   const candidates = pastTasks(data, today);
   const found = candidates.filter((task) =>

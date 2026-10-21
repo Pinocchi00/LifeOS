@@ -84,6 +84,12 @@
 .automation-panel .button.primary {
   white-space: normal;
 }
+.automation-panel .button,
+.automation-panel .text-button {
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 44px;
+}
 .automation-preview {
   padding: 20px;
   background: #e7ebdf;

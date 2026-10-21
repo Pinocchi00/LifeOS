@@ -101,6 +101,19 @@ test("aperçu sans écriture, consentement, créneaux libres, sauvegarde et reto
   const preview = page.getByRole("region", { name: "Aperçu des déplacements" });
   await expect(preview).toContainText("10:00");
   await expect(preview).toContainText("Échéance conservée");
+  const placement = await preview.evaluate((node) => {
+    const header = node.closest("dialog")!.querySelector(".modal-head")!;
+    const button = node.querySelector("button")!;
+    return {
+      top: node.getBoundingClientRect().top,
+      headerBottom: header.getBoundingClientRect().bottom,
+      fontSize: parseFloat(getComputedStyle(button).fontSize),
+      height: button.getBoundingClientRect().height,
+    };
+  });
+  expect(placement.top).toBeGreaterThanOrEqual(placement.headerBottom);
+  expect(placement.fontSize).toBeGreaterThanOrEqual(12);
+  expect(placement.height).toBeGreaterThanOrEqual(44);
   await expect(
     page.getByRole("button", {
       name: "Appliquer ces déplacements",
