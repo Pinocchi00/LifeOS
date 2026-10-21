@@ -7,7 +7,7 @@ capture() {
   if [ -n "$fixture_pid" ]; then kill "$fixture_pid" 2>/dev/null || true; fi
   adb exec-out screencap -p > artifacts/LifeOS-Android.png || true
   adb logcat -d -v threadtime > artifacts/android-logcat.txt || true
-  for image in native-home.png native-failure.png native-reminders.png native-adaptation.png native-github.png native-ai-claude.png native-eco-explorer.png native-eco-projects.png native-https-cert-refused.png native-https-github.png native-https-consent.png native-https-offline.png; do
+  for image in native-home.png native-automation-preview.png native-automation-journal.png native-failure.png native-reminders.png native-adaptation.png native-github.png native-ai-claude.png native-eco-explorer.png native-eco-projects.png native-https-cert-refused.png native-https-github.png native-https-consent.png native-https-offline.png; do
     adb pull "/sdcard/Android/data/fr.lifeos.personal/files/$image" "artifacts/$image" || true
   done
 }

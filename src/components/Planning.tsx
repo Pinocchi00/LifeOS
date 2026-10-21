@@ -35,6 +35,7 @@ type Props = {
   today: string;
   selectedDay: string;
   selectDay: (day: string) => void;
+  openAutomations: () => void;
   busy: boolean;
   renderTask: (task: Task) => ReactNode;
   editTask: (task: Task) => void;
@@ -100,6 +101,15 @@ export function Planning(props: Props) {
     );
   return (
     <section className="planning-workspace" aria-label="Planification">
+      <div className="section-heading">
+        <div>
+          <span className="planning-eyebrow">VOTRE TEMPS, À VOTRE RYTHME</span>
+          <p>Les créneaux passés peuvent retrouver leur place.</p>
+        </div>
+        <button className="button secondary" onClick={props.openAutomations}>
+          Automatisations
+        </button>
+      </div>
       <div className="planning-tabs" role="group" aria-label="Vues de l’agenda">
         {(
           [

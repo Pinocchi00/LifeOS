@@ -1,5 +1,14 @@
 # Journal des modifications
 
+## 0.15.0 — 21 octobre 2026
+
+- Agenda → Automatisations : replanifier explicitement 1 à 20 tâches ouvertes dont le créneau est d’un jour passé. Priorités puis échéances, durées et dates limites conservées, tâches et routines existantes respectées, propositions dans une plage choisie et explication des tâches qui n’y entrent pas.
+- Aperçu sans écriture, consentement décoché, expiration à dix minutes et nouveau contrôle des tâches/conflits avant une mutation atomique. Pour aujourd’hui, délai de relecture d’au moins cinq minutes.
+- Journal de 100 opérations au maximum, aucune purge implicite, retour groupé avec protection des éditions/suppressions et anciens créneaux occupés. Effacement explicite du seul journal ; sauvegarde complète préalable possible.
+- Organisation v7, imports v1 à v6 et migration IndexedDB en place ; Vie v1 reste séparée. Les instantanés historiques sont conservés même après suppression d’une tâche. Aucun déplacement à l’import, à l’ouverture ou en arrière-plan.
+- Recettes web et Android étendues au parcours local hors ligne et au journal. Aucune connexion fournisseur ni dépense n’est nécessaire pour cette fonction.
+
+
 ## 0.14.0 — 21 octobre 2026
 
 - Connecteurs GitHub privés, OpenAI et Anthropic depuis Android, avec origine HTTPS enregistrée explicitement et aucun réseau à l’ouverture du panneau ou à l’enregistrement du réglage.

@@ -210,8 +210,15 @@ describe("Apprentissage et conservation des liens", () => {
 });
 describe("Enveloppe v4", () => {
   it("migre v3 en conservant les collections antérieures et restaure v4 exactement", () => {
-    const { githubLinks, adaptation, resources, learningPaths, learningEntries, ...legacy } =
-      emptyData();
+    const {
+      automationRuns,
+      githubLinks,
+      adaptation,
+      resources,
+      learningPaths,
+      learningEntries,
+      ...legacy
+    } = emptyData();
     const note = {
       id: "old",
       title: "Idée ancienne",
@@ -222,7 +229,8 @@ describe("Enveloppe v4", () => {
       storedDataSchema.parse({ ...legacy, version: 3, notes: [note] }),
     ).toEqual({
       ...legacy,
-      version: 6,
+      version: 7,
+      automationRuns,
       githubLinks,
       adaptation,
       notes: [note],

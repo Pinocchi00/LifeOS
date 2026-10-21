@@ -248,7 +248,7 @@ export function GithubPanel({
       <p className="small muted">
         {links.length} lien{links.length > 1 ? "s" : ""} sur 10 pour cette
         mission. Les liens et relevés sont inclus dans la sauvegarde
-        d’organisation v6.
+        d’organisation v7.
       </p>
       {confirm && (
         <section

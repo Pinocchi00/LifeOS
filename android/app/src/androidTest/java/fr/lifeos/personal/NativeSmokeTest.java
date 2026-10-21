@@ -87,6 +87,9 @@ public class NativeSmokeTest {
         click("Nouvelle tâche");
         waitFor("document.querySelector('dialog[open] form input[name=title]')");
         fill("form input[name=title]", "Essai Android local");
+        js("document.querySelector('input[name=reserve]').click()");
+        waitFor("document.querySelector('input[name=scheduleDay]')");
+        fill("input[name=scheduleDay]", "2000-01-02");
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
         SystemClock.sleep(500);
         if (!"true".equals(js("document.body.innerText.includes('Garder vos modifications')")))
@@ -101,6 +104,38 @@ public class NativeSmokeTest {
         js("window.smokeBeforeReload=true");
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> activity.getActivity().getBridge().getWebView().reload());
         waitFor("window.smokeBeforeReload===undefined && document.body.innerText.includes('Essai Android local')");
+        // Local reviewed automation: real offline WebView and IndexedDB, no provider.
+        click("Agenda");
+        click("Automatisations");
+        waitFor("document.querySelector('.automation-candidates input[type=checkbox]')");
+        js("document.querySelector('.automation-candidates input[type=checkbox]').click()");
+        click("Préparer l’aperçu");
+        waitFor("document.querySelector('.automation-preview')");
+        assertEquals("true", js("Array.from(document.querySelectorAll('.automation-preview button')).find(b=>b.textContent==='Appliquer ces déplacements').disabled"));
+        assertEquals("true", js("document.querySelector('.automation-preview').textContent.includes('Aucune modification enregistrée')"));
+        capture("native-automation-preview.png");
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();
+        waitFor("document.querySelector('.unsaved-prompt')");
+        assertEquals("false", js("document.querySelector('.unsaved-prompt').textContent.includes('facturation')"));
+        click("Continuer la modification");
+        js("document.querySelector('.automation-consent input').click()");
+        click("Appliquer ces déplacements");
+        waitFor("document.querySelector('.automation-notice')?.textContent.includes('Créneaux déplacés')");
+        js("document.querySelector('dialog [aria-label=Fermer]').click()");
+        waitFor("!document.querySelector('dialog[open]')");
+        js("window.smokeBeforeReload=true");
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> activity.getActivity().getBridge().getWebView().reload());
+        waitFor("window.smokeBeforeReload===undefined && document.querySelector('h1')");
+        click("Agenda");
+        click("Automatisations");
+        waitFor("document.querySelector('.automation-run')");
+        click("Revenir aux anciens créneaux");
+        click("Confirmer le retour aux anciens créneaux");
+        waitFor("document.querySelector('.automation-run summary')?.textContent.includes('Annulée')");
+        capture("native-automation-journal.png");
+        js("document.querySelector('dialog [aria-label=Fermer]').click()");
+        waitFor("!document.querySelector('dialog[open]')");
+        click("Accueil");
         // Explicit preferences use the same offline IndexedDB envelope in WebView.
         js("document.querySelector('[aria-label=\"Personnaliser LifeOS\"]').click()");
         click("Modifier mes réglages");
@@ -186,7 +221,10 @@ public class NativeSmokeTest {
         assertNotNull(files); assertTrue(files.length > 0);
         JSONObject backup = new JSONObject(new String(Files.readAllBytes(files[0].toPath()), StandardCharsets.UTF_8));
         assertEquals("LifeOS", backup.getString("application"));
-        assertEquals(6, backup.getJSONObject("data").getInt("version"));
+        assertEquals(7, backup.getJSONObject("data").getInt("version"));
+        assertEquals(1, backup.getJSONObject("data").getJSONArray("automationRuns").length());
+        assertFalse(backup.getJSONObject("data").getJSONArray("automationRuns").getJSONObject(0).isNull("undoneAt"));
+        assertEquals("2000-01-02", backup.getJSONObject("data").getJSONArray("tasks").getJSONObject(0).getJSONObject("schedule").getString("day"));
         assertEquals(1, backup.getJSONObject("data").getJSONObject("adaptation").getJSONObject("preferences").getInt("priorityCount"));
         assertEquals(2, backup.getJSONObject("data").getJSONObject("adaptation").getJSONArray("revisions").length());
         assertEquals("Essai Android local", backup.getJSONObject("data").getJSONArray("tasks").getJSONObject(0).getString("title"));

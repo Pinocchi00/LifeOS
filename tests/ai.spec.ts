@@ -186,7 +186,7 @@ test("consentement, vrai serveur avec fournisseur fictif, brouillon incomplet ad
     /fixture-only-openai-key|fixture-ai-browser-code|lifeos_connector/,
   );
   const result = JSON.parse(raw).data;
-  expect(result.version).toBe(6);
+  expect(result.version).toBe(7);
   expect(result.missions[0].status).toBe("review");
   expect(result.missions[0].reports[0].body).toContain(
     "BROUILLON IA — NON VÉRIFIÉ",
@@ -443,7 +443,7 @@ test("Claude : choix sans réseau, consentement renouvelé, deux modèles et com
     /fixture-only-|fixture-ai-browser-code|lifeos_connector/,
   );
   const data = JSON.parse(raw).data;
-  expect(data.version).toBe(6);
+  expect(data.version).toBe(7);
   expect(data.missions[0].status).toBe("review");
   expect(data.missions[0].reports).toHaveLength(2);
   expect(data.missions[0].reports[0].evidence).toContain("sonnet-5-5/overview");

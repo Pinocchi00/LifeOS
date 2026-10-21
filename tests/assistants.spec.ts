@@ -146,7 +146,7 @@ test("mission complète, instructions, rapports, validation, filtres et projet s
     page.getByText("Donnez une intention à vos assistants."),
   ).toBeVisible();
 });
-test("compteurs manuels persistants, export v6 et restauration de sauvegarde v1", async ({
+test("compteurs manuels persistants, export v7 et restauration de sauvegarde v1", async ({
   page,
 }) => {
   await center(page);
@@ -177,7 +177,7 @@ test("compteurs manuels persistants, export v6 et restauration de sauvegarde v1"
   await page.getByRole("button", { name: "Exporter mes données" }).click();
   const file = await download;
   const content = JSON.parse(await readFile((await file.path())!, "utf8"));
-  expect(content.data.version).toBe(6);
+  expect(content.data.version).toBe(7);
   expect(content.data.usage[0].used).toBe(4);
   expect(content.data.usage[0].limit).toBe(10);
   const legacy = {

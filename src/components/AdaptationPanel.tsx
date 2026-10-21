@@ -481,7 +481,7 @@ export function AdaptationPanel({
       </section>
       <p className="small muted">
         Ces informations sont locales et incluses dans la sauvegarde
-        d’organisation v6. La recherche générale n’indexe pas les décisions :
+        d’organisation v7. La recherche générale n’indexe pas les décisions :
         utilisez le champ du carnet. Aucun suivi Vie n’alimente les conseils.
         Les historiques décrivent vos choix ; ils ne constituent pas un journal
         certifié.

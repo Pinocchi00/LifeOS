@@ -179,7 +179,7 @@ test("liens locaux sans réseau, lecture explicite, CI datée et validation de m
     "ne constituent pas une validation",
   );
 });
-test("relevés conservés après erreur, export v6, migration v5 et restauration hors ligne", async ({
+test("relevés conservés après erreur, export v7, migration v5 et restauration hors ligne", async ({
   page,
   context,
 }) => {
@@ -227,12 +227,12 @@ test("relevés conservés après erreur, export v6, migration v5 et restauration
   const download = await downloaded;
   const path = (await download.path())!;
   const raw = JSON.parse(await readFile(path, "utf8"));
-  expect(raw.data.version).toBe(6);
+  expect(raw.data.version).toBe(7);
   expect(raw.data.githubLinks[0].checks).toHaveLength(1);
   expect(raw.data.missions[0].status).toBe("review");
   expect(raw.data).not.toHaveProperty("personal");
   await close(page);
-  const { githubLinks: _links, ...v5 } = raw.data;
+  const { automationRuns: _runs, githubLinks: _links, ...v5 } = raw.data;
   await restore(page, { ...v5, version: 5 });
   await open(page);
   await expect(page.locator(".github-link")).toHaveCount(0);

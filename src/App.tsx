@@ -141,6 +141,12 @@ const AiPanel = lazy(() =>
   })),
 );
 
+const AutomationsPanel = lazy(() =>
+  import("./components/AutomationsPanel").then((module) => ({
+    default: module.AutomationsPanel,
+  })),
+);
+
 type Space = "home" | "agenda" | "projects" | "life" | "explore";
 type Editor =
   | {
@@ -167,6 +173,7 @@ type Editor =
       pathId?: string;
       stepId?: string;
     }
+  | { type: "automations" }
   | { type: "adaptation" }
   | { type: "preferences" }
   | { type: "decision"; value?: Decision }
@@ -585,14 +592,17 @@ function Backup({
         <span>
           <b>{data.adaptation.revisions.length}</b> versions de réglages
         </span>
+        <span>
+          <b>{data.automationRuns.length}</b> automatisations
+        </span>
       </div>
       <p className="small muted">
         Les réglages, les décisions et leurs historiques font partie de cette
-        sauvegarde d’organisation v6. Les titres, adresses et états des
-        références GitHub privées y figurent aussi en clair. Les accès du
-        serveur n’y sont pas enregistrés. Les brouillons IA adoptés sont inclus
-        en clair ; les clés et le registre de limites du serveur restent
-        séparés.
+        sauvegarde d’organisation v7, y compris le journal des automatisations.
+        Les titres, adresses et états des références GitHub privées y figurent
+        aussi en clair. Les accès du serveur n’y sont pas enregistrés. Les
+        brouillons IA adoptés sont inclus en clair ; les clés et le registre de
+        limites du serveur restent séparés.
       </p>
       <button
         className="button primary"
@@ -625,7 +635,7 @@ function Backup({
               setPending(parseBackup(await file.text()));
             } catch {
               setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v6 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
+                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v7 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
               );
             }
             event.target.value = "";
@@ -653,8 +663,9 @@ function Backup({
               (sum, link) => sum + link.checks.length,
               0,
             )}{" "}
-            relevés. L’import ne déclenche aucune lecture de GitHub. Les suivis
-            Vie ne seront pas modifiés.
+            relevés et {pending.automationRuns.length} opérations
+            d’automatisation. L’import ne déclenche aucun déplacement ni lecture
+            de GitHub. Les suivis Vie ne seront pas modifiés.
           </p>
           <button
             disabled={busy || exporting}
@@ -759,6 +770,7 @@ export default function App() {
   const [briefingMode, setBriefingMode] = useState<"morning" | "evening">(
     "morning",
   );
+  const [automationPending, setAutomationPending] = useState(false);
   const [today, setToday] = useState(localDay());
   const [selectedDay, setSelectedDay] = useState(localDay());
   useEffect(() => {
@@ -1567,6 +1579,7 @@ export default function App() {
                 today={today}
                 selectedDay={selectedDay}
                 selectDay={setSelectedDay}
+                openAutomations={() => setEditor({ type: "automations" })}
                 busy={busy}
                 renderTask={taskRow}
                 toggleTask={toggle}
@@ -1950,65 +1963,75 @@ export default function App() {
       {editor && (
         <Modal
           close={close}
-          pending={editor.type === "ai" && aiPending}
+          pendingMessage={
+            editor.type === "automations"
+              ? "Votre sélection ou votre aperçu sera perdu. Les opérations déjà enregistrées restent conservées ; une écriture en cours se terminera."
+              : undefined
+          }
+          pending={
+            (editor.type === "ai" && aiPending) ||
+            (editor.type === "automations" && automationPending)
+          }
           title={
-            editor.type === "ai"
-              ? "Un brouillon à relire"
-              : editor.type === "github"
-                ? "GitHub, les faits conservés"
-                : editor.type === "githubAdd"
-                  ? "Relier une référence GitHub"
-                  : editor.type === "adaptation"
-                    ? "Vos repères, vos choix"
-                    : editor.type === "preferences"
-                      ? "Ajuster mes réglages"
-                      : editor.type === "decision"
-                        ? editor.value
-                          ? "Relire ma décision"
-                          : "Consigner une décision"
-                        : editor.type === "resource"
+            editor.type === "automations"
+              ? "Automatiser avec attention"
+              : editor.type === "ai"
+                ? "Un brouillon à relire"
+                : editor.type === "github"
+                  ? "GitHub, les faits conservés"
+                  : editor.type === "githubAdd"
+                    ? "Relier une référence GitHub"
+                    : editor.type === "adaptation"
+                      ? "Vos repères, vos choix"
+                      : editor.type === "preferences"
+                        ? "Ajuster mes réglages"
+                        : editor.type === "decision"
                           ? editor.value
-                            ? "Modifier la ressource"
-                            : "Garder une ressource"
-                          : editor.type === "learningPath"
+                            ? "Relire ma décision"
+                            : "Consigner une décision"
+                          : editor.type === "resource"
                             ? editor.value
-                              ? "Modifier le parcours"
-                              : "Un parcours d’apprentissage"
-                            : editor.type === "learningEntry"
-                              ? "Votre séance d’apprentissage"
-                              : editor.type === "routine"
-                                ? editor.value
-                                  ? "Modifier la routine"
-                                  : "Nouvelle routine"
-                                : editor.type === "goal"
+                              ? "Modifier la ressource"
+                              : "Garder une ressource"
+                            : editor.type === "learningPath"
+                              ? editor.value
+                                ? "Modifier le parcours"
+                                : "Un parcours d’apprentissage"
+                              : editor.type === "learningEntry"
+                                ? "Votre séance d’apprentissage"
+                                : editor.type === "routine"
                                   ? editor.value
-                                    ? "Modifier l’objectif"
-                                    : "Nouvel objectif"
-                                  : editor.type === "task"
+                                    ? "Modifier la routine"
+                                    : "Nouvelle routine"
+                                  : editor.type === "goal"
                                     ? editor.value
-                                      ? "Modifier la tâche"
-                                      : "Un nouveau petit pas"
-                                    : editor.type === "project"
+                                      ? "Modifier l’objectif"
+                                      : "Nouvel objectif"
+                                    : editor.type === "task"
                                       ? editor.value
-                                        ? "Modifier le projet"
-                                        : "Un nouveau projet"
-                                      : editor.type === "note"
+                                        ? "Modifier la tâche"
+                                        : "Un nouveau petit pas"
+                                      : editor.type === "project"
                                         ? editor.value
-                                          ? "Modifier l’idée"
-                                          : "Capturer une idée"
-                                        : editor.type === "backup"
-                                          ? "Vos données, en sécurité"
-                                          : editor.type === "search"
-                                            ? "Retrouver l’essentiel"
-                                            : editor.type === "mission"
-                                              ? editor.value
-                                                ? "Modifier la mission"
-                                                : "Nouvelle mission"
-                                              : editor.type === "usage"
-                                                ? "Votre compteur personnel"
-                                                : editor.type === "focus"
-                                                  ? "Une chose à la fois"
-                                                  : "Instructions de mission"
+                                          ? "Modifier le projet"
+                                          : "Un nouveau projet"
+                                        : editor.type === "note"
+                                          ? editor.value
+                                            ? "Modifier l’idée"
+                                            : "Capturer une idée"
+                                          : editor.type === "backup"
+                                            ? "Vos données, en sécurité"
+                                            : editor.type === "search"
+                                              ? "Retrouver l’essentiel"
+                                              : editor.type === "mission"
+                                                ? editor.value
+                                                  ? "Modifier la mission"
+                                                  : "Nouvelle mission"
+                                                : editor.type === "usage"
+                                                  ? "Votre compteur personnel"
+                                                  : editor.type === "focus"
+                                                    ? "Une chose à la fois"
+                                                    : "Instructions de mission"
           }
         >
           {editor.type === "ai" && (
@@ -2067,6 +2090,20 @@ export default function App() {
                       ? { type: "github", missionId: editor.missionId }
                       : current,
                   )
+                }
+              />
+            </Suspense>
+          )}
+          {editor.type === "automations" && (
+            <Suspense
+              fallback={<p role="status">Ouverture des automatisations…</p>}
+            >
+              <AutomationsPanel
+                data={data}
+                today={today}
+                dirty={setAutomationPending}
+                change={(operation) =>
+                  change(operation, "Automatisation enregistrée")
                 }
               />
             </Suspense>

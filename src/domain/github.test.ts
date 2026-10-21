@@ -207,7 +207,7 @@ describe("Liens GitHub publics et référencés", () => {
       { ...emptyData().adaptation.preferences, priorityCount: 1 },
       "Une seule priorité",
     );
-    const { githubLinks: _links, ...v5 } = data;
+    const { automationRuns: _runs, githubLinks: _links, ...v5 } = data;
     expect(storedDataSchema.parse({ ...v5, version: 5 })).toEqual(data);
     data = addGithubLink(data, "m1", "https://github.com/a/b/pull/1");
     data = appendGithubCheck(data, data.githubLinks[0].id, check());
@@ -215,6 +215,6 @@ describe("Liens GitHub publics et référencés", () => {
     expect(JSON.parse(serializeBackup(data)).data).not.toHaveProperty(
       "personal",
     );
-    expect(JSON.parse(serializeBackup(data)).data.version).toBe(6);
+    expect(JSON.parse(serializeBackup(data)).data.version).toBe(7);
   });
 });

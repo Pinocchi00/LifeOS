@@ -261,7 +261,7 @@ test("apprentissage déclaré, progression réversible et historique après retr
     "30 MIN DÉCLARÉES",
   );
 });
-test("sauvegarde v6, restauration des liens, import v3 et bibliothèque hors ligne", async ({
+test("sauvegarde v7, restauration des liens, import v3 et bibliothèque hors ligne", async ({
   page,
   context,
 }) => {
@@ -277,7 +277,7 @@ test("sauvegarde v6, restauration des liens, import v3 et bibliothèque hors lig
   await page.getByRole("button", { name: "Exporter mes données" }).click();
   const path = await (await downloaded).path();
   const raw = JSON.parse(await readFile(path!, "utf8"));
-  expect(raw.data.version).toBe(6);
+  expect(raw.data.version).toBe(7);
   expect(raw.data.learningEntries).toHaveLength(1);
   await page.getByRole("button", { name: "Fermer", exact: true }).click();
   await view(page, "Ressources");

@@ -11,11 +11,13 @@ export function Modal({
   children,
   close,
   pending = false,
+  pendingMessage = "Un brouillon ou un envoi IA reste en cours. Fermer peut perdre la réponse et n’annule pas forcément sa facturation.",
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
   pending?: boolean;
+  pendingMessage?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [dirty, setDirty] = useState(false);
@@ -103,7 +105,7 @@ export function Modal({
           <strong>Garder vos modifications ?</strong>
           <p>
             {pending
-              ? "Un brouillon ou un envoi IA reste en cours. Fermer peut perdre la réponse et n’annule pas forcément sa facturation."
+              ? pendingMessage
               : "Le formulaire n’est pas enregistré. Vous pouvez continuer ou quitter sans enregistrer."}
           </p>
           <div>

@@ -1,5 +1,16 @@
 # Vérifications LifeOS
 
+## Lot 0.15 — 21 octobre 2026
+
+- **169 tests Vitest réussis**, dix-huit fichiers : sélection explicite et bornée, intervalles libres, priorités, dates limites/durées conservées, tâches et routines occupées, place insuffisante, aperçu expiré/réutilisé, modification/suppression/réalisation après aperçu, absence de mutation partielle, retour protégé, limite de journal, export/import v7 et migration IndexedDB v6 en place. Une recherche avec 20 000 tâches vérifie aussi le parcours des intervalles superposés ; aucun seuil de performance artificiel n’est déduit de ce seul test.
+- **78 tests serveur Node réussis**, fournisseurs fictifs uniquement ; aucun appel IA payé. Aucun code de serveur ou dépendance ajouté pour cette fonction locale.
+- **82 parcours Playwright réussis**, régression complète ordinateur et Pixel 7. Les six nouveaux parcours couvrent l’absence d’écriture à l’aperçu, le consentement, la protection de fermeture sans message IA, les déplacements sans conflit, les échéances inchangées, l’export/restauration, le retour daté, la place insuffisante, l’expiration, l’absence de débordement mobile, le journal hors ligne, le refus de retour après édition et l’effacement confirmé sans déplacement. Captures d’aperçu relues visuellement. Les six nouveaux parcours sont rejoués après les dernières finitions de focus et d’algorithme ; résultat final à consigner ci-dessous.
+- Compilation TypeScript/Vite/PWA, APK de développement, lint Gradle, test unitaire Java et compilation des scénarios instrumentés réussis. La recette native existante est étendue à la préparation, au consentement, au retour Android protégé, au journal après rechargement et à l’annulation, puis à leur export et restauration ; son exécution distante reste à vérifier après envoi.
+- APK local **`artifacts/LifeOS-0.15.0-debug.apk`**, **6 993 540 octets**, signature v2 vérifiée, version `0.15.0`, `versionCode 1500`, min API 24, cible/compilation 36. SHA-256 **`8ce04bb9f99a1e268a1183fdbd0363d84edd7475b33ea0538240614e2e7e9a98`**. APK de développement ; téléphone physique et signature de production non validés.
+- `npm audit --omit=dev` : zéro vulnérabilité connue signalée à cette date. Aucun changement de dépendances dans ce lot ; ce résultat ne constitue pas un audit exhaustif.
+- Limites : recherche déterministe selon la priorité, sans optimisation globale de la journée ; aucun ordonnanceur, aucune écriture GitHub ni action IA automatique. Les snapshots du journal contiennent les anciens textes des tâches, sont exportés en clair et ne disparaissent que lors de l’effacement explicite du journal. Le plafond général des sauvegardes reste 10 Mo. Vie conserve son format séparé v1.
+
+
 ## Lot 0.14 — 21 octobre 2026
 
 - **148 tests Vitest réussis**, dix-sept fichiers. Six nouveaux cas du pont natif : origines HTTPS canoniques et refus des chemins/identifiants/HTTP, réglages purement locaux, appels du pont sans fetch/cookie/bearer JS, annulation avant/pendant appel, erreurs TLS/serveur/réponses incompatibles sans repli et contrôle d’identité du relevé.

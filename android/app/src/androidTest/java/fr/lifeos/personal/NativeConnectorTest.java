@@ -126,7 +126,7 @@ public class NativeConnectorTest extends NativeSmokeTest {
         assertNotNull(files);assertTrue(files.length>0);
         String raw=new String(Files.readAllBytes(files[0].toPath()),StandardCharsets.UTF_8);
         JSONObject data=new JSONObject(raw).getJSONObject("data");
-        assertEquals(6,data.getInt("version"));assertEquals("todo",data.getJSONArray("missions").getJSONObject(0).getString("status"));
+        assertEquals(7,data.getInt("version"));assertEquals("todo",data.getJSONArray("missions").getJSONObject(0).getString("status"));
         assertTrue(raw.contains("BROUILLON IA — NON VÉRIFIÉ"));assertTrue(raw.contains("Référence privée HTTPS fictive"));
         for(String secret:new String[]{"nativeSession","native-https-fixture-code","fixture-github-token","fixture-openai-key","https://127.0.0.1:4182"})assertFalse(secret,raw.contains(secret));
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack();

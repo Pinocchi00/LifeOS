@@ -128,7 +128,7 @@ it("bornes strictes des entrées, aucune clé/cible/modèle arbitraire", () => {
   ])
     expect(aiInputSchema.safeParse(value).success).toBe(false);
 });
-it("adoption explicite en compte-rendu non vérifié, statut et validation conservés, export v6", () => {
+it("adoption explicite en compte-rendu non vérifié, statut et validation conservés, export v7", () => {
   const previous = data();
   const result = adoptAiDraft(previous, "m", draft());
   expect(previous.missions[0].reports).toHaveLength(0);

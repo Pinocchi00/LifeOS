@@ -217,7 +217,7 @@ test("HTTPS réel : appairage partagé GitHub/IA, consentement, révocation, exp
     /https-browser-fixture-(code|github-token|openai-key)|lifeos_connector|BEGIN PRIVATE KEY/,
   );
   const exported = JSON.parse(raw).data;
-  expect(exported.version).toBe(6);
+  expect(exported.version).toBe(7);
   expect(exported.missions[0].status).toBe("review");
   expect(exported.missions[0].reports[0].body).toContain(
     "BROUILLON IA — NON VÉRIFIÉ",

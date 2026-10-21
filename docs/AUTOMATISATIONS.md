@@ -1,0 +1,13 @@
+# Replanifier avec attention
+
+Dans **Agenda → Automatisations**, choisissez un jour d’accueil et une plage horaire. Cochez de 1 à 20 tâches dont le créneau est sur un jour passé, puis **Préparer l’aperçu**. Les tâches terminées, sans créneau, prévues aujourd’hui ou dans le futur ne sont pas candidates.
+
+Le moteur cherche les places libres en respectant les tâches et les routines déjà planifiées, y compris les créneaux réalisés. Les priorités hautes passent d’abord, puis les échéances les plus proches. La durée est conservée. La recherche avance par pas de cinq minutes à partir de l’heure choisie. Pour aujourd’hui, les propositions commencent au moins cinq minutes après la préparation. Ce mécanisme ne garantit pas une optimisation globale : il place les tâches dans cet ordre, et indique celles qui ne trouvent pas de place. Élargissez la plage ou réduisez la sélection si nécessaire.
+
+Lisez les lignes **Avant / Après** et les tâches laissées en place. Les échéances restent inchangées : déplacer une session ne repousse pas sa date limite. Cochez le consentement puis **Appliquer ces déplacements**. Rien ne change avant cette étape. L’aperçu expire après dix minutes. Si une tâche sélectionnée change ou si une place est devenue indisponible, tout le lot est refusé et doit être préparé à nouveau.
+
+Chaque application figure dans **Le journal**, conservé après rechargement et dans la sauvegarde générale v7. Dépliez une opération pour relire ses déplacements. **Revenir aux anciens créneaux** puis la confirmation rétablit le lot entier seulement si chaque tâche est inchangée et si aucun autre engagement n’occupe les anciens créneaux. Une édition, une réalisation, une suppression ou la suppression du projet rattaché peut bloquer ce retour. Ajustez alors les tâches individuellement dans l’agenda. Le retour lui-même reste daté dans le journal.
+
+Cent opérations sont conservées au maximum. À cette limite, aucune opération existante n’est supprimée pour faire de la place. Exportez une sauvegarde, puis utilisez **Effacer le journal** et sa confirmation. Les tâches restent en place, mais le retour groupé depuis ce journal n’est plus possible. Les instantanés contiennent aussi les anciens titres et descriptions des tâches, même si elles sont ensuite supprimées : effacer le journal les retire de l’application, pas des sauvegardes déjà exportées.
+
+La fonction marche hors ligne, dans la PWA et dans l’APK. Elle n’effectue aucun appel GitHub ou IA, ne déclenche aucun coût et ne tourne pas en arrière-plan. Importer une sauvegarde restaure les données enregistrées, sans rejouer les automatisations. Les suivis Vie gardent leur sauvegarde séparée.

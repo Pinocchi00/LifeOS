@@ -4,6 +4,21 @@ import { describe, expect, it } from "vitest";
 import { readData, writeData } from "./database";
 import { emptyData, type Data } from "../domain/model";
 describe("IndexedDB", () => {
+  it("migre v6 en place en conservant toutes les collections et en initialisant le journal", async () => {
+    const current = emptyData();
+    const { automationRuns: _runs, ...v6 } = current;
+    const db = await openDB("lifeos-core", 1, {
+      upgrade(database) {
+        database.createObjectStore("state");
+      },
+    });
+    await db.put("state", { ...v6, version: 6 }, "current");
+    db.close();
+    expect(await readData()).toEqual(current);
+    const check = await openDB("lifeos-core", 1);
+    expect(await check.get("state", "current")).toEqual(current);
+    check.close();
+  });
   it("migre une enveloppe v1 existante sans effacer ses notes", async () => {
     const db = await openDB("lifeos-core", 1, {
       upgrade(database) {
@@ -26,11 +41,11 @@ describe("IndexedDB", () => {
     await db.put("state", legacy, "current");
     db.close();
     const migrated = await readData();
-    expect(migrated.version).toBe(6);
+    expect(migrated.version).toBe(7);
     expect(migrated.notes).toEqual(legacy.notes);
     expect(migrated.missions).toEqual([]);
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(6);
+    expect((await check.get("state", "current")).version).toBe(7);
     check.close();
     await writeData(emptyData());
   });
@@ -54,6 +69,7 @@ describe("IndexedDB", () => {
   });
   it("migre aussi v2 en place et conserve les tâches existantes", async () => {
     const {
+      automationRuns,
       githubLinks,
       adaptation,
       resources,
@@ -75,7 +91,8 @@ describe("IndexedDB", () => {
     db.close();
     expect(await readData()).toEqual({
       ...legacy,
-      version: 6,
+      version: 7,
+      automationRuns,
       githubLinks,
       adaptation,
       resources,
@@ -87,7 +104,7 @@ describe("IndexedDB", () => {
       goals,
     });
     const check = await openDB("lifeos-core", 1);
-    expect((await check.get("state", "current")).version).toBe(6);
+    expect((await check.get("state", "current")).version).toBe(7);
     check.close();
     await writeData(emptyData());
   });
@@ -111,6 +128,7 @@ describe("IndexedDB", () => {
   });
   it("migre une enveloppe v3 réelle et réécrit v5 sans effacer le planning", async () => {
     const {
+      automationRuns,
       githubLinks,
       adaptation,
       resources,
@@ -135,7 +153,8 @@ describe("IndexedDB", () => {
     const migrated = await readData();
     expect(migrated).toEqual({
       ...legacy,
-      version: 6,
+      version: 7,
+      automationRuns,
       githubLinks,
       adaptation,
       tasks: [task],
@@ -143,12 +162,12 @@ describe("IndexedDB", () => {
       learningPaths,
       learningEntries,
     });
-    expect((await db.get("state", "current")).version).toBe(6);
+    expect((await db.get("state", "current")).version).toBe(7);
     db.close();
     await writeData(emptyData());
   });
   it("migre v4 en place et conserve Explorer sans consulter la base Vie", async () => {
-    const { githubLinks, adaptation, ...legacy } = emptyData();
+    const { automationRuns, githubLinks, adaptation, ...legacy } = emptyData();
     const note = {
       id: "note-v4",
       title: "Conservée",
@@ -160,7 +179,8 @@ describe("IndexedDB", () => {
     const migrated = await readData();
     expect(migrated).toEqual({
       ...legacy,
-      version: 6,
+      version: 7,
+      automationRuns,
       githubLinks,
       notes: [note],
       adaptation,
@@ -176,7 +196,7 @@ describe("IndexedDB", () => {
       { ...emptyData().adaptation.preferences, priorityCount: 1 },
       "Garder un cap",
     );
-    const { githubLinks: _links, ...legacy } = current;
+    const { automationRuns: _runs, githubLinks: _links, ...legacy } = current;
     const db = await openDB("lifeos-core", 1);
     await db.put("state", { ...legacy, version: 5 }, "current");
     expect(await readData()).toEqual(current);

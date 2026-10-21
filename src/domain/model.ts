@@ -1,5 +1,8 @@
+import { taskSchema } from "./taskSchema";
+export { taskSchema } from "./taskSchema";
+import { automationRunSchema } from "./automationSchema";
 import { z } from "zod";
-import { text, id, title, day } from "./validation";
+import { text, id, title } from "./validation";
 import { githubKey, githubLinkSchema } from "./githubSchema";
 import { adaptationSchema, emptyAdaptation } from "./adaptationSchema";
 import {
@@ -9,32 +12,10 @@ import {
 } from "./exploreSchema";
 import { missionSchema, usageSchema } from "./assistants";
 import {
-  scheduleSchema,
   routineSchema,
   routineEntrySchema,
   goalSchema,
 } from "./planningSchema";
-export const taskSchema = z
-  .object({
-    id,
-    title,
-    description: text,
-    status: z.enum(["todo", "done"]),
-    priority: z.enum(["high", "medium", "low"]),
-    due: day.or(z.literal("")),
-    schedule: scheduleSchema.optional(),
-    projectId: id.or(z.literal("")),
-    createdAt: z.string().datetime(),
-    completedAt: z.string().datetime().nullable(),
-  })
-  .strict()
-  .refine(
-    (task) =>
-      task.status === "done"
-        ? task.completedAt !== null
-        : task.completedAt === null,
-    "Statut et date de réalisation incohérents",
-  );
 export const projectSchema = z
   .object({
     id,
@@ -278,62 +259,119 @@ const validateAdaptation = (
     });
 };
 const v5Schema = v5Base.superRefine(validateAdaptation);
-export const dataSchema = v5Base
-  .extend({
-    version: z.literal(6),
-    githubLinks: z.array(githubLinkSchema).max(2000),
-  })
-  .superRefine((data, context) => {
-    validateAdaptation({ ...data, version: 5 }, context);
-    const missions = new Set(data.missions.map((mission) => mission.id));
-    const keys = new Set<string>();
-    const counts = new Map<string, number>();
-    for (const link of data.githubLinks) {
-      const key = `${link.missionId}/${githubKey(link.target)}`;
-      const count = (counts.get(link.missionId) ?? 0) + 1;
-      counts.set(link.missionId, count);
-      if (!missions.has(link.missionId) || keys.has(key) || count > 10)
-        context.addIssue({
-          code: "custom",
-          message:
-            "Lien GitHub orphelin, dupliqué ou limite par mission dépassée.",
-        });
-      keys.add(key);
-    }
-    const items = [
-      ...data.tasks,
-      ...data.projects,
-      ...data.notes,
-      ...data.missions,
-      ...data.missions.flatMap((item) => item.reports),
-      ...data.routines,
-      ...data.routineEntries,
-      ...data.goals,
-      ...data.resources,
-      ...data.learningPaths,
-      ...data.learningPaths.flatMap((item) => item.steps),
-      ...data.learningEntries,
-      ...data.adaptation.revisions,
-      ...data.adaptation.feedback,
-      ...data.adaptation.decisions,
-      ...data.githubLinks,
-      ...data.githubLinks.flatMap((link) => link.checks),
-    ];
-    if (new Set(items.map((item) => item.id)).size !== items.length)
+const v6Base = v5Base.extend({
+  version: z.literal(6),
+  githubLinks: z.array(githubLinkSchema).max(2000),
+});
+const validateGithub = (
+  data: z.infer<typeof v6Base>,
+  context: z.RefinementCtx,
+) => {
+  validateAdaptation({ ...data, version: 5 }, context);
+  const missions = new Set(data.missions.map((mission) => mission.id));
+  const keys = new Set<string>();
+  const counts = new Map<string, number>();
+  for (const link of data.githubLinks) {
+    const key = `${link.missionId}/${githubKey(link.target)}`;
+    const count = (counts.get(link.missionId) ?? 0) + 1;
+    counts.set(link.missionId, count);
+    if (!missions.has(link.missionId) || keys.has(key) || count > 10)
       context.addIssue({
         code: "custom",
-        message: "Identifiants GitHub ou d’organisation dupliqués.",
+        message:
+          "Lien GitHub orphelin, dupliqué ou limite par mission dépassée.",
+      });
+    keys.add(key);
+  }
+  const items = [
+    ...data.tasks,
+    ...data.projects,
+    ...data.notes,
+    ...data.missions,
+    ...data.missions.flatMap((item) => item.reports),
+    ...data.routines,
+    ...data.routineEntries,
+    ...data.goals,
+    ...data.resources,
+    ...data.learningPaths,
+    ...data.learningPaths.flatMap((item) => item.steps),
+    ...data.learningEntries,
+    ...data.adaptation.revisions,
+    ...data.adaptation.feedback,
+    ...data.adaptation.decisions,
+    ...data.githubLinks,
+    ...data.githubLinks.flatMap((link) => link.checks),
+  ];
+  if (new Set(items.map((item) => item.id)).size !== items.length)
+    context.addIssue({
+      code: "custom",
+      message: "Identifiants GitHub ou d’organisation dupliqués.",
+    });
+};
+const v6Schema = v6Base.superRefine(validateGithub);
+export const dataSchema = v6Base
+  .extend({
+    version: z.literal(7),
+    automationRuns: z.array(automationRunSchema).max(100),
+  })
+  .superRefine((data, context) => {
+    validateGithub({ ...data, version: 6 }, context);
+    const ids = data.automationRuns.map((run) => run.id);
+    const otherIds = new Set(
+      [
+        ...data.tasks,
+        ...data.projects,
+        ...data.notes,
+        ...data.missions,
+        ...data.missions.flatMap((item) => item.reports),
+        ...data.routines,
+        ...data.routineEntries,
+        ...data.goals,
+        ...data.resources,
+        ...data.learningPaths,
+        ...data.learningPaths.flatMap((item) => item.steps),
+        ...data.learningEntries,
+        ...data.adaptation.revisions,
+        ...data.adaptation.feedback,
+        ...data.adaptation.decisions,
+        ...data.githubLinks,
+        ...data.githubLinks.flatMap((item) => item.checks),
+      ].map((item) => item.id),
+    );
+    if (
+      new Set(ids).size !== ids.length ||
+      ids.some((value) => otherIds.has(value))
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Identifiants d’automatisation dupliqués.",
       });
   });
 export const storedDataSchema = z
-  .union([dataSchema, v5Schema, v4Schema, v3Schema, v2Schema, legacySchema])
+  .union([
+    dataSchema,
+    v6Schema,
+    v5Schema,
+    v4Schema,
+    v3Schema,
+    v2Schema,
+    legacySchema,
+  ])
   .transform((data) => {
-    if (data.version === 6) return data;
+    if (data.version === 7) return data;
+    if (data.version === 6)
+      return { ...data, version: 7 as const, automationRuns: [] };
     if (data.version === 5)
-      return { ...data, version: 6 as const, githubLinks: [] };
+      return {
+        ...data,
+        version: 7 as const,
+        githubLinks: [],
+        automationRuns: [],
+      };
     return {
       ...data,
-      version: 6 as const,
+      version: 7 as const,
+      automationRuns: [],
       githubLinks: [],
       adaptation: emptyAdaptation(),
       missions: data.version === 1 ? [] : data.missions,
@@ -359,7 +397,8 @@ export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Data = z.infer<typeof dataSchema>;
 export const emptyData = (): Data => ({
-  version: 6,
+  version: 7,
+  automationRuns: [],
   githubLinks: [],
   adaptation: emptyAdaptation(),
   resources: [],

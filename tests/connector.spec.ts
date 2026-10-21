@@ -165,7 +165,7 @@ test("serveur réel local, appairage sans lecture, relevé privé fictif, export
     /fixture-provider|fixture-browser-code|lifeos_connector|EXCLUDED-BROWSER-BODY/,
   );
   const backup = JSON.parse(raw);
-  expect(backup.data.version).toBe(6);
+  expect(backup.data.version).toBe(7);
   expect(backup.data.githubLinks[0].checks).toHaveLength(1);
   expect(backup.data.missions[0].status).toBe("review");
   expect(backup.data).not.toHaveProperty("personal");
