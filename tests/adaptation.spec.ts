@@ -232,6 +232,9 @@ test("décision relue, modifiée, export v6, restauration v4 et fonctionnement h
   await page
     .getByRole("button", { name: "Confirmer le remplacement", exact: true })
     .click();
+  // The dialog closes only after the IndexedDB restore transaction commits.
+  // Replaying a cached page before that point can correctly retain the old v4 data.
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
