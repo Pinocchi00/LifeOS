@@ -229,3 +229,14 @@ L’aperçu en mémoire est indépendant des données courantes. Après consente
 Le retour groupé exige les tâches identiques aux instantanés après déplacement et les anciens créneaux libres. Il ne ressuscite aucune tâche supprimée et ne remplace aucune édition. Les créneaux originaux pouvaient déjà se chevaucher entre eux : leur restauration reproduit ce choix initial. Les autres engagements actuels restent protégés. Les opérations sont bornées à cent, sans effacement implicite. Effacer le journal exige une confirmation dédiée et conserve les tâches.
 
 Le format général passe en v7. Les snapshots historiques ne sont pas des références vivantes : supprimer une tâche ou un projet ne détruit pas sa trace passée, mais peut bloquer le retour groupé. Ils incluent le texte de la tâche au moment du déplacement ; l’export général contient ces textes en clair. Le journal peut être effacé explicitement. La base Vie, les clés fournisseur et la configuration native restent hors de ce format.
+
+
+## Sauvegardes et écritures sous contrôle — lot 0.16
+
+Chaque sélection de fichier reçoit un numéro de lecture en mémoire. Une nouvelle sélection, une annulation ou la fermeture invalide les lectures précédentes. Une réponse devenue ancienne n’est ni parsée ni affichée et ne peut réactiver une confirmation. Le sélecteur reste utilisable pendant une lecture pour remplacer son choix. Annuler retire le droit de restaurer ; cela ne promet pas d’interrompre physiquement la lecture native du fichier déjà engagée.
+
+Les exports et les confirmations de restauration attendent les écritures en cours de leur espace. Le compteur couvre toutes les mutations générales en file, comme le compteur existant de Vie. La transaction valide écrit l’état normalisé, qui devient aussi l’état en mémoire. Une interruption attend la fin effective de la transaction avant de signaler son échec et conserve l’ancienne enveloppe.
+
+La taille portable reste bornée à 10 × 1 024 × 1 024 octets UTF-8. L’export essaie d’abord un JSON indenté puis, si nécessaire, le même contenu sans indentation. Le JSON compact reste lisible par les anciennes versions compatibles avec son format ; les données générales restent en v7 et Vie en v1. Si même le contenu compact dépasse la limite, aucun export tronqué n’est produit. Les limites de nombre d’éléments et de taille du fichier sont distinctes : tous les jeux de données autorisés individuellement ne sont pas garantis exportables ensemble. Aucun découpage ni fusion automatique n’est introduit.
+
+La validation lit le discriminant de version avant de parcourir les collections. Les contraintes et migrations des sept formats restent celles de leurs schémas respectifs. Les gros fichiers invalides évitent ainsi les essais successifs des versions historiques. Les mesures de ce lot portent sur des données synthétiques ; elles ne constituent pas une promesse de durée sur téléphone ni un audit global des performances de l’agenda.

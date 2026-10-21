@@ -1217,6 +1217,7 @@ export function PersonalSpace({ today }: { today: string }) {
           {editor.type === "backup" && (
             <PersonalBackupForm
               data={data}
+              writing={busy}
               change={(operation) =>
                 commit(operation, "Rubriques Vie restaurées")
               }

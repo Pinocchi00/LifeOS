@@ -2,7 +2,7 @@
 
 ## Installer l’APK de développement
 
-Le lot 0.15 produit `artifacts/LifeOS-0.15.0-debug.apk` et son empreinte `.sha256`. Copier le fichier sur le téléphone, l’ouvrir et autoriser la source d’installation lorsque le système le demande. Android 7/API 24 est le minimum déclaré ; un Android System WebView récent reste nécessaire aux fonctions web de l’application. Cette version n’est pas une publication Play Store et n’a pas de clé de production.
+Le lot 0.16 produit `artifacts/LifeOS-0.16.0-debug.apk` et son empreinte `.sha256`. Copier le fichier sur le téléphone, l’ouvrir et autoriser la source d’installation lorsque le système le demande. Android 7/API 24 est le minimum déclaré ; un Android System WebView récent reste nécessaire aux fonctions web de l’application. Cette version n’est pas une publication Play Store et n’a pas de clé de production.
 
 L’installation Android possède son propre stockage. Pour transférer des informations depuis Windows : exporter l’organisation et, séparément, les rubriques Vie souhaitées ; copier les fichiers ; les restaurer dans l’APK après lecture du récapitulatif. Une restauration remplace les rubriques annoncées, sans fusion entre appareils. Exporter les données courantes avant tout remplacement.
 
@@ -55,3 +55,8 @@ La recette native historique est conservée. Un second profil d’essai vérifie
 ## Automatisations locales 0.15
 
 Dans **Agenda → Automatisations**, replanifier les créneaux passés après sélection, aperçu et consentement. Le journal est conservé dans l’organisation v7 et permet un retour groupé si les tâches n’ont pas changé. Fonctionne hors ligne, sans serveur ni notification automatique. Voir [AUTOMATISATIONS.md](AUTOMATISATIONS.md).
+
+
+## Sauvegardes renforcées 0.16
+
+Le sélecteur Android bénéficie du dernier fichier prioritaire et de l’annulation d’aperçu, avec possibilité de choisir à nouveau le même fichier. L’export attend les écritures engagées et passe en JSON compact si seule l’indentation dépasse la limite. Les formats v7 et Vie v1 ne changent pas. La recette instrumentée annule un premier aperçu, vérifie que les deux tâches locales sont conservées puis reprend le même fichier et confirme sa restauration.

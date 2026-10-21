@@ -9,6 +9,7 @@ export function useLifeOS() {
   const [busy, setBusy] = useState(false);
   const current = useRef(data);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const pending = useRef(0);
   useEffect(() => {
     let cancelled = false;
     let release = () => {};
@@ -50,11 +51,13 @@ export function useLifeOS() {
   }, []);
   const mutate = useCallback(
     (change: (previous: Data) => Data): Promise<void> => {
+      pending.current++;
       setBusy(true);
       const operation = queue.current.then(async () => {
-        const next = change(current.current);
+        const proposed = change(current.current);
+        let next: Data;
         try {
-          await writeData(next);
+          next = await writeData(proposed);
         } catch {
           setError(
             "Enregistrement impossible. Vos dernières modifications ne sont pas sauvegardées ; réessayez et exportez vos données.",
@@ -66,7 +69,10 @@ export function useLifeOS() {
         setError("");
       });
       queue.current = operation.catch(() => undefined);
-      return operation.finally(() => setBusy(false));
+      return operation.finally(() => {
+        pending.current--;
+        setBusy(pending.current > 0);
+      });
     },
     [],
   );

@@ -263,6 +263,15 @@ public class NativeSmokeTest {
             device.click(location[0] + (int)(position.getDouble("x") * position.getDouble("scale")),
                 location[1] + (int)(position.getDouble("y") * position.getDouble("scale")));
             waitFor("document.body.innerText.includes('Remplacer les données actuelles')");
+            click("Annuler la restauration");
+            waitFor("!document.querySelector('.restore-warning')");
+            assertEquals("\"2\"", js("document.querySelector('.backup-counts b').textContent"));
+            // The same file can be selected again after cancelling its preview.
+            js("document.querySelector('input[type=file]').scrollIntoView({block:'center'})");
+            position = new JSONObject(js("(()=>{const r=document.querySelector('input[type=file]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,scale:devicePixelRatio}})()"));
+            device.click(location[0] + (int)(position.getDouble("x") * position.getDouble("scale")),
+                location[1] + (int)(position.getDouble("y") * position.getDouble("scale")));
+            waitFor("document.body.innerText.includes('Remplacer les données actuelles')");
             click("Confirmer le remplacement");
             waitFor("!document.querySelector('dialog[open]')");
             waitFor("document.body.innerText.includes('Essai Android local') && !document.body.innerText.includes('À retirer par restauration')");

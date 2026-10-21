@@ -1,3 +1,4 @@
+import { boundedJson, jsonBytes, MAX_BACKUP_BYTES } from "./backupSize";
 import { taskSchema } from "./taskSchema";
 export { taskSchema } from "./taskSchema";
 import { automationRunSchema } from "./automationSchema";
@@ -348,7 +349,7 @@ export const dataSchema = v6Base
       });
   });
 export const storedDataSchema = z
-  .union([
+  .discriminatedUnion("version", [
     dataSchema,
     v6Schema,
     v5Schema,
@@ -474,23 +475,17 @@ export function removeProject(data: Data, projectId: string): Data {
   };
 }
 export function serializeBackup(data: Data) {
-  const raw = JSON.stringify(
+  return boundedJson(
     backupSchema.parse({
       application: "LifeOS",
       exportedAt: new Date().toISOString(),
       data,
     }),
-    null,
-    2,
+    "La sauvegarde dépasse 10 Mo, même sans mise en forme. Réduisez les données avant d’exporter ; le fichier ne serait pas restaurable.",
   );
-  if (new TextEncoder().encode(raw).length > 10 * 1024 * 1024)
-    throw new Error(
-      "La sauvegarde dépasse 10 Mo. Réduisez les données avant d’exporter ; le fichier ne serait pas restaurable.",
-    );
-  return raw;
 }
 export function parseBackup(raw: string): Data {
-  if (new TextEncoder().encode(raw).length > 10 * 1024 * 1024)
+  if (jsonBytes(raw) > MAX_BACKUP_BYTES)
     throw new Error("Sauvegarde trop volumineuse (10 Mo maximum).");
   return backupSchema.parse(JSON.parse(raw)).data;
 }

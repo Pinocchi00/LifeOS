@@ -1,5 +1,14 @@
 # Journal des modifications
 
+## 0.16.0 — 21 octobre 2026
+
+- Premier lot de stabilisation 1.0 : lecture des sauvegardes avec dernier fichier prioritaire, annulation explicite, indicateur de lecture et refus des réponses tardives après annulation/fermeture, pour l’organisation et Vie.
+- Export bloqué tant que des écritures restent en attente ; les écritures générales conservent en mémoire l’état normalisé réellement persisté. Une transaction interrompue est attendue et nettoyée avant de propager son échec, sans remplacer les données précédentes.
+- Exports JSON automatiquement compacts lorsque la mise en forme seule dépasserait 10 Mo. Aucun retrait d’éléments ni troncature. Taille comptée en octets UTF-8, limite inchangée pour l’import et l’export.
+- Choix direct du schéma selon la version, conservant les migrations v1 à v6 vers v7. Une enveloppe inconnue ou incohérente n’est pas réécrite à l’ouverture.
+- Recettes sur 20 000 tâches, Vie proche de la limite, lectures finissant à l’envers, restauration annulée, transaction interrompue et nouvelle tentative. Formats de données inchangés ; aucun compte, hébergement ou appel fournisseur ajouté.
+
+
 ## 0.15.0 — 21 octobre 2026
 
 - Agenda → Automatisations : replanifier explicitement 1 à 20 tâches ouvertes dont le créneau est d’un jour passé. Priorités puis échéances, durées et dates limites conservées, tâches et routines existantes respectées, propositions dans une plage choisie et explication des tâches qui n’y entrent pas.

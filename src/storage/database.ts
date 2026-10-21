@@ -25,13 +25,24 @@ export async function readData(): Promise<Data> {
     db.close();
   }
 }
-export async function writeData(data: Data): Promise<void> {
+export async function writeData(data: Data): Promise<Data> {
   const valid = dataSchema.parse(data);
   const db = await database();
   try {
     const transaction = db.transaction("state", "readwrite");
-    await transaction.store.put(valid, "current");
-    await transaction.done;
+    try {
+      await transaction.store.put(valid, "current");
+      await transaction.done;
+      return valid;
+    } catch (error) {
+      try {
+        transaction.abort();
+      } catch {
+        /* Already completed or aborted. */
+      }
+      await transaction.done.catch(() => undefined);
+      throw error;
+    }
   } finally {
     db.close();
   }

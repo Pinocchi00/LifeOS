@@ -1,3 +1,4 @@
+import { useBackupImport } from "./storage/useBackupImport";
 import {
   lazy,
   Suspense,
@@ -506,17 +507,24 @@ function Backup({
   data,
   restore,
   close,
+  writing,
 }: {
   data: Data;
   restore: (data: Data) => Promise<void>;
   close: () => void;
+  writing: boolean;
 }) {
-  const [pending, setPending] = useState<Data | null>(null);
+  const imported = useBackupImport(
+    parseBackup,
+    "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v7 de 10 Mo maximum. Aucune donnée n’a été modifiée.",
+  );
+  const { pending, reading } = imported;
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   async function download() {
     setError("");
+    imported.clearError();
     setExporting(true);
     try {
       await exportJson(
@@ -540,6 +548,12 @@ function Backup({
         leur propre sauvegarde. Exportez régulièrement une copie dans un endroit
         sûr. Le fichier JSON est lisible et n’est pas chiffré.
       </p>
+      {writing && (
+        <p role="status">
+          Enregistrement en cours. La sauvegarde sera disponible après les
+          dernières écritures.
+        </p>
+      )}
       <div className="backup-counts">
         <span>
           <b>{data.tasks.length}</b> tâches
@@ -607,7 +621,7 @@ function Backup({
       <button
         className="button primary"
         onClick={() => void download()}
-        disabled={busy || exporting}
+        disabled={busy || exporting || reading || writing}
       >
         <ArrowDownToLine size={17} /> Exporter mes données
       </button>
@@ -624,24 +638,29 @@ function Backup({
         <input
           type="file"
           accept=".json,application/json"
-          disabled={busy || exporting}
-          onChange={async (event) => {
-            setError("");
-            setPending(null);
-            const file = event.target.files?.[0];
+          disabled={busy || exporting || writing}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
             if (!file) return;
-            try {
-              if (file.size > 10 * 1024 * 1024) throw new Error();
-              setPending(parseBackup(await file.text()));
-            } catch {
-              setError(
-                "Fichier invalide ou incompatible. Utilisez une sauvegarde LifeOS v1 à v7 de moins de 10 Mo. Aucune donnée n’a été modifiée.",
-              );
-            }
-            event.target.value = "";
+            setError("");
+            void imported.load(file);
           }}
         />
       </label>
+      {reading && <p role="status">Lecture de la sauvegarde…</p>}
+      {(reading || pending) && (
+        <button
+          className="button secondary backup-cancel"
+          disabled={busy || exporting || writing}
+          onClick={() => {
+            imported.cancel();
+            setError("");
+          }}
+        >
+          Annuler la restauration
+        </button>
+      )}
       {pending && (
         <div className="restore-warning">
           <strong>Remplacer les données actuelles ?</strong>
@@ -668,7 +687,7 @@ function Backup({
             de GitHub. Les suivis Vie ne seront pas modifiés.
           </p>
           <button
-            disabled={busy || exporting}
+            disabled={busy || exporting || reading || writing}
             className="button danger"
             onClick={async () => {
               setBusy(true);
@@ -688,9 +707,9 @@ function Backup({
           </button>
         </div>
       )}
-      {error && (
+      {(error || imported.error) && (
         <p className="error" role="alert">
-          {error}
+          {error || imported.error}
         </p>
       )}
       <p className="small muted">
@@ -2348,6 +2367,7 @@ export default function App() {
           {editor.type === "backup" && (
             <Backup
               data={data}
+              writing={busy}
               restore={(value) => change(() => value, "Sauvegarde restaurée")}
               close={close}
             />

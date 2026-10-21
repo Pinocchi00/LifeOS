@@ -2078,3 +2078,9 @@ footer .local-dot {
     transition: none !important;
   }
 }
+
+.button.backup-cancel {
+  font-size: 12px;
+  min-height: 44px;
+  margin: 12px 0;
+}

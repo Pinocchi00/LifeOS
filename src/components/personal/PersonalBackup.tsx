@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useBackupImport } from "../../storage/useBackupImport";
+import { useEffect, useState } from "react";
 import { localDay } from "../../domain/model";
 import { exportJson } from "../../platform/backup";
 import { isAndroid } from "../../platform/runtime";
@@ -9,26 +10,37 @@ import {
   serializePersonal,
   type PersonalData,
   type PersonalSection,
-  type PersonalBackup,
 } from "../../domain/personal";
 
 export function PersonalBackupForm({
   data,
   change,
   close,
+  writing,
 }: {
   data: PersonalData;
   change: (operation: (data: PersonalData) => PersonalData) => Promise<void>;
   close: () => void;
+  writing: boolean;
 }) {
   const [included, setIncluded] = useState<PersonalSection[]>([]);
   const [selected, setSelected] = useState<PersonalSection[]>([]);
-  const [pending, setPending] = useState<PersonalBackup | null>(null);
+  const imported = useBackupImport(
+    parsePersonal,
+    "Fichier Vie invalide ou incompatible (10 Mo maximum). Aucun suivi n’a été modifié.",
+  );
+  const { pending, reading } = imported;
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  useEffect(() => {
+    setSelected(
+      pending ? (Object.keys(pending.sections) as PersonalSection[]) : [],
+    );
+  }, [pending]);
   async function download() {
     setError("");
+    imported.clearError();
     setExporting(true);
     try {
       const raw = serializePersonal(data, included);
@@ -47,6 +59,12 @@ export function PersonalBackupForm({
         contient des informations personnelles en clair : choisissez ce que vous
         souhaitez sauvegarder.
       </p>
+      {writing && (
+        <p role="status">
+          Enregistrement Vie en cours. La sauvegarde sera disponible après les
+          dernières écritures.
+        </p>
+      )}
       <fieldset className="schedule-fields">
         <legend>Rubriques à exporter</legend>
         {(Object.keys(sectionNames) as PersonalSection[]).map((section) => (
@@ -69,7 +87,7 @@ export function PersonalBackupForm({
       <button
         className="button primary"
         onClick={() => void download()}
-        disabled={!included.length || exporting || saving}
+        disabled={!included.length || exporting || saving || reading || writing}
       >
         Exporter la sélection Vie
       </button>
@@ -85,27 +103,31 @@ export function PersonalBackupForm({
         <input
           type="file"
           accept=".json,application/json"
-          disabled={saving || exporting}
-          onChange={async (event) => {
-            setError("");
-            setPending(null);
-            setSelected([]);
-            const file = event.target.files?.[0];
+          disabled={saving || exporting || writing}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
             if (!file) return;
-            try {
-              if (file.size > 10 * 1024 * 1024) throw new Error();
-              const value = parsePersonal(await file.text());
-              setPending(value);
-              setSelected(Object.keys(value.sections) as PersonalSection[]);
-            } catch {
-              setError(
-                "Fichier Vie invalide ou incompatible (10 Mo maximum). Aucun suivi n’a été modifié.",
-              );
-            }
-            event.target.value = "";
+            setError("");
+            setSelected([]);
+            void imported.load(file);
           }}
         />
       </label>
+      {reading && <p role="status">Lecture de la sauvegarde Vie…</p>}
+      {(reading || pending) && (
+        <button
+          className="button secondary backup-cancel"
+          disabled={saving || exporting || writing}
+          onClick={() => {
+            imported.cancel();
+            setSelected([]);
+            setError("");
+          }}
+        >
+          Annuler la restauration Vie
+        </button>
+      )}
       {pending && (
         <div className="restore-warning">
           <strong>Remplacer les rubriques choisies ?</strong>
@@ -139,7 +161,9 @@ export function PersonalBackupForm({
           )}
           <button
             className="button danger"
-            disabled={saving || exporting || !selected.length}
+            disabled={
+              saving || exporting || reading || writing || !selected.length
+            }
             onClick={async () => {
               setSaving(true);
               setError("");
@@ -161,9 +185,9 @@ export function PersonalBackupForm({
           </button>
         </div>
       )}
-      {error && (
+      {(error || imported.error) && (
         <p role="alert" className="error">
-          {error}
+          {error || imported.error}
         </p>
       )}
       <p className="muted small">

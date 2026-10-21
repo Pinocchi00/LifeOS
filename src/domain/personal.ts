@@ -1,3 +1,4 @@
+import { boundedJson, jsonBytes, MAX_BACKUP_BYTES } from "./backupSize";
 import { z } from "zod";
 import { day, id, text, title } from "./validation";
 import { localDay } from "./model";
@@ -266,24 +267,18 @@ export function serializePersonal(
       habitEntries: data.habitEntries,
     };
   if (included.includes("sommeil")) sections.sommeil = { sleep: data.sleep };
-  const raw = JSON.stringify(
+  return boundedJson(
     personalBackupSchema.parse({
       application: "LifeOS-Vie",
       version: 1,
       exportedAt: new Date().toISOString(),
       sections,
     }),
-    null,
-    2,
+    "La sauvegarde Vie dépasse 10 Mo, même sans mise en forme. Exportez moins de rubriques à la fois ou réduisez les données.",
   );
-  if (new TextEncoder().encode(raw).length > 10 * 1024 * 1024)
-    throw new Error(
-      "Choisissez moins de rubriques : le fichier dépasse 10 Mo.",
-    );
-  return raw;
 }
 export function parsePersonal(raw: string) {
-  if (new TextEncoder().encode(raw).length > 10 * 1024 * 1024)
+  if (jsonBytes(raw) > MAX_BACKUP_BYTES)
     throw new Error("Fichier Vie limité à 10 Mo.");
   return personalBackupSchema.parse(JSON.parse(raw));
 }

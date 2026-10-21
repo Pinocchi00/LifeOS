@@ -1,9 +1,93 @@
 import "fake-indexeddb/auto";
 import { openDB } from "idb";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readData, writeData } from "./database";
 import { emptyData, type Data } from "../domain/model";
 describe("IndexedDB", () => {
+  it("renvoie l’état normalisé réellement écrit, sans garder un état différent en mémoire", async () => {
+    const proposed = {
+      ...emptyData(),
+      notes: [
+        {
+          id: "normalized",
+          title: "  Mon idée  ",
+          body: "  Contexte  ",
+          createdAt: "2026-10-21T10:00:00.000Z",
+        },
+      ],
+    };
+    const saved = await writeData(proposed);
+    expect(saved.notes[0]).toMatchObject({
+      title: "Mon idée",
+      body: "Contexte",
+    });
+    expect(await readData()).toEqual(saved);
+    expect(proposed.notes[0].title).toBe("  Mon idée  ");
+    await writeData(emptyData());
+  });
+  it("garde l’ancienne enveloppe après une transaction interrompue puis accepte la suivante", async () => {
+    const original = {
+      ...emptyData(),
+      notes: [
+        {
+          id: "keep",
+          title: "Conservée",
+          body: "",
+          createdAt: "2026-10-21T10:00:00.000Z",
+        },
+      ],
+    };
+    await writeData(original);
+    const put = IDBObjectStore.prototype.put;
+    const fault = vi
+      .spyOn(IDBObjectStore.prototype, "put")
+      .mockImplementationOnce(function (this: IDBObjectStore, value, key) {
+        const request = put.call(this, value, key);
+        this.transaction.abort();
+        return request;
+      });
+    try {
+      await expect(writeData(emptyData())).rejects.toThrow();
+    } finally {
+      fault.mockRestore();
+    }
+    expect(await readData()).toEqual(original);
+    await writeData(emptyData());
+    expect(await readData()).toEqual(emptyData());
+  });
+  it.each([
+    { version: 99, private: "à conserver" },
+    {
+      version: 1,
+      tasks: [],
+      projects: [],
+      notes: [
+        {
+          id: "old",
+          title: "",
+          body: "à conserver",
+          createdAt: "2026-10-21T10:00:00.000Z",
+        },
+      ],
+    },
+  ])(
+    "ne réécrit pas une enveloppe incompatible ou une migration invalide",
+    async (stored) => {
+      const db = await openDB("lifeos-core", 1, {
+        upgrade(database) {
+          database.createObjectStore("state");
+        },
+      });
+      await db.put("state", stored, "current");
+      try {
+        await expect(readData()).rejects.toThrow();
+        expect(await db.get("state", "current")).toEqual(stored);
+      } finally {
+        db.close();
+        await writeData(emptyData());
+      }
+    },
+  );
   it("migre v6 en place en conservant toutes les collections et en initialisant le journal", async () => {
     const current = emptyData();
     const { automationRuns: _runs, ...v6 } = current;
