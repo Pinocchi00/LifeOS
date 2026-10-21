@@ -59,6 +59,7 @@ public class NativeConnectorTest extends NativeSmokeTest {
         click("Vérifier ce serveur HTTPS");
         waitFor("document.querySelector('.github-access [role=alert]')?.textContent.includes('certificat refusé')");
         js("document.querySelector('.github-access [role=alert]').scrollIntoView({block:'center'})");
+        assertEquals("true",js("!document.querySelector('.github-access [role=alert]').textContent.includes('factur')"));
         capture("native-https-cert-refused.png");
 
         KeyStore trust=KeyStore.getInstance(KeyStore.getDefaultType());trust.load(null);

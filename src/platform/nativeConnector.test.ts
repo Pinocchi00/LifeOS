@@ -109,11 +109,16 @@ it("annulation avant et pendant le pont, sans relance", async () => {
     18000,
   );
   during.abort();
-  await expect(promise).rejects.toThrow("facturé");
+  await expect(promise).rejects.toThrow("conservés");
   expect(mock.cancel).toHaveBeenCalledWith({
     id: mock.request.mock.calls[0][0].id,
   });
   expect(mock.request).toHaveBeenCalledTimes(1);
+  const sending = new AbortController();
+  const sent = nativeConnectorRequest("ai/execute", {}, sending.signal, 65000);
+  sending.abort();
+  await expect(sent).rejects.toThrow("facturé");
+  expect(mock.request).toHaveBeenCalledTimes(2);
 });
 it("refus, erreur TLS et réponse native incompatible ne déclenchent aucun repli", async () => {
   mock.request

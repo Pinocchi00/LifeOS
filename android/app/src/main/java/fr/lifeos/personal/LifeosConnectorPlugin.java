@@ -35,7 +35,11 @@ public class LifeosConnectorPlugin extends Plugin {
             executor.execute(() -> {
                 try { call.resolve(JSObject.fromJSONObject(current.execute(job))); }
                 catch (NativeConnector.ProtocolException ignored) { call.reject("Serveur non compatible avec Android. Installez LifeOS 0.14 ou plus récent sur le serveur, puis vérifiez à nouveau."); }
-                catch (Exception ignored) { call.reject("Serveur HTTPS inaccessible, certificat refusé ou opération annulée. Aucun réessai automatique ; un envoi IA peut avoir été facturé."); }
+                catch (Exception ignored) {
+                    String message="Serveur HTTPS inaccessible, certificat refusé ou opération annulée. Aucun réessai automatique.";
+                    if ("ai/execute".equals(job.path)) message+=" Un envoi IA peut avoir été facturé.";
+                    call.reject(message);
+                }
             });
         } catch (Exception ignored) { call.reject("Configurez une origine HTTPS et terminez l’opération en cours avant de réessayer."); }
     }

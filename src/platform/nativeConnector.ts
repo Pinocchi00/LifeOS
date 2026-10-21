@@ -75,7 +75,9 @@ export async function nativeConnectorRequest(
       void plugin.cancel({ id }).catch(() => {});
       reject(
         new Error(
-          "Opération annulée. Aucun réessai automatique ; un envoi IA peut avoir été facturé.",
+          path === "ai/execute"
+            ? "Envoi IA interrompu. Aucun réessai automatique ; il peut avoir été facturé."
+            : "Opération annulée. Vos relevés et comptes-rendus restent conservés.",
         ),
       );
     };
